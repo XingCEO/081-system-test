@@ -6,9 +6,12 @@ import { useCartStore } from '../../stores/useCartStore';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { TABLE_STATUS_LABELS, TABLE_STATUS_COLORS } from '../../utils/constants';
 import Modal from '../../components/ui/Modal';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { IconCart, IconBroom, IconCheck, IconCalendar, IconTrash, IconPencilSquare } from '../../components/ui/Icons';
 import toast from 'react-hot-toast';
 import type { RestaurantTable, TableShape, TableStatus } from '../../db/types';
+
+type ViewMode = 'canvas' | 'list';
 
 export default function TableMapPage() {
   const navigate = useNavigate();
@@ -19,6 +22,8 @@ export default function TableMapPage() {
   const [showAddTable, setShowAddTable] = useState(false);
   const [dragTable, setDragTable] = useState<number | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [viewMode, setViewMode] = useState<ViewMode>('canvas');
+  const [deleteTarget, setDeleteTarget] = useState<RestaurantTable | null>(null);
 
   const tables = useLiveQuery(() => db.diningTables.filter(t => t.isActive).toArray());
 
@@ -76,10 +81,10 @@ export default function TableMapPage() {
     toast.success('桌位已新增');
   };
 
-  const handleDeleteTable = async (table: RestaurantTable) => {
-    if (!table.id) return;
-    await db.diningTables.update(table.id, { isActive: false });
-    setSelectedTable(null);
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget?.id) return;
+    await db.diningTables.delete(deleteTarget.id);
+    setDeleteTarget(null);
     toast.success('桌位已刪除');
   };
 
@@ -104,58 +109,149 @@ export default function TableMapPage() {
             ))}
           </div>
         </div>
-        {isAdmin && (
-          <div className="flex gap-2">
-            {editMode && (
-              <button onClick={() => setShowAddTable(true)} className="btn-secondary">
-                + 新增桌位
-              </button>
-            )}
+        <div className="flex gap-2 items-center">
+          {/* View Mode Toggle */}
+          <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
             <button
-              onClick={() => setEditMode(!editMode)}
-              className={editMode ? 'btn-primary' : 'btn-secondary'}
+              onClick={() => setViewMode('canvas')}
+              className={`px-3 py-1.5 text-sm font-medium transition-all ${
+                viewMode === 'canvas'
+                  ? 'bg-blue-600 text-white dark:bg-blue-500'
+                  : 'bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+              }`}
             >
-              {editMode ? <><IconCheck className="w-4 h-4 inline" /> 完成編輯</> : <><IconPencilSquare className="w-4 h-4 inline" /> 編輯佈局</>}
+              畫布
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-1.5 text-sm font-medium transition-all ${
+                viewMode === 'list'
+                  ? 'bg-blue-600 text-white dark:bg-blue-500'
+                  : 'bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+              }`}
+            >
+              列表
             </button>
           </div>
-        )}
-      </div>
-
-      {/* Table Map */}
-      <div
-        className="flex-1 relative overflow-auto bg-slate-100 dark:bg-slate-950 p-4"
-        onMouseMove={handleDragMove}
-        onMouseUp={handleDragEnd}
-        onMouseLeave={handleDragEnd}
-      >
-        <div className="relative min-w-[700px] min-h-[600px]">
-          {tables?.map((table) => (
-            <div
-              key={table.id}
-              className={`table-item absolute cursor-pointer transition-all hover:shadow-lg flex flex-col items-center justify-center text-center select-none ${
-                TABLE_STATUS_COLORS[table.status]
-              } ${editMode ? 'cursor-move ring-2 ring-dashed ring-blue-300 dark:ring-blue-600' : ''} ${
-                table.shape === 'round' ? 'rounded-full' : 'rounded-xl'
-              }`}
-              style={{
-                left: table.x,
-                top: table.y,
-                width: table.width,
-                height: table.height,
-              }}
-              onClick={() => handleTableClick(table)}
-              onMouseDown={(e) => handleDragStart(e, table)}
-            >
-              <span className="font-bold text-lg">{table.number}</span>
-              <span className="text-xs opacity-75">{table.name}</span>
-              <span className="text-xs opacity-60 mt-0.5">{table.capacity}人</span>
-              <span className="text-[10px] font-medium mt-1">
-                {TABLE_STATUS_LABELS[table.status]}
-              </span>
-            </div>
-          ))}
+          {isAdmin && (
+            <>
+              {editMode && (
+                <button onClick={() => setShowAddTable(true)} className="btn-secondary">
+                  + 新增桌位
+                </button>
+              )}
+              <button
+                onClick={() => setEditMode(!editMode)}
+                className={editMode ? 'btn-primary' : 'btn-secondary'}
+              >
+                {editMode ? <><IconCheck className="w-4 h-4 inline" /> 完成編輯</> : <><IconPencilSquare className="w-4 h-4 inline" /> 編輯佈局</>}
+              </button>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Canvas View */}
+      {viewMode === 'canvas' && (
+        <div
+          className="flex-1 relative overflow-auto bg-slate-100 dark:bg-slate-950 p-4"
+          onMouseMove={handleDragMove}
+          onMouseUp={handleDragEnd}
+          onMouseLeave={handleDragEnd}
+        >
+          <div className="relative min-w-[700px] min-h-[600px]">
+            {tables?.map((table) => (
+              <div
+                key={table.id}
+                className={`table-item absolute cursor-pointer transition-all hover:shadow-lg flex flex-col items-center justify-center text-center select-none ${
+                  TABLE_STATUS_COLORS[table.status]
+                } ${editMode ? 'cursor-move ring-2 ring-dashed ring-blue-300 dark:ring-blue-600' : ''} ${
+                  table.shape === 'round' ? 'rounded-full' : 'rounded-xl'
+                }`}
+                style={{
+                  left: table.x,
+                  top: table.y,
+                  width: table.width,
+                  height: table.height,
+                }}
+                onClick={() => handleTableClick(table)}
+                onMouseDown={(e) => handleDragStart(e, table)}
+              >
+                {/* Delete button in edit mode */}
+                {editMode && isAdmin && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(table); }}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md z-10 transition-colors"
+                  >
+                    ✕
+                  </button>
+                )}
+                <span className="font-bold text-lg">{table.number}</span>
+                <span className="text-xs opacity-75">{table.name}</span>
+                <span className="text-xs opacity-60 mt-0.5">{table.capacity}人</span>
+                <span className="text-[10px] font-medium mt-1">
+                  {TABLE_STATUS_LABELS[table.status]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* List View */}
+      {viewMode === 'list' && (
+        <div className="flex-1 overflow-auto p-4">
+          <div className="space-y-2">
+            {tables?.map((table, i) => (
+              <div
+                key={table.id}
+                className={`card px-4 py-3 flex items-center justify-between animate-slide-up stagger-${Math.min(i + 1, 6)}`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center font-bold text-lg ${TABLE_STATUS_COLORS[table.status]}`}>
+                    {table.number}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">
+                      {table.number} {table.name}
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {table.capacity} 人座 · {table.shape === 'square' ? '方形' : table.shape === 'round' ? '圓形' : '長方形'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${TABLE_STATUS_COLORS[table.status]}`}>
+                    {TABLE_STATUS_LABELS[table.status]}
+                  </span>
+                  {!editMode && (
+                    <button
+                      onClick={() => handleTableClick(table)}
+                      className="btn-secondary text-sm px-3 py-1.5"
+                    >
+                      操作
+                    </button>
+                  )}
+                  {editMode && isAdmin && (
+                    <button
+                      onClick={() => setDeleteTarget(table)}
+                      className="btn-danger text-sm px-3 py-1.5 flex items-center gap-1"
+                    >
+                      <IconTrash className="w-3.5 h-3.5" /> 刪除
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {(!tables || tables.length === 0) && (
+              <div className="text-center py-16 text-slate-400 dark:text-slate-600">
+                <p className="text-lg font-medium">尚無桌位</p>
+                <p className="text-sm mt-1">請切換至編輯模式新增桌位</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Table Action Modal */}
       {selectedTable && !editMode && (
@@ -227,18 +323,20 @@ export default function TableMapPage() {
                 <IconCalendar className="w-4 h-4" /> 設為預約
               </button>
             )}
-
-            {isAdmin && editMode && (
-              <button
-                onClick={() => handleDeleteTable(selectedTable)}
-                className="btn-danger w-full flex items-center justify-center gap-1.5"
-              >
-                <IconTrash className="w-4 h-4" /> 刪除桌位
-              </button>
-            )}
           </div>
         </Modal>
       )}
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="刪除桌位"
+        message={`確定要永久刪除「${deleteTarget?.number} ${deleteTarget?.name}」？此操作無法復原。`}
+        confirmText="刪除"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
 
       {/* Add Table Modal */}
       {showAddTable && (

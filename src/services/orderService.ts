@@ -1,5 +1,5 @@
 import { db } from '../db/database';
-import type { CartItem, Order, OrderItem, OrderStatus } from '../db/types';
+import type { CartItem, Order, OrderItem, OrderStatus, OrderItemStatus } from '../db/types';
 import { format } from 'date-fns';
 
 export async function getNextOrderNumber(): Promise<string> {
@@ -59,31 +59,58 @@ export async function createOrder(params: {
     modifiersTotal: item.modifiersTotal,
     subtotal: (item.unitPrice + item.modifiersTotal) * item.quantity,
     note: item.note,
+    itemStatus: 'pending' as OrderItemStatus,
+    isCombo: item.isCombo,
+    comboItems: item.comboItems,
   }));
 
   await db.orderItems.bulkAdd(orderItems);
 
   // Deduct inventory
   for (const item of params.items) {
-    const inv = await db.inventory.where('productId').equals(item.productId).first();
-    if (inv && inv.id) {
-      const newStock = Math.max(0, inv.currentStock - item.quantity);
-      await db.inventory.update(inv.id, {
-        currentStock: newStock,
-        lastUpdated: now,
-      });
-      await db.inventoryTransactions.add({
-        productId: item.productId,
-        productName: item.productName,
-        type: 'sale',
-        quantity: -item.quantity,
-        previousStock: inv.currentStock,
-        newStock,
-        orderId: orderId as number,
-        note: `訂單 ${orderNumber}`,
-        employeeId: params.employeeId,
-        createdAt: now,
-      });
+    if (item.isCombo && item.comboItems?.length) {
+      // Combo: deduct inventory for each sub-product
+      for (const sub of item.comboItems) {
+        const inv = await db.inventory.where('productId').equals(sub.productId).first();
+        if (inv && inv.id) {
+          const deductQty = sub.quantity * item.quantity;
+          const newStock = Math.max(0, inv.currentStock - deductQty);
+          await db.inventory.update(inv.id, { currentStock: newStock, lastUpdated: now });
+          await db.inventoryTransactions.add({
+            productId: sub.productId,
+            productName: sub.productName,
+            type: 'sale',
+            quantity: -deductQty,
+            previousStock: inv.currentStock,
+            newStock,
+            orderId: orderId as number,
+            note: `訂單 ${orderNumber} (套餐)`,
+            employeeId: params.employeeId,
+            createdAt: now,
+          });
+        }
+      }
+    } else {
+      const inv = await db.inventory.where('productId').equals(item.productId).first();
+      if (inv && inv.id) {
+        const newStock = Math.max(0, inv.currentStock - item.quantity);
+        await db.inventory.update(inv.id, {
+          currentStock: newStock,
+          lastUpdated: now,
+        });
+        await db.inventoryTransactions.add({
+          productId: item.productId,
+          productName: item.productName,
+          type: 'sale',
+          quantity: -item.quantity,
+          previousStock: inv.currentStock,
+          newStock,
+          orderId: orderId as number,
+          note: `訂單 ${orderNumber}`,
+          employeeId: params.employeeId,
+          createdAt: now,
+        });
+      }
     }
   }
 
@@ -143,27 +170,71 @@ export async function cancelOrder(orderId: number): Promise<void> {
   const items = await db.orderItems.where('orderId').equals(orderId).toArray();
   const now = new Date().toISOString();
   for (const item of items) {
-    const inv = await db.inventory.where('productId').equals(item.productId).first();
-    if (inv && inv.id) {
-      const newStock = inv.currentStock + item.quantity;
-      await db.inventory.update(inv.id, {
-        currentStock: newStock,
-        lastUpdated: now,
-      });
-      await db.inventoryTransactions.add({
-        productId: item.productId,
-        productName: item.productName,
-        type: 'adjustment',
-        quantity: item.quantity,
-        previousStock: inv.currentStock,
-        newStock,
-        orderId,
-        note: `取消訂單 ${order.orderNumber}`,
-        employeeId: order.employeeId,
-        createdAt: now,
-      });
+    if (item.isCombo && item.comboItems?.length) {
+      for (const sub of item.comboItems) {
+        const inv = await db.inventory.where('productId').equals(sub.productId).first();
+        if (inv && inv.id) {
+          const restoreQty = sub.quantity * item.quantity;
+          const newStock = inv.currentStock + restoreQty;
+          await db.inventory.update(inv.id, { currentStock: newStock, lastUpdated: now });
+          await db.inventoryTransactions.add({
+            productId: sub.productId,
+            productName: sub.productName,
+            type: 'adjustment',
+            quantity: restoreQty,
+            previousStock: inv.currentStock,
+            newStock,
+            orderId,
+            note: `取消訂單 ${order.orderNumber} (套餐)`,
+            employeeId: order.employeeId,
+            createdAt: now,
+          });
+        }
+      }
+    } else {
+      const inv = await db.inventory.where('productId').equals(item.productId).first();
+      if (inv && inv.id) {
+        const newStock = inv.currentStock + item.quantity;
+        await db.inventory.update(inv.id, {
+          currentStock: newStock,
+          lastUpdated: now,
+        });
+        await db.inventoryTransactions.add({
+          productId: item.productId,
+          productName: item.productName,
+          type: 'adjustment',
+          quantity: item.quantity,
+          previousStock: inv.currentStock,
+          newStock,
+          orderId,
+          note: `取消訂單 ${order.orderNumber}`,
+          employeeId: order.employeeId,
+          createdAt: now,
+        });
+      }
     }
   }
 
   await updateOrderStatus(orderId, 'cancelled');
+}
+
+export async function updateOrderItemStatus(
+  orderItemId: number,
+  status: OrderItemStatus
+): Promise<void> {
+  await db.orderItems.update(orderItemId, { itemStatus: status });
+
+  // Auto-advance: if ALL items in the order are completed, set order to 'ready'
+  const item = await db.orderItems.get(orderItemId);
+  if (!item) return;
+
+  const allItems = await db.orderItems.where('orderId').equals(item.orderId).toArray();
+  const allCompleted = allItems.every((i) => i.itemStatus === 'completed');
+
+  if (allCompleted) {
+    const order = await db.orders.get(item.orderId);
+    if (order && (order.status === 'pending' || order.status === 'preparing')) {
+      await updateOrderStatus(item.orderId, 'ready');
+    }
+  }
 }

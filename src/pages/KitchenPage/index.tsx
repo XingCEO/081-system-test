@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
-import { updateOrderStatus } from '../../services/orderService';
+import { updateOrderStatus, updateOrderItemStatus } from '../../services/orderService';
 import { getMinutesElapsed } from '../../utils/date';
 import { ORDER_STATUS_LABELS } from '../../utils/constants';
 import { IconFire, IconChefHat, IconMapPin, IconNote, IconWarning, IconCheck, IconSparkles } from '../../components/ui/Icons';
@@ -30,6 +30,12 @@ export default function KitchenPage() {
     toast.success(`訂單 ${order.orderNumber} → ${label}`);
   };
 
+  const handleItemToggle = async (item: OrderItem) => {
+    if (!item.id) return;
+    const newStatus = item.itemStatus === 'completed' ? 'pending' : 'completed';
+    await updateOrderItemStatus(item.id, newStatus);
+  };
+
   const pending = activeOrders?.filter(o => o.status === 'pending') || [];
   const preparing = activeOrders?.filter(o => o.status === 'preparing') || [];
   const ready = activeOrders?.filter(o => o.status === 'ready') || [];
@@ -38,6 +44,9 @@ export default function KitchenPage() {
     const items = orderItems?.get(order.id!) || [];
     const minutes = getMinutesElapsed(order.createdAt);
     const isUrgent = minutes >= 15;
+
+    const completedCount = items.filter(it => it.itemStatus === 'completed').length;
+    const totalCount = items.length;
 
     const borderColor =
       order.status === 'pending' ? 'border-red-400 bg-red-50 dark:bg-red-950/50 dark:border-red-600' :
@@ -58,6 +67,15 @@ export default function KitchenPage() {
             <span className="font-bold text-lg dark:text-white">#{order.orderNumber.split('-')[1]}</span>
           </div>
           <div className="flex items-center gap-2">
+            {totalCount > 0 && (
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                completedCount === totalCount
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
+                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+              }`}>
+                {completedCount}/{totalCount} 完成
+              </span>
+            )}
             {order.tableName !== '外帶' && (
               <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-0.5">
                 <IconMapPin className="w-3 h-3" /> {order.tableName}
@@ -69,26 +87,57 @@ export default function KitchenPage() {
           </div>
         </div>
 
-        {/* Items */}
-        <div className="px-4 pb-3 space-y-1.5">
-          {items.map((item) => (
-            <div key={item.id} className="flex items-start gap-2">
-              <span className="font-bold text-blue-600 dark:text-blue-400 min-w-[24px]">{item.quantity}x</span>
-              <div>
-                <span className="font-medium text-slate-900 dark:text-white">{item.productName}</span>
-                {item.modifiers.length > 0 && (
-                  <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
-                    ({item.modifiers.map(m => m.name).join(', ')})
+        {/* Items with per-item toggle */}
+        <div className="px-4 pb-3 space-y-1">
+          {items.map((item) => {
+            const isDone = item.itemStatus === 'completed';
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleItemToggle(item)}
+                className={`w-full flex items-start gap-2 text-left rounded-lg px-2 py-1.5 transition-all ${
+                  isDone
+                    ? 'bg-emerald-100/50 dark:bg-emerald-900/20'
+                    : 'hover:bg-white/50 dark:hover:bg-white/5'
+                }`}
+              >
+                <span className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                  isDone
+                    ? 'bg-emerald-500 border-emerald-500 text-white'
+                    : 'border-slate-300 dark:border-slate-600'
+                }`}>
+                  {isDone && <IconCheck className="w-3 h-3" />}
+                </span>
+                <span className={`font-bold min-w-[24px] ${isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                  {item.quantity}x
+                </span>
+                <div className="flex-1 min-w-0">
+                  <span className={`font-medium ${isDone ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white'}`}>
+                    {item.productName}
                   </span>
-                )}
-                {item.note && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
-                    <IconNote className="w-3 h-3" /> {item.note}
-                  </p>
-                )}
-              </div>
-            </div>
-          ))}
+                  {item.isCombo && item.comboItems && item.comboItems.length > 0 && (
+                    <div className="mt-0.5 ml-2 space-y-0.5">
+                      {item.comboItems.map((sub, si) => (
+                        <p key={si} className={`text-xs ${isDone ? 'text-slate-400 dark:text-slate-600 line-through' : 'text-slate-500 dark:text-slate-400'}`}>
+                          └ {sub.quantity}x {sub.productName}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  {item.modifiers.length > 0 && (
+                    <span className={`text-xs ml-1 ${isDone ? 'text-slate-400 dark:text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}>
+                      ({item.modifiers.map(m => m.name).join(', ')})
+                    </span>
+                  )}
+                  {item.note && (
+                    <p className={`text-xs flex items-center gap-0.5 ${isDone ? 'text-slate-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                      <IconNote className="w-3 h-3" /> {item.note}
+                    </p>
+                  )}
+                </div>
+              </button>
+            );
+          })}
           {order.note && (
             <p className="text-sm text-amber-600 dark:text-amber-400 font-medium mt-2 flex items-center gap-1">
               <IconWarning className="w-4 h-4" /> {order.note}

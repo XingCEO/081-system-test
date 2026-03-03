@@ -11,6 +11,13 @@ export interface Category {
   updatedAt: string;
 }
 
+// ==================== 套餐子項 ====================
+export interface ComboItem {
+  productId: number;
+  productName: string;
+  quantity: number;
+}
+
 // ==================== 商品 ====================
 export interface Product {
   id?: number;
@@ -23,6 +30,8 @@ export interface Product {
   modifierGroupIds: number[];
   trackInventory: boolean;
   sortOrder: number;
+  isCombo?: boolean;
+  comboItems?: ComboItem[];
   createdAt: string;
   updatedAt: string;
 }
@@ -72,6 +81,7 @@ export interface RestaurantTable {
 
 // ==================== 訂單 ====================
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+export type OrderItemStatus = 'pending' | 'completed';
 
 export interface Order {
   id?: number;
@@ -103,6 +113,9 @@ export interface OrderItem {
   modifiersTotal: number;
   subtotal: number;
   note: string;
+  itemStatus?: OrderItemStatus;
+  isCombo?: boolean;
+  comboItems?: ComboItem[];
 }
 
 // ==================== 員工 ====================
@@ -196,4 +209,6 @@ export interface CartItem {
   modifiers: SelectedModifier[];
   modifiersTotal: number;
   note: string;
+  isCombo?: boolean;
+  comboItems?: ComboItem[];
 }

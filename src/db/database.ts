@@ -42,6 +42,15 @@ export class PosDatabase extends Dexie {
       syncQueue: '++id, table, operation, createdAt, synced',
       settings: '&key',
     });
+
+    // v2: add itemStatus to order items, combo fields are non-indexed
+    this.version(2).stores({}).upgrade(async (tx) => {
+      await tx.table('orderItems').toCollection().modify((item) => {
+        if (!item.itemStatus) {
+          item.itemStatus = 'pending';
+        }
+      });
+    });
   }
 }
 

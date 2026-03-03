@@ -8,7 +8,7 @@ import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { IconPencil, IconUpload, IconDownload, getCategoryIcon, CATEGORY_ICON_KEYS } from '../../components/ui/Icons';
 import toast from 'react-hot-toast';
-import type { Product, Category } from '../../db/types';
+import type { Product, Category, ComboItem } from '../../db/types';
 
 export default function MenuManagementPage() {
   const [showProductForm, setShowProductForm] = useState(false);
@@ -146,7 +146,14 @@ export default function MenuManagementPage() {
                       {getCategoryIcon(catIcon, { className: 'w-6 h-6' })}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900 dark:text-white">{product.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-slate-900 dark:text-white">{product.name}</h3>
+                        {product.isCombo && (
+                          <span className="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-400 px-1.5 py-0.5 rounded-full">
+                            套餐
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
                         {categories?.find(c => c.id === product.categoryId)?.name || '未分類'}
                         {product.description && ` · ${product.description}`}
@@ -241,6 +248,36 @@ function ProductFormModal({ product, categories, modifierGroups, onSave, onClose
   const [trackInventory, setTrackInventory] = useState(product?.trackInventory ?? true);
   const [selectedModGroups, setSelectedModGroups] = useState<number[]>(product?.modifierGroupIds || []);
   const [imageUrl, setImageUrl] = useState(product?.imageUrl || '');
+  const [isCombo, setIsCombo] = useState(product?.isCombo ?? false);
+  const [comboItems, setComboItems] = useState<ComboItem[]>(product?.comboItems || []);
+
+  // All active products for combo sub-item selection (exclude self)
+  const allProducts = useLiveQuery(
+    () => db.products.filter(p => p.isActive && p.id !== product?.id).sortBy('name')
+  );
+
+  const handleAddComboItem = (prod: Product) => {
+    const existing = comboItems.find(ci => ci.productId === prod.id!);
+    if (existing) {
+      setComboItems(prev =>
+        prev.map(ci => ci.productId === prod.id! ? { ...ci, quantity: ci.quantity + 1 } : ci)
+      );
+    } else {
+      setComboItems(prev => [...prev, { productId: prod.id!, productName: prod.name, quantity: 1 }]);
+    }
+  };
+
+  const handleRemoveComboItem = (productId: number) => {
+    setComboItems(prev => prev.filter(ci => ci.productId !== productId));
+  };
+
+  const handleComboItemQty = (productId: number, delta: number) => {
+    setComboItems(prev =>
+      prev
+        .map(ci => ci.productId === productId ? { ...ci, quantity: Math.max(0, ci.quantity + delta) } : ci)
+        .filter(ci => ci.quantity > 0)
+    );
+  };
 
   const handleSubmit = () => {
     if (!name || !price) return;
@@ -249,15 +286,17 @@ function ProductFormModal({ product, categories, modifierGroups, onSave, onClose
       description,
       price: parseInt(price),
       categoryId,
-      trackInventory,
-      modifierGroupIds: selectedModGroups,
+      trackInventory: isCombo ? false : trackInventory,
+      modifierGroupIds: isCombo ? [] : selectedModGroups,
       imageUrl,
+      isCombo,
+      comboItems: isCombo ? comboItems : undefined,
     });
   };
 
   return (
     <Modal open={true} onClose={onClose} title={product ? '編輯商品' : '新增商品'} size="lg">
-      <div className="space-y-4">
+      <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">商品名稱 *</label>
@@ -284,31 +323,113 @@ function ProductFormModal({ product, categories, modifierGroups, onSave, onClose
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">圖片URL</label>
           <input value={imageUrl} onChange={e => setImageUrl(e.target.value)} className="input-field" placeholder="https://..." />
         </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">修改群組</label>
-          <div className="flex flex-wrap gap-2">
-            {modifierGroups.map(g => (
-              <button
-                key={g.id}
-                onClick={() => setSelectedModGroups(prev =>
-                  prev.includes(g.id!) ? prev.filter(id => id !== g.id!) : [...prev, g.id!]
-                )}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
-                  selectedModGroups.includes(g.id!) ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400' : 'border-slate-200 dark:border-slate-700 dark:text-slate-400'
-                }`}
-              >
-                {g.name}
-              </button>
-            ))}
+
+        {/* Combo Toggle */}
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
+          <input
+            type="checkbox"
+            id="isCombo"
+            checked={isCombo}
+            onChange={e => setIsCombo(e.target.checked)}
+            className="w-5 h-5 rounded accent-purple-600"
+          />
+          <label htmlFor="isCombo" className="text-sm font-medium text-purple-700 dark:text-purple-400">
+            設為套餐商品
+          </label>
+        </div>
+
+        {/* Combo Sub-Item Picker */}
+        {isCombo && (
+          <div className="border border-purple-200 dark:border-purple-800 rounded-lg p-3 space-y-3">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block">套餐內容</label>
+
+            {/* Selected combo items */}
+            {comboItems.length > 0 && (
+              <div className="space-y-2">
+                {comboItems.map(ci => (
+                  <div key={ci.productId} className="flex items-center justify-between bg-purple-50 dark:bg-purple-950/30 rounded-lg px-3 py-2">
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">{ci.productName}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleComboItemQty(ci.productId, -1)}
+                        className="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center text-sm font-bold"
+                      >
+                        −
+                      </button>
+                      <span className="w-8 text-center font-semibold text-sm">{ci.quantity}</span>
+                      <button
+                        onClick={() => handleComboItemQty(ci.productId, 1)}
+                        className="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center text-sm font-bold"
+                      >
+                        +
+                      </button>
+                      <button
+                        onClick={() => handleRemoveComboItem(ci.productId)}
+                        className="text-red-400 hover:text-red-600 text-xs ml-1"
+                      >
+                        移除
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add sub-item from products */}
+            <div>
+              <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">點擊商品加入套餐</label>
+              <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                {allProducts?.filter(p => !p.isCombo).map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => handleAddComboItem(p)}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                      comboItems.some(ci => ci.productId === p.id!)
+                        ? 'border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-400'
+                        : 'border-slate-200 text-slate-600 hover:border-purple-300 dark:border-slate-700 dark:text-slate-400 dark:hover:border-purple-600'
+                    }`}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <input type="checkbox" id="trackInv" checked={trackInventory} onChange={e => setTrackInventory(e.target.checked)} className="w-5 h-5 rounded" />
-          <label htmlFor="trackInv" className="text-sm font-medium text-slate-700 dark:text-slate-300">追蹤庫存</label>
-        </div>
+        )}
+
+        {/* Modifier Groups (hidden for combos) */}
+        {!isCombo && (
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">修改群組</label>
+            <div className="flex flex-wrap gap-2">
+              {modifierGroups.map(g => (
+                <button
+                  key={g.id}
+                  onClick={() => setSelectedModGroups(prev =>
+                    prev.includes(g.id!) ? prev.filter(id => id !== g.id!) : [...prev, g.id!]
+                  )}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
+                    selectedModGroups.includes(g.id!) ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400' : 'border-slate-200 dark:border-slate-700 dark:text-slate-400'
+                  }`}
+                >
+                  {g.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Track Inventory (hidden for combos) */}
+        {!isCombo && (
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="trackInv" checked={trackInventory} onChange={e => setTrackInventory(e.target.checked)} className="w-5 h-5 rounded" />
+            <label htmlFor="trackInv" className="text-sm font-medium text-slate-700 dark:text-slate-300">追蹤庫存</label>
+          </div>
+        )}
+
         <div className="flex gap-2 pt-4">
           <button onClick={onClose} className="btn-secondary flex-1">取消</button>
-          <button onClick={handleSubmit} disabled={!name || !price} className="btn-primary flex-1">
+          <button onClick={handleSubmit} disabled={!name || !price || (isCombo && comboItems.length === 0)} className="btn-primary flex-1">
             {product ? '更新商品' : '新增商品'}
           </button>
         </div>

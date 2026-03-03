@@ -113,9 +113,16 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
                   </div>
                 )}
 
-                <h3 className="font-semibold text-slate-900 dark:text-white text-sm truncate">
-                  {product.name}
-                </h3>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-sm truncate">
+                    {product.name}
+                  </h3>
+                  {product.isCombo && (
+                    <span className="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                      套餐
+                    </span>
+                  )}
+                </div>
                 {product.description && (
                   <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
                     {product.description}

@@ -18,7 +18,17 @@ export default function POSPage() {
   );
 
   const handleProductClick = (product: Product) => {
-    if (product.modifierGroupIds.length > 0) {
+    if (product.isCombo) {
+      // Combo products go directly to cart, no modifier modal
+      useCartStore.getState().addItem({
+        productId: product.id!,
+        productName: product.name,
+        unitPrice: product.price,
+        modifiers: [],
+        isCombo: true,
+        comboItems: product.comboItems || [],
+      });
+    } else if (product.modifierGroupIds.length > 0) {
       setSelectedProduct(product);
     } else {
       useCartStore.getState().addItem({

@@ -53,9 +53,25 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
                 <div key={item.cartItemId} className="px-4 py-3 animate-fade-in">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-slate-900 dark:text-white truncate text-sm">
-                        {item.productName}
-                      </h4>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-medium text-slate-900 dark:text-white truncate text-sm">
+                          {item.productName}
+                        </h4>
+                        {item.isCombo && (
+                          <span className="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                            套餐
+                          </span>
+                        )}
+                      </div>
+                      {item.isCombo && item.comboItems && item.comboItems.length > 0 && (
+                        <div className="mt-1 ml-2 space-y-0.5">
+                          {item.comboItems.map((sub, si) => (
+                            <p key={si} className="text-xs text-slate-500 dark:text-slate-400">
+                              └ {sub.quantity}x {sub.productName}
+                            </p>
+                          ))}
+                        </div>
+                      )}
                       {item.modifiers.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {item.modifiers.map((mod, i) => (

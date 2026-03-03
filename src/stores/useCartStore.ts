@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { CartItem, SelectedModifier } from '../db/types';
+import type { CartItem, ComboItem, SelectedModifier } from '../db/types';
 
 interface CartState {
   items: CartItem[];
@@ -13,6 +13,8 @@ interface CartState {
     unitPrice: number;
     modifiers: SelectedModifier[];
     note?: string;
+    isCombo?: boolean;
+    comboItems?: ComboItem[];
   }) => void;
   removeItem: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, delta: number) => void;
@@ -46,6 +48,8 @@ export const useCartStore = create<CartState>()(
               modifiers: item.modifiers,
               modifiersTotal,
               note: item.note || '',
+              isCombo: item.isCombo,
+              comboItems: item.comboItems,
             },
           ],
         }));
