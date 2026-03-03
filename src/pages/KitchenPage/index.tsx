@@ -34,15 +34,15 @@ export default function KitchenPage() {
   const preparing = activeOrders?.filter(o => o.status === 'preparing') || [];
   const ready = activeOrders?.filter(o => o.status === 'ready') || [];
 
-  const renderOrderCard = (order: Order) => {
+  const renderOrderCard = (order: Order, i: number) => {
     const items = orderItems?.get(order.id!) || [];
     const minutes = getMinutesElapsed(order.createdAt);
     const isUrgent = minutes >= 15;
 
     const borderColor =
-      order.status === 'pending' ? 'border-red-400 bg-red-50' :
-      order.status === 'preparing' ? 'border-amber-400 bg-amber-50' :
-      'border-emerald-400 bg-emerald-50';
+      order.status === 'pending' ? 'border-red-400 bg-red-50 dark:bg-red-950/50 dark:border-red-600' :
+      order.status === 'preparing' ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/50 dark:border-amber-600' :
+      'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 dark:border-emerald-600';
 
     const statusColor =
       order.status === 'pending' ? 'bg-red-500' :
@@ -50,20 +50,20 @@ export default function KitchenPage() {
       'bg-emerald-500';
 
     return (
-      <div key={order.id} className={`rounded-xl border-2 ${borderColor} overflow-hidden`}>
+      <div key={order.id} className={`rounded-xl border-2 ${borderColor} overflow-hidden animate-slide-up stagger-${Math.min(i + 1, 6)} transition-all hover:shadow-lg`}>
         {/* Card Header */}
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className={`w-3 h-3 rounded-full ${statusColor}`} />
-            <span className="font-bold text-lg">#{order.orderNumber.split('-')[1]}</span>
+            <span className={`w-3 h-3 rounded-full ${statusColor} ${order.status === 'pending' ? 'animate-pulse' : ''}`} />
+            <span className="font-bold text-lg dark:text-white">#{order.orderNumber.split('-')[1]}</span>
           </div>
           <div className="flex items-center gap-2">
             {order.tableName !== '外帶' && (
-              <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-0.5">
+              <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-0.5">
                 <IconMapPin className="w-3 h-3" /> {order.tableName}
               </span>
             )}
-            <span className={`text-sm font-medium ${isUrgent ? 'text-red-600 animate-pulse' : 'text-slate-500'}`}>
+            <span className={`text-sm font-medium ${isUrgent ? 'text-red-600 dark:text-red-400 animate-pulse' : 'text-slate-500 dark:text-slate-400'}`}>
               {minutes} 分鐘
             </span>
           </div>
@@ -73,16 +73,16 @@ export default function KitchenPage() {
         <div className="px-4 pb-3 space-y-1.5">
           {items.map((item) => (
             <div key={item.id} className="flex items-start gap-2">
-              <span className="font-bold text-blue-600 min-w-[24px]">{item.quantity}x</span>
+              <span className="font-bold text-blue-600 dark:text-blue-400 min-w-[24px]">{item.quantity}x</span>
               <div>
-                <span className="font-medium text-slate-900">{item.productName}</span>
+                <span className="font-medium text-slate-900 dark:text-white">{item.productName}</span>
                 {item.modifiers.length > 0 && (
-                  <span className="text-xs text-slate-500 ml-1">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
                     ({item.modifiers.map(m => m.name).join(', ')})
                   </span>
                 )}
                 {item.note && (
-                  <p className="text-xs text-amber-600 flex items-center gap-0.5">
+                  <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
                     <IconNote className="w-3 h-3" /> {item.note}
                   </p>
                 )}
@@ -90,7 +90,7 @@ export default function KitchenPage() {
             </div>
           ))}
           {order.note && (
-            <p className="text-sm text-amber-600 font-medium mt-2 flex items-center gap-1">
+            <p className="text-sm text-amber-600 dark:text-amber-400 font-medium mt-2 flex items-center gap-1">
               <IconWarning className="w-4 h-4" /> {order.note}
             </p>
           )}
@@ -132,33 +132,33 @@ export default function KitchenPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between">
+      <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <IconFire className="w-6 h-6 text-orange-500" /> 廚房顯示
           </h1>
           <div className="flex gap-4 mt-1 text-sm">
-            <span className="text-red-600">待處理：{pending.length}</span>
-            <span className="text-amber-600">製作中：{preparing.length}</span>
-            <span className="text-emerald-600">完成：{ready.length}</span>
+            <span className="text-red-600 dark:text-red-400 font-medium">待處理：{pending.length}</span>
+            <span className="text-amber-600 dark:text-amber-400 font-medium">製作中：{preparing.length}</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium">完成：{ready.length}</span>
           </div>
         </div>
       </div>
 
       {noOrders ? (
-        <div className="flex-1 flex items-center justify-center text-slate-400">
-          <div className="text-center">
-            <IconChefHat className="w-16 h-16 mx-auto mb-3" />
+        <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-600">
+          <div className="text-center animate-fade-in">
+            <IconChefHat className="w-16 h-16 mx-auto mb-4" />
             <p className="text-xl font-medium">目前沒有訂單</p>
-            <p className="text-sm mt-1">新訂單將自動顯示在此</p>
+            <p className="text-sm mt-1.5">新訂單將自動顯示在此</p>
           </div>
         </div>
       ) : (
         <div className="flex-1 overflow-auto p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {pending.map(renderOrderCard)}
-            {preparing.map(renderOrderCard)}
-            {ready.map(renderOrderCard)}
+            {pending.map((o, i) => renderOrderCard(o, i))}
+            {preparing.map((o, i) => renderOrderCard(o, i + pending.length))}
+            {ready.map((o, i) => renderOrderCard(o, i + pending.length + preparing.length))}
           </div>
         </div>
       )}

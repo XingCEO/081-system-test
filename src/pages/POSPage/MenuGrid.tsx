@@ -43,7 +43,7 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
       {/* Search */}
       <div className="px-4 pt-4 pb-2">
         <div className="relative">
-          <IconSearch className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <IconSearch className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
             placeholder="搜尋商品..."
@@ -58,10 +58,10 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
       <div className="px-4 pb-2 flex gap-2 overflow-x-auto flex-shrink-0 scrollbar-hide">
         <button
           onClick={() => setActiveCategoryId(null)}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
             activeCategoryId === null
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700'
           }`}
         >
           全部
@@ -70,10 +70,10 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
           <button
             key={cat.id}
             onClick={() => setActiveCategoryId(cat.id!)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
               activeCategoryId === cat.id
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700'
             }`}
           >
             {getCategoryIcon(cat.icon, { className: 'w-4 h-4' })}
@@ -85,7 +85,7 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
       {/* Product Grid */}
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {filtered?.map((product) => {
+          {filtered?.map((product, i) => {
             const stock = inventoryMap?.get(product.id!) ?? null;
             const isSoldOut = product.trackInventory && stock !== null && stock <= 0;
             const catIcon = categories.find((c) => c.id === product.categoryId)?.icon || 'restaurant';
@@ -95,11 +95,11 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
                 key={product.id}
                 onClick={() => !isSoldOut && onProductClick(product)}
                 disabled={isSoldOut}
-                className={`card p-4 text-left transition-all active:scale-95 ${
+                className={`card p-3 text-left transition-all active:scale-[0.97] animate-fade-in ${
                   isSoldOut
                     ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:shadow-md hover:border-blue-300 cursor-pointer'
-                }`}
+                    : 'hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer'
+                } stagger-${Math.min((i % 8) + 1, 6)}`}
               >
                 {product.imageUrl ? (
                   <img
@@ -108,31 +108,31 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
                     className="w-full h-24 object-cover rounded-lg mb-2"
                   />
                 ) : (
-                  <div className="w-full h-24 bg-slate-100 rounded-lg mb-2 flex items-center justify-center text-slate-400">
+                  <div className="w-full h-24 bg-slate-100 dark:bg-slate-800 rounded-lg mb-2 flex items-center justify-center text-slate-400 dark:text-slate-600">
                     {getCategoryIcon(catIcon, { className: 'w-8 h-8' })}
                   </div>
                 )}
 
-                <h3 className="font-semibold text-slate-900 text-base truncate">
+                <h3 className="font-semibold text-slate-900 dark:text-white text-sm truncate">
                   {product.name}
                 </h3>
                 {product.description && (
-                  <p className="text-xs text-slate-400 truncate mt-0.5">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
                     {product.description}
                   </p>
                 )}
 
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-lg font-bold text-blue-600">
+                  <span className="text-base font-bold text-blue-600 dark:text-blue-400">
                     {formatPrice(product.price)}
                   </span>
                   {isSoldOut && (
-                    <span className="text-xs font-medium bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-medium bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400 px-2 py-0.5 rounded-full">
                       售完
                     </span>
                   )}
                   {product.trackInventory && stock !== null && !isSoldOut && stock <= 10 && (
-                    <span className="text-xs text-amber-600 font-medium">
+                    <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
                       剩{stock}
                     </span>
                   )}
@@ -143,9 +143,10 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
         </div>
 
         {filtered?.length === 0 && (
-          <div className="text-center py-12 text-slate-400">
-            <IconSearch className="w-10 h-10 mx-auto mb-2" />
-            <p>找不到符合的商品</p>
+          <div className="text-center py-16 text-slate-400 dark:text-slate-600">
+            <IconSearch className="w-12 h-12 mx-auto mb-3" />
+            <p className="text-lg font-medium">找不到符合的商品</p>
+            <p className="text-sm mt-1">試試其他關鍵字</p>
           </div>
         )}
       </div>

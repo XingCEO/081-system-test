@@ -27,9 +27,9 @@ export default function NumberPad({ value, onChange, maxLength = 10 }: NumberPad
           onClick={() => handlePress(key)}
           className={`number-pad-btn ${
             key === 'C'
-              ? 'bg-red-100 text-red-600 hover:bg-red-200'
+              ? 'bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-400 dark:hover:bg-red-900'
               : key === 'BS'
-              ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+              ? 'bg-amber-100 text-amber-600 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-400 dark:hover:bg-amber-900'
               : ''
           }`}
         >

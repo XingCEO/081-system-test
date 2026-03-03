@@ -59,16 +59,16 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
     return (
       <Modal open={true} onClose={onClose} title="付款成功" size="md">
         <div className="text-center">
-          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <IconCheck className="w-10 h-10 text-emerald-600" />
+          <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-in">
+            <IconCheck className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <h3 className="text-2xl font-bold text-emerald-600 mb-2">付款完成！</h3>
-          <p className="text-slate-600 mb-1">訂單編號：{completedOrder.orderNumber}</p>
-          <p className="text-slate-600 mb-1">
+          <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">付款完成！</h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-1">訂單編號：{completedOrder.orderNumber}</p>
+          <p className="text-slate-600 dark:text-slate-400 mb-1">
             {completedOrder.tableName !== '外帶' && `桌位：${completedOrder.tableName} · `}
             總計：{formatPrice(completedOrder.total)}
           </p>
-          <p className="text-slate-600">
+          <p className="text-slate-600 dark:text-slate-400">
             收款：{formatPrice(completedOrder.cashReceived)} · 找零：{formatPrice(completedOrder.changeGiven)}
           </p>
 
@@ -114,20 +114,20 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
 
   return (
     <Modal open={true} onClose={onClose} title="結帳" size="md">
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Amount Due */}
-        <div className="text-center bg-blue-50 rounded-2xl p-6">
-          <p className="text-slate-600 text-sm">應收金額</p>
-          <p className="text-4xl font-bold text-blue-600 mt-1">{formatPrice(total)}</p>
+        <div className="text-center bg-blue-50 dark:bg-blue-950/50 rounded-2xl p-5">
+          <p className="text-slate-600 dark:text-slate-400 text-sm">應收金額</p>
+          <p className="text-4xl font-bold text-blue-600 dark:text-blue-400 mt-1">{formatPrice(total)}</p>
           {tableId && (
-            <p className="text-slate-500 text-sm mt-1 flex items-center justify-center gap-1"><IconMapPin className="w-3.5 h-3.5 inline" /> {tableName}</p>
+            <p className="text-slate-500 dark:text-slate-500 text-sm mt-1 flex items-center justify-center gap-1"><IconMapPin className="w-3.5 h-3.5 inline" /> {tableName}</p>
           )}
         </div>
 
         {/* Cash Input Display */}
         <div className="text-center">
-          <p className="text-slate-600 text-sm">收到金額</p>
-          <p className="text-3xl font-bold text-slate-900 mt-1">
+          <p className="text-slate-600 dark:text-slate-400 text-sm">收到金額</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
             {cashInput ? formatPrice(cashReceived) : 'NT$0'}
           </p>
         </div>
@@ -138,7 +138,7 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
             <button
               key={amount}
               onClick={() => setCashInput(String(amount))}
-              className="btn-secondary flex-1 text-lg"
+              className="btn-secondary flex-1 text-base"
             >
               ${amount}
             </button>
@@ -156,13 +156,15 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
 
         {/* Change */}
         {cashReceived > 0 && (
-          <div className={`text-center p-4 rounded-xl ${
-            change >= 0 ? 'bg-emerald-50' : 'bg-red-50'
+          <div className={`text-center p-4 rounded-xl animate-fade-in ${
+            change >= 0
+              ? 'bg-emerald-50 dark:bg-emerald-950/50'
+              : 'bg-red-50 dark:bg-red-950/50'
           }`}>
-            <p className={`text-sm ${change >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+            <p className={`text-sm ${change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
               {change >= 0 ? '找零' : '金額不足'}
             </p>
-            <p className={`text-2xl font-bold ${change >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+            <p className={`text-2xl font-bold ${change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
               {change >= 0 ? formatPrice(change) : formatPrice(Math.abs(change))}
             </p>
           </div>

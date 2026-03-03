@@ -58,34 +58,34 @@ export default function Sidebar() {
     <>
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/30 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden animate-fade-in"
           onClick={() => setSidebarOpen(false)}
         />
       )}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 ${
+        className={`fixed lg:static inset-y-0 left-0 z-40 w-60 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 ease-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {filteredItems.map((item) => (
+        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
+          {filteredItems.map((item, i) => (
             <NavLink
               key={item.path}
               to={item.path}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                isActive ? 'sidebar-link-active' : 'sidebar-link'
+                `${isActive ? 'sidebar-link-active' : 'sidebar-link'} animate-slide-up stagger-${Math.min(i + 1, 6)}`
               }
             >
               <item.icon className="w-5 h-5" />
               <span>{item.label}</span>
               {item.permission === 'inventory' && (lowStockCount ?? 0) > 0 && (
-                <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                <span className="ml-auto bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center animate-bounce-in">
                   {lowStockCount}
                 </span>
               )}
               {item.permission === 'kitchen' && (pendingOrderCount ?? 0) > 0 && (
-                <span className="ml-auto bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                <span className="ml-auto bg-amber-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center animate-bounce-in">
                   {pendingOrderCount}
                 </span>
               )}
@@ -93,10 +93,10 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        <div className="p-3 border-t border-slate-200">
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800">
           <button
             onClick={handleLogout}
-            className="sidebar-link w-full text-red-600 hover:bg-red-50 hover:text-red-700"
+            className="sidebar-link w-full text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
           >
             <IconLogout className="w-5 h-5" />
             <span>登出</span>

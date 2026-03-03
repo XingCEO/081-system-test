@@ -93,12 +93,12 @@ export default function TableMapPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between">
+      <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">桌位管理</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">桌位管理</h1>
           <div className="flex gap-4 mt-1">
             {Object.entries(statusCounts).map(([status, count]) => (
-              <span key={status} className="text-sm text-slate-500">
+              <span key={status} className="text-sm text-slate-500 dark:text-slate-400">
                 {TABLE_STATUS_LABELS[status]}：<span className="font-semibold">{count}</span>
               </span>
             ))}
@@ -123,7 +123,7 @@ export default function TableMapPage() {
 
       {/* Table Map */}
       <div
-        className="flex-1 relative overflow-auto bg-slate-100 p-4"
+        className="flex-1 relative overflow-auto bg-slate-100 dark:bg-slate-950 p-4"
         onMouseMove={handleDragMove}
         onMouseUp={handleDragEnd}
         onMouseLeave={handleDragEnd}
@@ -132,9 +132,9 @@ export default function TableMapPage() {
           {tables?.map((table) => (
             <div
               key={table.id}
-              className={`table-item absolute cursor-pointer transition-shadow hover:shadow-lg flex flex-col items-center justify-center text-center select-none ${
+              className={`table-item absolute cursor-pointer transition-all hover:shadow-lg flex flex-col items-center justify-center text-center select-none ${
                 TABLE_STATUS_COLORS[table.status]
-              } ${editMode ? 'cursor-move ring-2 ring-dashed ring-blue-300' : ''} ${
+              } ${editMode ? 'cursor-move ring-2 ring-dashed ring-blue-300 dark:ring-blue-600' : ''} ${
                 table.shape === 'round' ? 'rounded-full' : 'rounded-xl'
               }`}
               style={{
@@ -172,7 +172,7 @@ export default function TableMapPage() {
               }`}>
                 {TABLE_STATUS_LABELS[selectedTable.status]}
               </span>
-              <p className="text-slate-500 text-sm mt-2">容納 {selectedTable.capacity} 人</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">容納 {selectedTable.capacity} 人</p>
             </div>
 
             {selectedTable.status === 'available' && (
@@ -264,25 +264,25 @@ function AddTableModal({ onClose, onAdd }: {
     <Modal open={true} onClose={onClose} title="新增桌位" size="sm">
       <div className="space-y-4">
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-1">桌號</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">桌號</label>
           <input value={number} onChange={e => setNumber(e.target.value)} className="input-field" placeholder="例：A1" />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-1">名稱</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">名稱</label>
           <input value={name} onChange={e => setName(e.target.value)} className="input-field" placeholder="例：窗邊座位" />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-1">容納人數</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">容納人數</label>
           <input type="number" value={capacity} onChange={e => setCapacity(+e.target.value)} className="input-field" min={1} max={20} />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-1">形狀</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">形狀</label>
           <div className="flex gap-2">
             {(['square', 'round', 'rectangle'] as const).map(s => (
               <button
                 key={s}
                 onClick={() => setShape(s)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 ${shape === s ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${shape === s ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400' : 'border-slate-200 dark:border-slate-700 dark:text-slate-400'}`}
               >
                 {s === 'square' ? '方形' : s === 'round' ? '圓形' : '長方形'}
               </button>

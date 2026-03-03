@@ -102,34 +102,34 @@ export default function MenuManagementPage() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between">
+      <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <IconPencil className="w-6 h-6 text-blue-500" /> 菜單管理
           </h1>
           <div className="flex gap-2 mt-3">
             <button
               onClick={() => setActiveTab('products')}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium ${activeTab === 'products' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'products' ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
             >
               商品 ({products?.filter(p => p.isActive).length || 0})
             </button>
             <button
               onClick={() => setActiveTab('categories')}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium ${activeTab === 'categories' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'categories' ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
             >
               分類 ({categories?.filter(c => c.isActive).length || 0})
             </button>
           </div>
         </div>
-        <div className="flex gap-2">
-          <button onClick={handleExport} className="btn-secondary flex items-center gap-1.5"><IconUpload className="w-4 h-4" /> 匯出菜單</button>
-          <button onClick={() => importRef.current?.click()} className="btn-secondary flex items-center gap-1.5"><IconDownload className="w-4 h-4" /> 匯入菜單</button>
+        <div className="flex gap-2 flex-shrink-0">
+          <button onClick={handleExport} className="btn-secondary flex items-center gap-1.5 text-sm"><IconUpload className="w-4 h-4" /> 匯出</button>
+          <button onClick={() => importRef.current?.click()} className="btn-secondary flex items-center gap-1.5 text-sm"><IconDownload className="w-4 h-4" /> 匯入</button>
           <input ref={importRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
           {activeTab === 'products' ? (
-            <button onClick={() => { setEditProduct(null); setShowProductForm(true); }} className="btn-primary">+ 新增商品</button>
+            <button onClick={() => { setEditProduct(null); setShowProductForm(true); }} className="btn-primary text-sm">+ 新增商品</button>
           ) : (
-            <button onClick={() => { setEditCategory(null); setShowCategoryForm(true); }} className="btn-primary">+ 新增分類</button>
+            <button onClick={() => { setEditCategory(null); setShowCategoryForm(true); }} className="btn-primary text-sm">+ 新增分類</button>
           )}
         </div>
       </div>
@@ -137,28 +137,28 @@ export default function MenuManagementPage() {
       <div className="flex-1 overflow-auto p-4">
         {activeTab === 'products' ? (
           <div className="space-y-2">
-            {products?.filter(p => p.isActive).map((product) => {
+            {products?.filter(p => p.isActive).map((product, i) => {
               const catIcon = categories?.find(c => c.id === product.categoryId)?.icon || 'restaurant';
               return (
-                <div key={product.id} className="card px-4 py-3 flex items-center justify-between">
+                <div key={product.id} className={`card px-4 py-3 flex items-center justify-between animate-slide-up stagger-${Math.min(i + 1, 6)}`}>
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500">
+                    <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-400">
                       {getCategoryIcon(catIcon, { className: 'w-6 h-6' })}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900">{product.name}</h3>
-                      <p className="text-sm text-slate-500">
+                      <h3 className="font-semibold text-slate-900 dark:text-white">{product.name}</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
                         {categories?.find(c => c.id === product.categoryId)?.name || '未分類'}
                         {product.description && ` · ${product.description}`}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-bold text-blue-600 text-lg">{formatPrice(product.price)}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">{formatPrice(product.price)}</span>
                     <button onClick={() => { setEditProduct(product); setShowProductForm(true); }} className="btn-secondary text-sm px-3 py-1.5">
                       編輯
                     </button>
-                    <button onClick={() => setDeleteTarget({ type: 'product', id: product.id!, name: product.name })} className="text-red-400 hover:text-red-600 text-sm">
+                    <button onClick={() => setDeleteTarget({ type: 'product', id: product.id!, name: product.name })} className="text-red-400 hover:text-red-600 dark:hover:text-red-400 text-sm transition-colors">
                       刪除
                     </button>
                   </div>
@@ -168,23 +168,23 @@ export default function MenuManagementPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {categories?.filter(c => c.isActive).map((cat) => (
-              <div key={cat.id} className="card px-4 py-3 flex items-center justify-between">
+            {categories?.filter(c => c.isActive).map((cat, i) => (
+              <div key={cat.id} className={`card px-4 py-3 flex items-center justify-between animate-slide-up stagger-${Math.min(i + 1, 6)}`}>
                 <div className="flex items-center gap-4">
-                  <div className="text-slate-600">
+                  <div className="text-slate-600 dark:text-slate-400">
                     {getCategoryIcon(cat.icon, { className: 'w-8 h-8' })}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900">{cat.name}</h3>
-                    <p className="text-sm text-slate-500">{cat.description}</p>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">{cat.name}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{cat.description}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-slate-400">排序：{cat.sortOrder}</span>
+                  <span className="text-sm text-slate-400 dark:text-slate-500">排序：{cat.sortOrder}</span>
                   <button onClick={() => { setEditCategory(cat); setShowCategoryForm(true); }} className="btn-secondary text-sm px-3 py-1.5">
                     編輯
                   </button>
-                  <button onClick={() => setDeleteTarget({ type: 'category', id: cat.id!, name: cat.name })} className="text-red-400 hover:text-red-600 text-sm">
+                  <button onClick={() => setDeleteTarget({ type: 'category', id: cat.id!, name: cat.name })} className="text-red-400 hover:text-red-600 dark:hover:text-red-400 text-sm transition-colors">
                     刪除
                   </button>
                 </div>
@@ -260,20 +260,20 @@ function ProductFormModal({ product, categories, modifierGroups, onSave, onClose
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-slate-700 block mb-1">商品名稱 *</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">商品名稱 *</label>
             <input value={name} onChange={e => setName(e.target.value)} className="input-field" placeholder="例：滷肉飯" />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 block mb-1">價格 (NT$) *</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">價格 (NT$) *</label>
             <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="input-field" placeholder="85" min={0} />
           </div>
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-1">描述</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">描述</label>
           <input value={description} onChange={e => setDescription(e.target.value)} className="input-field" placeholder="商品描述" />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-1">分類</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">分類</label>
           <select value={categoryId} onChange={e => setCategoryId(+e.target.value)} className="input-field">
             {categories.filter(c => c.isActive).map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
@@ -281,11 +281,11 @@ function ProductFormModal({ product, categories, modifierGroups, onSave, onClose
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-1">圖片URL</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">圖片URL</label>
           <input value={imageUrl} onChange={e => setImageUrl(e.target.value)} className="input-field" placeholder="https://..." />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-2">修改群組</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">修改群組</label>
           <div className="flex flex-wrap gap-2">
             {modifierGroups.map(g => (
               <button
@@ -293,8 +293,8 @@ function ProductFormModal({ product, categories, modifierGroups, onSave, onClose
                 onClick={() => setSelectedModGroups(prev =>
                   prev.includes(g.id!) ? prev.filter(id => id !== g.id!) : [...prev, g.id!]
                 )}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 ${
-                  selectedModGroups.includes(g.id!) ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200'
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
+                  selectedModGroups.includes(g.id!) ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400' : 'border-slate-200 dark:border-slate-700 dark:text-slate-400'
                 }`}
               >
                 {g.name}
@@ -304,7 +304,7 @@ function ProductFormModal({ product, categories, modifierGroups, onSave, onClose
         </div>
         <div className="flex items-center gap-2">
           <input type="checkbox" id="trackInv" checked={trackInventory} onChange={e => setTrackInventory(e.target.checked)} className="w-5 h-5 rounded" />
-          <label htmlFor="trackInv" className="text-sm font-medium text-slate-700">追蹤庫存</label>
+          <label htmlFor="trackInv" className="text-sm font-medium text-slate-700 dark:text-slate-300">追蹤庫存</label>
         </div>
         <div className="flex gap-2 pt-4">
           <button onClick={onClose} className="btn-secondary flex-1">取消</button>
@@ -331,21 +331,21 @@ function CategoryFormModal({ category, onSave, onClose }: {
     <Modal open={true} onClose={onClose} title={category ? '編輯分類' : '新增分類'} size="sm">
       <div className="space-y-4">
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-1">分類名稱 *</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">分類名稱 *</label>
           <input value={name} onChange={e => setName(e.target.value)} className="input-field" placeholder="例：主餐" />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-1">描述</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">描述</label>
           <input value={description} onChange={e => setDescription(e.target.value)} className="input-field" placeholder="分類描述" />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-2">圖示</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">圖示</label>
           <div className="flex flex-wrap gap-2">
             {CATEGORY_ICON_KEYS.map(key => (
               <button
                 key={key}
                 onClick={() => setIcon(key)}
-                className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 text-slate-600 ${icon === key ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 text-slate-600 dark:text-slate-400 transition-all ${icon === key ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' : 'border-slate-200 dark:border-slate-700'}`}
               >
                 {getCategoryIcon(key, { className: 'w-5 h-5' })}
               </button>
@@ -353,7 +353,7 @@ function CategoryFormModal({ category, onSave, onClose }: {
           </div>
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 block mb-1">顏色</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">顏色</label>
           <input type="color" value={color} onChange={e => setColor(e.target.value)} className="w-full h-10 rounded-lg cursor-pointer" />
         </div>
         <div className="flex gap-2 pt-2">

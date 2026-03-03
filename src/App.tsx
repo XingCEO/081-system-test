@@ -4,6 +4,8 @@ import { Toaster } from 'react-hot-toast';
 import { initializeDatabase } from './db/database';
 import AppShell from './components/layout/AppShell';
 import { IconRestaurant } from './components/ui/Icons';
+// Initialize theme on app load
+import './stores/useThemeStore';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const POSPage = lazy(() => import('./pages/POSPage'));
@@ -38,12 +40,12 @@ export default function App() {
 
   if (!ready) {
     return (
-      <div className="h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+      <div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="text-center animate-fade-in">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse shadow-lg">
             <IconRestaurant className="w-8 h-8 text-white" />
           </div>
-          <p className="text-slate-500 font-medium">系統載入中...</p>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">系統載入中...</p>
         </div>
       </div>
     );
@@ -60,6 +62,8 @@ export default function App() {
             padding: '12px 20px',
             fontSize: '14px',
             fontWeight: 500,
+            background: 'var(--toast-bg, #fff)',
+            color: 'var(--toast-color, #334155)',
           },
         }}
       />
