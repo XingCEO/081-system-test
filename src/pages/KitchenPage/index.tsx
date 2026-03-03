@@ -1,0 +1,167 @@
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../../db/database';
+import { updateOrderStatus } from '../../services/orderService';
+import { getMinutesElapsed } from '../../utils/date';
+import { ORDER_STATUS_LABELS } from '../../utils/constants';
+import { IconFire, IconChefHat, IconMapPin, IconNote, IconWarning, IconCheck, IconSparkles } from '../../components/ui/Icons';
+import toast from 'react-hot-toast';
+import type { Order, OrderItem, OrderStatus } from '../../db/types';
+
+export default function KitchenPage() {
+  const activeOrders = useLiveQuery(
+    () => db.orders.where('status').anyOf(['pending', 'preparing', 'ready']).toArray()
+  );
+
+  const orderItems = useLiveQuery(async () => {
+    if (!activeOrders?.length) return new Map<number, OrderItem[]>();
+    const map = new Map<number, OrderItem[]>();
+    for (const order of activeOrders) {
+      if (!order.id) continue;
+      const items = await db.orderItems.where('orderId').equals(order.id).toArray();
+      map.set(order.id, items);
+    }
+    return map;
+  }, [activeOrders]);
+
+  const handleStatusChange = async (order: Order, newStatus: OrderStatus) => {
+    if (!order.id) return;
+    await updateOrderStatus(order.id, newStatus);
+    const label = ORDER_STATUS_LABELS[newStatus];
+    toast.success(`訂單 ${order.orderNumber} → ${label}`);
+  };
+
+  const pending = activeOrders?.filter(o => o.status === 'pending') || [];
+  const preparing = activeOrders?.filter(o => o.status === 'preparing') || [];
+  const ready = activeOrders?.filter(o => o.status === 'ready') || [];
+
+  const renderOrderCard = (order: Order) => {
+    const items = orderItems?.get(order.id!) || [];
+    const minutes = getMinutesElapsed(order.createdAt);
+    const isUrgent = minutes >= 15;
+
+    const borderColor =
+      order.status === 'pending' ? 'border-red-400 bg-red-50' :
+      order.status === 'preparing' ? 'border-amber-400 bg-amber-50' :
+      'border-emerald-400 bg-emerald-50';
+
+    const statusColor =
+      order.status === 'pending' ? 'bg-red-500' :
+      order.status === 'preparing' ? 'bg-amber-500' :
+      'bg-emerald-500';
+
+    return (
+      <div key={order.id} className={`rounded-xl border-2 ${borderColor} overflow-hidden`}>
+        {/* Card Header */}
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className={`w-3 h-3 rounded-full ${statusColor}`} />
+            <span className="font-bold text-lg">#{order.orderNumber.split('-')[1]}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {order.tableName !== '外帶' && (
+              <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-0.5">
+                <IconMapPin className="w-3 h-3" /> {order.tableName}
+              </span>
+            )}
+            <span className={`text-sm font-medium ${isUrgent ? 'text-red-600 animate-pulse' : 'text-slate-500'}`}>
+              {minutes} 分鐘
+            </span>
+          </div>
+        </div>
+
+        {/* Items */}
+        <div className="px-4 pb-3 space-y-1.5">
+          {items.map((item) => (
+            <div key={item.id} className="flex items-start gap-2">
+              <span className="font-bold text-blue-600 min-w-[24px]">{item.quantity}x</span>
+              <div>
+                <span className="font-medium text-slate-900">{item.productName}</span>
+                {item.modifiers.length > 0 && (
+                  <span className="text-xs text-slate-500 ml-1">
+                    ({item.modifiers.map(m => m.name).join(', ')})
+                  </span>
+                )}
+                {item.note && (
+                  <p className="text-xs text-amber-600 flex items-center gap-0.5">
+                    <IconNote className="w-3 h-3" /> {item.note}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+          {order.note && (
+            <p className="text-sm text-amber-600 font-medium mt-2 flex items-center gap-1">
+              <IconWarning className="w-4 h-4" /> {order.note}
+            </p>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="px-4 pb-3">
+          {order.status === 'pending' && (
+            <button
+              onClick={() => handleStatusChange(order, 'preparing')}
+              className="btn-warning w-full flex items-center justify-center gap-1.5"
+            >
+              <IconChefHat className="w-4 h-4" /> 開始製作
+            </button>
+          )}
+          {order.status === 'preparing' && (
+            <button
+              onClick={() => handleStatusChange(order, 'ready')}
+              className="btn-success w-full flex items-center justify-center gap-1.5"
+            >
+              <IconCheck className="w-4 h-4" /> 製作完成
+            </button>
+          )}
+          {order.status === 'ready' && (
+            <button
+              onClick={() => handleStatusChange(order, 'completed')}
+              className="btn-primary w-full flex items-center justify-center gap-1.5"
+            >
+              <IconSparkles className="w-4 h-4" /> 已出餐
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const noOrders = !activeOrders?.length;
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <IconFire className="w-6 h-6 text-orange-500" /> 廚房顯示
+          </h1>
+          <div className="flex gap-4 mt-1 text-sm">
+            <span className="text-red-600">待處理：{pending.length}</span>
+            <span className="text-amber-600">製作中：{preparing.length}</span>
+            <span className="text-emerald-600">完成：{ready.length}</span>
+          </div>
+        </div>
+      </div>
+
+      {noOrders ? (
+        <div className="flex-1 flex items-center justify-center text-slate-400">
+          <div className="text-center">
+            <IconChefHat className="w-16 h-16 mx-auto mb-3" />
+            <p className="text-xl font-medium">目前沒有訂單</p>
+            <p className="text-sm mt-1">新訂單將自動顯示在此</p>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-auto p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {pending.map(renderOrderCard)}
+            {preparing.map(renderOrderCard)}
+            {ready.map(renderOrderCard)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

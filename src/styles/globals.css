@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+@layer base {
+  html, body {
+    @apply h-full bg-slate-50 text-slate-900 antialiased;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  * {
+    @apply outline-none;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium px-4 py-2.5 rounded-lg transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed select-none;
+  }
+
+  .btn-secondary {
+    @apply bg-slate-200 hover:bg-slate-300 active:bg-slate-400 text-slate-700 font-medium px-4 py-2.5 rounded-lg transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed select-none;
+  }
+
+  .btn-danger {
+    @apply bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-medium px-4 py-2.5 rounded-lg transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed select-none;
+  }
+
+  .btn-success {
+    @apply bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-medium px-4 py-2.5 rounded-lg transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed select-none;
+  }
+
+  .btn-warning {
+    @apply bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-medium px-4 py-2.5 rounded-lg transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed select-none;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-slate-200;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2.5 border border-slate-300 rounded-lg text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors font-medium select-none;
+  }
+
+  .sidebar-link-active {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 text-blue-700 font-medium select-none;
+  }
+
+  .number-pad-btn {
+    @apply flex items-center justify-center w-full aspect-square text-2xl font-bold rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 transition-colors select-none;
+  }
+
+  .table-available {
+    @apply bg-emerald-50 border-2 border-emerald-400 text-emerald-700;
+  }
+
+  .table-occupied {
+    @apply bg-amber-50 border-2 border-amber-400 text-amber-700;
+  }
+
+  .table-cleaning {
+    @apply bg-red-50 border-2 border-red-400 text-red-700;
+  }
+
+  .table-reserved {
+    @apply bg-blue-50 border-2 border-blue-400 text-blue-700;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoom-in-95 {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.15s ease-out;
+  }
+
+  .animate-zoom-in-95 {
+    animation: zoom-in-95 0.2s ease-out;
+  }
+}
+
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .receipt-print, .receipt-print * {
+    visibility: visible;
+  }
+
+  .receipt-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #000;
+  }
+}
