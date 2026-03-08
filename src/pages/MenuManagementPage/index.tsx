@@ -16,12 +16,13 @@ import { replaceProductRecipe } from '../../services/bomService';
 import { exportMenuData, importMenuData } from '../../services/syncService';
 import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
 import { formatPrice } from '../../utils/currency';
+import ModifierGroupsPanel from './ModifierGroupsPanel';
 
 type DeleteTarget = { type: 'product' | 'category'; id: number; name: string } | null;
 
 export default function MenuManagementPage() {
   useAppSettingsStore((state) => state.settings.currency);
-  const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'modifierGroups'>('products');
   const [showProductForm, setShowProductForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -157,6 +158,12 @@ export default function MenuManagementPage() {
             >
               分類 ({categories?.filter((category) => category.isActive).length || 0})
             </button>
+            <button
+              onClick={() => setActiveTab('modifierGroups')}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'modifierGroups' ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
+            >
+              加料群組 ({modifierGroups?.length || 0})
+            </button>
           </div>
         </div>
 
@@ -172,10 +179,15 @@ export default function MenuManagementPage() {
             <button onClick={() => { setEditProduct(null); setShowProductForm(true); }} className="btn-primary text-sm">
               + 新增商品
             </button>
-          ) : (
+          ) : activeTab === 'categories' ? (
             <button onClick={() => { setEditCategory(null); setShowCategoryForm(true); }} className="btn-primary text-sm">
               + 新增分類
             </button>
+          ) : null}
+          {activeTab === 'modifierGroups' && (
+            <span className="text-xs text-slate-500 dark:text-slate-400 self-center">
+              可在列表內直接新增與編輯群組
+            </span>
           )}
         </div>
       </div>
@@ -222,7 +234,7 @@ export default function MenuManagementPage() {
               );
             })}
           </div>
-        ) : (
+        ) : activeTab === 'categories' ? (
           <div className="space-y-2">
             {categories?.filter((category) => category.isActive).map((category, index) => (
               <div key={category.id} className={`card px-4 py-3 flex items-center justify-between animate-slide-up stagger-${Math.min(index + 1, 6)}`}>
@@ -244,6 +256,8 @@ export default function MenuManagementPage() {
               </div>
             ))}
           </div>
+        ) : (
+          <ModifierGroupsPanel />
         )}
       </div>
 

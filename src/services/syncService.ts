@@ -254,8 +254,12 @@ export async function resetAllData(): Promise<void> {
   window.location.reload();
 }
 
-export function downloadFile(content: string, filename: string) {
-  const blob = new Blob([content], { type: 'application/json' });
+export function downloadFile(
+  content: string,
+  filename: string,
+  mimeType = 'application/json;charset=utf-8'
+) {
+  const blob = new Blob(['\ufeff', content], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

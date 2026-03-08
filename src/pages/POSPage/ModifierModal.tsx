@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import toast from 'react-hot-toast';
 import { db } from '../../db/database';
 import { useCartStore } from '../../stores/useCartStore';
 import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
@@ -33,21 +34,34 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
     return result;
   }, [product.id]);
 
-  const handleToggle = (groupId: number, mod: SelectedModifier, multiSelect: boolean) => {
+  const handleToggle = (
+    groupId: number,
+    mod: SelectedModifier,
+    multiSelect: boolean,
+    maxSelections: number
+  ) => {
+    const current = selected.get(groupId) || [];
+    const exists = current.find((item) => item.modifierId === mod.modifierId);
+
+    if (multiSelect && !exists && current.length >= Math.max(1, maxSelections)) {
+      toast.error(`此群組最多可選 ${Math.max(1, maxSelections)} 項`);
+      return;
+    }
+
     setSelected((prev) => {
       const next = new Map(prev);
-      const current = next.get(groupId) || [];
+      const currentItems = next.get(groupId) || [];
 
       if (multiSelect) {
-        const exists = current.find((m) => m.modifierId === mod.modifierId);
-        if (exists) {
-          next.set(groupId, current.filter((m) => m.modifierId !== mod.modifierId));
+        const selectedModifier = currentItems.find((m) => m.modifierId === mod.modifierId);
+        if (selectedModifier) {
+          next.set(groupId, currentItems.filter((m) => m.modifierId !== mod.modifierId));
         } else {
-          next.set(groupId, [...current, mod]);
+          next.set(groupId, [...currentItems, mod]);
         }
       } else {
-        const exists = current.find((m) => m.modifierId === mod.modifierId);
-        if (exists) {
+        const selectedModifier = currentItems.find((m) => m.modifierId === mod.modifierId);
+        if (selectedModifier) {
           next.set(groupId, []);
         } else {
           next.set(groupId, [mod]);
@@ -61,8 +75,15 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
   const allModifiers = Array.from(selected.values()).flat();
   const modifiersTotal = allModifiers.reduce((sum, m) => sum + m.price, 0);
   const totalPrice = product.price + modifiersTotal;
+  const missingRequiredGroups =
+    groups?.filter(({ group }) => group.required && (selected.get(group.id!)?.length ?? 0) === 0) ?? [];
 
   const handleConfirm = () => {
+    if (missingRequiredGroups.length > 0) {
+      toast.error(`請先完成必選項目：${missingRequiredGroups.map(({ group }) => group.name).join('、')}`);
+      return;
+    }
+
     useCartStore.getState().addItem({
       productId: product.id!,
       productName: product.name,
@@ -91,7 +112,7 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
               <h3 className="font-semibold text-slate-900 dark:text-white">{group.name}</h3>
               <span className="text-xs bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 px-2 py-0.5 rounded-full">
                 {group.required ? '必選' : '可選'}
-                {group.multiSelect ? ' · 可多選' : ''}
+                {group.multiSelect ? ` · 最多 ${Math.max(1, group.maxSelections)} 項` : ' · 單選'}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -107,7 +128,7 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
                         modifierId: mod.id!,
                         name: mod.name,
                         price: mod.price,
-                      }, group.multiSelect)
+                      }, group.multiSelect, group.maxSelections)
                     }
                     className={`p-3 rounded-xl border-2 text-left transition-all active:scale-[0.97] ${
                       isSelected
@@ -127,6 +148,12 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
             </div>
           </div>
         ))}
+
+        {missingRequiredGroups.length > 0 && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-300">
+            請先選擇必選群組：{missingRequiredGroups.map(({ group }) => group.name).join('、')}
+          </div>
+        )}
 
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">備註</label>
@@ -148,7 +175,11 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
             <button onClick={onClose} className="btn-secondary px-6">
               取消
             </button>
-            <button onClick={handleConfirm} className="btn-primary px-6">
+            <button
+              onClick={handleConfirm}
+              disabled={groups === undefined || missingRequiredGroups.length > 0}
+              className="btn-primary px-6 disabled:opacity-50"
+            >
               加入訂單
             </button>
           </div>
