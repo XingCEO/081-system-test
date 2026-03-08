@@ -1,4 +1,5 @@
 import { db } from './database';
+import { seedIngredientData } from './seedBom';
 
 export async function seedDatabase() {
   const now = new Date().toISOString();
@@ -138,20 +139,8 @@ export async function seedDatabase() {
     { number: 'D1', name: '包廂', capacity: 10, x: 450, y: 50, width: 160, height: 160, shape: 'rectangle', status: 'available', currentOrderId: null, floor: 1, isActive: true },
   ]);
 
-  // ==================== 庫存初始化 ====================
-  const products = await db.products.toArray();
-  for (const product of products) {
-    if (product.trackInventory && product.id) {
-      await db.inventory.add({
-        productId: product.id,
-        productName: product.name,
-        currentStock: 50,
-        lowStockThreshold: 10,
-        unit: '份',
-        lastUpdated: now,
-      });
-    }
-  }
+  // ==================== BOM 食材庫存 ====================
+  await seedIngredientData(now);
 }
 
 async function hashPin(pin: string): Promise<string> {

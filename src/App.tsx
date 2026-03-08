@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { initializeDatabase } from './db/database';
 import AppShell from './components/layout/AppShell';
 import { IconRestaurant } from './components/ui/Icons';
+import { useAppSettingsStore } from './stores/useAppSettingsStore';
 // Initialize theme on app load
 import './stores/useThemeStore';
 
@@ -21,7 +22,10 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 function PageLoader() {
   return (
     <div className="h-full flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      <div
+        className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin"
+        style={{ borderColor: 'var(--theme-primary)', borderTopColor: 'transparent' }}
+      />
     </div>
   );
 }
@@ -30,19 +34,33 @@ export default function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    initializeDatabase()
-      .then(() => setReady(true))
-      .catch((err) => {
+    let cancelled = false;
+
+    async function bootstrap() {
+      try {
+        await initializeDatabase();
+        await useAppSettingsStore.getState().loadSettings();
+      } catch (err) {
         console.error('Init failed:', err);
-        setReady(true);
-      });
+      } finally {
+        if (!cancelled) {
+          setReady(true);
+        }
+      }
+    }
+
+    void bootstrap();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (!ready) {
     return (
       <div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="text-center animate-fade-in">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse shadow-lg">
+          <div className="w-16 h-16 accent-gradient rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse shadow-lg">
             <IconRestaurant className="w-8 h-8 text-white" />
           </div>
           <p className="text-slate-500 dark:text-slate-400 font-medium">系統載入中...</p>

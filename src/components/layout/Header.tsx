@@ -1,24 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useNavigate } from 'react-router-dom';
+import { db } from '../../db/database';
+import { hasPermission } from '../../services/authService';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { useAuthStore } from '../../stores/useAuthStore';
+import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
 import { useUIStore } from '../../stores/useUIStore';
 import { useThemeStore } from '../../stores/useThemeStore';
-import { useOnlineStatus } from '../../hooks/useOnlineStatus';
+import { IconWarning } from '../ui/Icons';
 
 export default function Header() {
+  const navigate = useNavigate();
   const { currentEmployee } = useAuthStore();
+  const storeName = useAppSettingsStore((state) => state.settings.storeName);
   const { toggleSidebar } = useUIStore();
   const { theme, setTheme } = useThemeStore();
   const isOnline = useOnlineStatus();
   const [time, setTime] = useState(new Date());
+  const lowStockCount = useLiveQuery(
+    () => db.inventory.filter((record) => record.currentStock <= record.lowStockThreshold).count(),
+    []
+  );
 
   useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    const timer = window.setInterval(() => setTime(new Date()), 1000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const cycleTheme = () => {
-    const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
-    setTheme(next);
+    const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
+    setTheme(nextTheme);
   };
 
   return (
@@ -32,35 +44,52 @@ export default function Header() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
+
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-sm">
-            <span className="text-white font-bold text-sm">P</span>
+          <div className="w-8 h-8 accent-gradient rounded-lg flex items-center justify-center shadow-sm">
+            <span className="text-sm font-bold text-white">P</span>
           </div>
-          <h1 className="text-base font-bold text-slate-900 dark:text-white hidden sm:block">POS 餐飲系統</h1>
+          <h1 className="hidden sm:block text-base font-bold text-slate-900 dark:text-white">
+            {storeName}
+          </h1>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
         {currentEmployee && (
           <div className="flex items-center gap-2 text-sm">
-            <div className="w-7 h-7 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
-              <span className="font-semibold text-white text-xs">
+            <div className="w-7 h-7 accent-gradient rounded-full flex items-center justify-center shadow-sm">
+              <span className="text-xs font-semibold text-white">
                 {currentEmployee.name.charAt(0)}
               </span>
             </div>
-            <span className="hidden sm:inline font-medium text-slate-700 dark:text-slate-300">{currentEmployee.name}</span>
+            <span className="hidden sm:inline font-medium text-slate-700 dark:text-slate-300">
+              {currentEmployee.name}
+            </span>
           </div>
         )}
+
+        {currentEmployee &&
+          hasPermission(currentEmployee.role, 'inventory') &&
+          (lowStockCount ?? 0) > 0 && (
+            <button
+              onClick={() => navigate('/inventory')}
+              className="hidden md:flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/60"
+              title="查看低庫存食材"
+            >
+              <IconWarning className="h-4 w-4" />
+              <span>低庫存 {lowStockCount}</span>
+            </button>
+          )}
 
         <div className="text-sm font-mono font-semibold text-slate-600 dark:text-slate-400 tabular-nums">
           {time.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
         </div>
 
-        {/* Theme Toggle */}
         <button
           onClick={cycleTheme}
           className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
-          title={theme === 'light' ? '淺色模式' : theme === 'dark' ? '深色模式' : '跟隨系統'}
+          title={theme === 'light' ? '亮色模式' : theme === 'dark' ? '深色模式' : '跟隨系統'}
         >
           {theme === 'light' ? (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +112,7 @@ export default function Header() {
             : 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400'
         }`}>
           <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-red-500'}`} />
-          <span className="hidden sm:inline">{isOnline ? '已連線' : '離線'}</span>
+          <span className="hidden sm:inline">{isOnline ? '連線中' : '離線'}</span>
         </div>
       </div>
     </header>

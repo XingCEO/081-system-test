@@ -1,12 +1,19 @@
+import { useEffect, useRef, type SVGProps } from 'react';
 import { Outlet, Navigate, NavLink, useLocation } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { logoutEmployee, getDefaultRoute, hasPermission } from '../../services/authService';
 import { useAuthStore } from '../../stores/useAuthStore';
-import { hasPermission } from '../../services/authService';
+import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import { IconCart, IconChair, IconChefHat, IconClipboard, IconChart } from '../ui/Icons';
-import type { SVGProps } from 'react';
 
-const BOTTOM_NAV: { path: string; label: string; icon: (props: SVGProps<SVGSVGElement>) => React.JSX.Element; permission: string }[] = [
+const BOTTOM_NAV: {
+  path: string;
+  label: string;
+  icon: (props: SVGProps<SVGSVGElement>) => React.JSX.Element;
+  permission: string;
+}[] = [
   { path: '/pos', label: '點餐', icon: IconCart, permission: 'pos' },
   { path: '/tables', label: '桌位', icon: IconChair, permission: 'tables' },
   { path: '/kitchen', label: '廚房', icon: IconChefHat, permission: 'kitchen' },
@@ -14,16 +21,85 @@ const BOTTOM_NAV: { path: string; label: string; icon: (props: SVGProps<SVGSVGEl
   { path: '/analytics', label: '分析', icon: IconChart, permission: 'analytics' },
 ];
 
-export default function AppShell() {
-  const { isAuthenticated, currentEmployee } = useAuthStore();
-  const location = useLocation();
+const ROUTE_PERMISSIONS = [
+  { path: '/menu-management', permission: 'menu' },
+  { path: '/inventory', permission: 'inventory' },
+  { path: '/employees', permission: 'employees' },
+  { path: '/analytics', permission: 'analytics' },
+  { path: '/settings', permission: 'settings' },
+  { path: '/orders', permission: 'orders' },
+  { path: '/kitchen', permission: 'kitchen' },
+  { path: '/tables', permission: 'tables' },
+  { path: '/pos', permission: 'pos' },
+] as const;
 
-  if (!isAuthenticated) {
+export default function AppShell() {
+  const { currentEmployee, isAuthenticated, logout, shiftId } = useAuthStore();
+  const autoLogoutMinutes = useAppSettingsStore((state) => state.settings.autoLogoutMinutes);
+  const location = useLocation();
+  const logoutInProgressRef = useRef(false);
+
+  useEffect(() => {
+    if (!isAuthenticated || !currentEmployee || !shiftId || autoLogoutMinutes <= 0) {
+      return;
+    }
+
+    let timeoutId = 0;
+
+    const handleAutoLogout = async () => {
+      if (logoutInProgressRef.current) {
+        return;
+      }
+
+      logoutInProgressRef.current = true;
+
+      try {
+        await logoutEmployee(shiftId);
+      } finally {
+        logout();
+        toast('因閒置過久，已自動登出');
+        logoutInProgressRef.current = false;
+      }
+    };
+
+    const resetTimer = () => {
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        void handleAutoLogout();
+      }, autoLogoutMinutes * 60 * 1000);
+    };
+
+    const activityEvents: (keyof WindowEventMap)[] = ['pointerdown', 'keydown', 'scroll'];
+
+    for (const eventName of activityEvents) {
+      window.addEventListener(eventName, resetTimer);
+    }
+
+    resetTimer();
+
+    return () => {
+      window.clearTimeout(timeoutId);
+
+      for (const eventName of activityEvents) {
+        window.removeEventListener(eventName, resetTimer);
+      }
+    };
+  }, [autoLogoutMinutes, currentEmployee, isAuthenticated, logout, shiftId]);
+
+  if (!isAuthenticated || !currentEmployee) {
     return <Navigate to="/login" replace />;
   }
 
-  const filteredBottomNav = BOTTOM_NAV.filter(
-    (item) => currentEmployee && hasPermission(currentEmployee.role, item.permission)
+  const routePermission = ROUTE_PERMISSIONS.find((item) =>
+    location.pathname.startsWith(item.path)
+  );
+
+  if (routePermission && !hasPermission(currentEmployee.role, routePermission.permission)) {
+    return <Navigate to={getDefaultRoute(currentEmployee.role)} replace />;
+  }
+
+  const filteredBottomNav = BOTTOM_NAV.filter((item) =>
+    hasPermission(currentEmployee.role, item.permission)
   );
 
   const isPOS = location.pathname === '/pos';
@@ -38,15 +114,12 @@ export default function AppShell() {
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation */}
       <nav className={`lg:hidden flex-shrink-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-around safe-area-bottom ${isPOS ? 'hidden' : ''}`}>
         {filteredBottomNav.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
-            className={({ isActive }) =>
-              isActive ? 'bottom-nav-item-active' : 'bottom-nav-item'
-            }
+            className={({ isActive }) => (isActive ? 'bottom-nav-item-active' : 'bottom-nav-item')}
           >
             <item.icon className="w-5 h-5" />
             <span>{item.label}</span>

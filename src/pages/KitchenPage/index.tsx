@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { updateOrderStatus, updateOrderItemStatus } from '../../services/orderService';
 import { getMinutesElapsed } from '../../utils/date';
+import { getShortOrderNumber } from '../../utils/orderNumber';
 import { ORDER_STATUS_LABELS } from '../../utils/constants';
 import { IconFire, IconChefHat, IconMapPin, IconNote, IconWarning, IconCheck, IconSparkles } from '../../components/ui/Icons';
 import toast from 'react-hot-toast';
@@ -64,7 +65,7 @@ export default function KitchenPage() {
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`w-3 h-3 rounded-full ${statusColor} ${order.status === 'pending' ? 'animate-pulse' : ''}`} />
-            <span className="font-bold text-lg dark:text-white">#{order.orderNumber.split('-')[1]}</span>
+            <span className="font-bold text-lg dark:text-white">#{getShortOrderNumber(order.orderNumber)}</span>
           </div>
           <div className="flex items-center gap-2">
             {totalCount > 0 && (

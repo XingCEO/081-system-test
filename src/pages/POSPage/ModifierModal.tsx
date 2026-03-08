@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { useCartStore } from '../../stores/useCartStore';
-import { formatPrice } from '../../utils/currency';
+import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
+import { formatPrice, formatPriceDelta } from '../../utils/currency';
 import Modal from '../../components/ui/Modal';
 import type { Product, SelectedModifier } from '../../db/types';
 
@@ -12,6 +13,7 @@ interface ModifierModalProps {
 }
 
 export default function ModifierModal({ product, onClose }: ModifierModalProps) {
+  useAppSettingsStore((state) => state.settings.currency);
   const [selected, setSelected] = useState<Map<number, SelectedModifier[]>>(new Map());
   const [note, setNote] = useState('');
 
@@ -116,7 +118,7 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
                     <span className="font-medium text-slate-900 dark:text-white">{mod.name}</span>
                     {mod.price !== 0 && (
                       <span className={`text-sm ml-1 ${mod.price > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                        {mod.price > 0 ? '+' : ''}{formatPrice(mod.price)}
+                        {formatPriceDelta(mod.price)}
                       </span>
                     )}
                   </button>

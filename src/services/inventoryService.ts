@@ -1,29 +1,93 @@
 import { db } from '../db/database';
-import type { InventoryRecord } from '../db/types';
+import type { Ingredient, InventoryRecord, InventoryTransaction } from '../db/types';
 
-export async function restockProduct(
-  productId: number,
+export interface IngredientInput {
+  name: string;
+  unit: string;
+  costPerUnit: number;
+  lowStockThreshold: number;
+  currentStock: number;
+}
+
+export async function createIngredient(input: IngredientInput): Promise<number> {
+  const now = new Date().toISOString();
+  const sortOrder = (await db.ingredients.count()) + 1;
+
+  const ingredientId = await db.ingredients.add({
+    name: input.name,
+    unit: input.unit,
+    costPerUnit: input.costPerUnit,
+    lowStockThreshold: input.lowStockThreshold,
+    isActive: true,
+    sortOrder,
+    createdAt: now,
+    updatedAt: now,
+  } satisfies Ingredient);
+
+  await db.inventory.add({
+    ingredientId: ingredientId as number,
+    ingredientName: input.name,
+    currentStock: input.currentStock,
+    lowStockThreshold: input.lowStockThreshold,
+    unit: input.unit,
+    lastUpdated: now,
+  });
+
+  return ingredientId as number;
+}
+
+export async function updateIngredient(
+  ingredientId: number,
+  input: IngredientInput
+): Promise<void> {
+  const now = new Date().toISOString();
+
+  await db.ingredients.where('id').equals(ingredientId).modify({
+    name: input.name,
+    unit: input.unit,
+    costPerUnit: input.costPerUnit,
+    lowStockThreshold: input.lowStockThreshold,
+    updatedAt: now,
+  });
+
+  await db.inventory.where('ingredientId').equals(ingredientId).modify({
+    ingredientName: input.name,
+    currentStock: input.currentStock,
+    lowStockThreshold: input.lowStockThreshold,
+    unit: input.unit,
+    lastUpdated: now,
+  });
+
+  await db.productRecipes.where('ingredientId').equals(ingredientId).modify({
+    ingredientName: input.name,
+  });
+}
+
+export async function restockIngredient(
+  ingredientId: number,
   quantity: number,
   employeeId: number,
   note: string
 ): Promise<void> {
-  const inv = await db.inventory.where('productId').equals(productId).first();
-  if (!inv || !inv.id) return;
+  const inventory = await db.inventory.where('ingredientId').equals(ingredientId).first();
+  if (!inventory?.id) {
+    return;
+  }
 
-  const newStock = inv.currentStock + quantity;
+  const newStock = inventory.currentStock + quantity;
   const now = new Date().toISOString();
 
-  await db.inventory.update(inv.id, {
+  await db.inventory.update(inventory.id, {
     currentStock: newStock,
     lastUpdated: now,
   });
 
   await db.inventoryTransactions.add({
-    productId,
-    productName: inv.productName,
+    ingredientId,
+    ingredientName: inventory.ingredientName,
     type: 'restock',
     quantity,
-    previousStock: inv.currentStock,
+    previousStock: inventory.currentStock,
     newStock,
     orderId: null,
     note,
@@ -32,29 +96,31 @@ export async function restockProduct(
   });
 }
 
-export async function adjustStock(
-  productId: number,
+export async function adjustIngredientStock(
+  ingredientId: number,
   newQuantity: number,
   employeeId: number,
   note: string
 ): Promise<void> {
-  const inv = await db.inventory.where('productId').equals(productId).first();
-  if (!inv || !inv.id) return;
+  const inventory = await db.inventory.where('ingredientId').equals(ingredientId).first();
+  if (!inventory?.id) {
+    return;
+  }
 
-  const diff = newQuantity - inv.currentStock;
+  const diff = newQuantity - inventory.currentStock;
   const now = new Date().toISOString();
 
-  await db.inventory.update(inv.id, {
+  await db.inventory.update(inventory.id, {
     currentStock: newQuantity,
     lastUpdated: now,
   });
 
   await db.inventoryTransactions.add({
-    productId,
-    productName: inv.productName,
+    ingredientId,
+    ingredientName: inventory.ingredientName,
     type: 'adjustment',
     quantity: diff,
-    previousStock: inv.currentStock,
+    previousStock: inventory.currentStock,
     newStock: newQuantity,
     orderId: null,
     note,
@@ -63,29 +129,31 @@ export async function adjustStock(
   });
 }
 
-export async function wasteProduct(
-  productId: number,
+export async function wasteIngredient(
+  ingredientId: number,
   quantity: number,
   employeeId: number,
   note: string
 ): Promise<void> {
-  const inv = await db.inventory.where('productId').equals(productId).first();
-  if (!inv || !inv.id) return;
+  const inventory = await db.inventory.where('ingredientId').equals(ingredientId).first();
+  if (!inventory?.id) {
+    return;
+  }
 
-  const newStock = Math.max(0, inv.currentStock - quantity);
+  const newStock = Math.max(0, inventory.currentStock - quantity);
   const now = new Date().toISOString();
 
-  await db.inventory.update(inv.id, {
+  await db.inventory.update(inventory.id, {
     currentStock: newStock,
     lastUpdated: now,
   });
 
   await db.inventoryTransactions.add({
-    productId,
-    productName: inv.productName,
+    ingredientId,
+    ingredientName: inventory.ingredientName,
     type: 'waste',
     quantity: -quantity,
-    previousStock: inv.currentStock,
+    previousStock: inventory.currentStock,
     newStock,
     orderId: null,
     note,
@@ -94,50 +162,30 @@ export async function wasteProduct(
   });
 }
 
-export async function getLowStockProducts(): Promise<InventoryRecord[]> {
-  return db.inventory
-    .filter((inv) => inv.currentStock <= inv.lowStockThreshold)
-    .toArray();
+export async function getLowStockIngredients(): Promise<InventoryRecord[]> {
+  return db.inventory.filter((inventory) => inventory.currentStock <= inventory.lowStockThreshold).toArray();
 }
 
 export async function updateThreshold(
-  productId: number,
+  ingredientId: number,
   threshold: number
 ): Promise<void> {
-  const inv = await db.inventory.where('productId').equals(productId).first();
-  if (inv && inv.id) {
-    await db.inventory.update(inv.id, { lowStockThreshold: threshold });
-  }
+  await db.inventory.where('ingredientId').equals(ingredientId).modify({
+    lowStockThreshold: threshold,
+  });
+  await db.ingredients.where('id').equals(ingredientId).modify({
+    lowStockThreshold: threshold,
+  });
 }
 
 export async function getTransactionHistory(
-  productId: number,
+  ingredientId: number,
   limit = 50
-): Promise<ReturnType<typeof db.inventoryTransactions.toArray>> {
+): Promise<InventoryTransaction[]> {
   return db.inventoryTransactions
-    .where('productId')
-    .equals(productId)
+    .where('ingredientId')
+    .equals(ingredientId)
     .reverse()
     .limit(limit)
     .toArray();
-}
-
-export async function addInventoryForProduct(
-  productId: number,
-  productName: string,
-  initialStock = 50,
-  threshold = 10,
-  unit = '份'
-): Promise<void> {
-  const exists = await db.inventory.where('productId').equals(productId).first();
-  if (exists) return;
-
-  await db.inventory.add({
-    productId,
-    productName,
-    currentStock: initialStock,
-    lowStockThreshold: threshold,
-    unit,
-    lastUpdated: new Date().toISOString(),
-  });
 }

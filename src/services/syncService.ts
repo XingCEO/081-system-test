@@ -1,11 +1,100 @@
 import { db } from '../db/database';
+import type {
+  AppSetting,
+  Category,
+  DailySummary,
+  Employee,
+  Ingredient,
+  InventoryRecord,
+  InventoryTransaction,
+  Modifier,
+  ModifierGroup,
+  Order,
+  OrderItem,
+  Product,
+  ProductRecipeItem,
+  RestaurantTable,
+  Shift,
+} from '../db/types';
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function normalizeInventoryRecords(value: unknown): InventoryRecord[] {
+  return asArray<Record<string, unknown>>(value).flatMap((record) => {
+    const ingredientId =
+      typeof record.ingredientId === 'number'
+        ? record.ingredientId
+        : typeof record.productId === 'number'
+          ? record.productId
+          : null;
+
+    const ingredientName =
+      typeof record.ingredientName === 'string'
+        ? record.ingredientName
+        : typeof record.productName === 'string'
+          ? record.productName
+          : null;
+
+    if (ingredientId == null || ingredientName == null) {
+      return [];
+    }
+
+    return [{
+      ingredientId,
+      ingredientName,
+      currentStock: Number(record.currentStock ?? 0),
+      lowStockThreshold: Number(record.lowStockThreshold ?? 0),
+      unit: typeof record.unit === 'string' ? record.unit : '份',
+      lastUpdated: typeof record.lastUpdated === 'string' ? record.lastUpdated : new Date().toISOString(),
+    }];
+  });
+}
+
+function normalizeInventoryTransactions(value: unknown): InventoryTransaction[] {
+  return asArray<Record<string, unknown>>(value).flatMap((record) => {
+    const ingredientId =
+      typeof record.ingredientId === 'number'
+        ? record.ingredientId
+        : typeof record.productId === 'number'
+          ? record.productId
+          : null;
+
+    const ingredientName =
+      typeof record.ingredientName === 'string'
+        ? record.ingredientName
+        : typeof record.productName === 'string'
+          ? record.productName
+          : null;
+
+    if (ingredientId == null || ingredientName == null) {
+      return [];
+    }
+
+    return [{
+      ingredientId,
+      ingredientName,
+      type: (record.type as InventoryTransaction['type']) ?? 'adjustment',
+      quantity: Number(record.quantity ?? 0),
+      previousStock: Number(record.previousStock ?? 0),
+      newStock: Number(record.newStock ?? 0),
+      orderId: typeof record.orderId === 'number' ? record.orderId : null,
+      note: typeof record.note === 'string' ? record.note : '',
+      employeeId: typeof record.employeeId === 'number' ? record.employeeId : 0,
+      createdAt: typeof record.createdAt === 'string' ? record.createdAt : new Date().toISOString(),
+    }];
+  });
+}
 
 export async function exportAllData(): Promise<string> {
   const data = {
-    version: '1.0',
+    version: '2.0',
     exportedAt: new Date().toISOString(),
     categories: await db.categories.toArray(),
     products: await db.products.toArray(),
+    ingredients: await db.ingredients.toArray(),
+    productRecipes: await db.productRecipes.toArray(),
     modifierGroups: await db.modifierGroups.toArray(),
     modifiers: await db.modifiers.toArray(),
     tables: await db.diningTables.toArray(),
@@ -24,126 +113,138 @@ export async function exportAllData(): Promise<string> {
 
 export async function importAllData(jsonString: string): Promise<void> {
   const data = JSON.parse(jsonString);
-  if (!data.version) throw new Error('無效的資料格式');
+  if (!data.version) {
+    throw new Error('無效的資料格式');
+  }
+
+  const categories = asArray<Category>(data.categories);
+  const products = asArray<Product>(data.products);
+  const ingredients = asArray<Ingredient>(data.ingredients);
+  const productRecipes = asArray<ProductRecipeItem>(data.productRecipes);
+  const modifierGroups = asArray<ModifierGroup>(data.modifierGroups);
+  const modifiers = asArray<Modifier>(data.modifiers);
+  const tables = asArray<RestaurantTable>(data.tables);
+  const orders = asArray<Order>(data.orders);
+  const orderItems = asArray<OrderItem>(data.orderItems);
+  const employees = asArray<Employee>(data.employees);
+  const shifts = asArray<Shift>(data.shifts);
+  const inventory = normalizeInventoryRecords(data.inventory);
+  const inventoryTransactions = normalizeInventoryTransactions(data.inventoryTransactions);
+  const dailySummaries = asArray<DailySummary>(data.dailySummaries);
+  const settings = asArray<AppSetting>(data.settings);
 
   await db.transaction(
     'rw',
     [
-      db.categories, db.products, db.modifierGroups, db.modifiers,
-      db.diningTables, db.orders, db.orderItems, db.employees,
-      db.shifts, db.inventory, db.inventoryTransactions,
-      db.dailySummaries, db.settings,
+      db.categories,
+      db.products,
+      db.ingredients,
+      db.productRecipes,
+      db.modifierGroups,
+      db.modifiers,
+      db.diningTables,
+      db.orders,
+      db.orderItems,
+      db.employees,
+      db.shifts,
+      db.inventory,
+      db.inventoryTransactions,
+      db.dailySummaries,
+      db.settings,
     ],
     async () => {
-      if (data.categories?.length) {
-        await db.categories.clear();
-        await db.categories.bulkAdd(data.categories);
-      }
-      if (data.products?.length) {
-        await db.products.clear();
-        await db.products.bulkAdd(data.products);
-      }
-      if (data.modifierGroups?.length) {
-        await db.modifierGroups.clear();
-        await db.modifierGroups.bulkAdd(data.modifierGroups);
-      }
-      if (data.modifiers?.length) {
-        await db.modifiers.clear();
-        await db.modifiers.bulkAdd(data.modifiers);
-      }
-      if (data.tables?.length) {
-        await db.diningTables.clear();
-        await db.diningTables.bulkAdd(data.tables);
-      }
-      if (data.orders?.length) {
-        await db.orders.clear();
-        await db.orders.bulkAdd(data.orders);
-      }
-      if (data.orderItems?.length) {
-        await db.orderItems.clear();
-        await db.orderItems.bulkAdd(data.orderItems);
-      }
-      if (data.employees?.length) {
-        await db.employees.clear();
-        await db.employees.bulkAdd(data.employees);
-      }
-      if (data.shifts?.length) {
-        await db.shifts.clear();
-        await db.shifts.bulkAdd(data.shifts);
-      }
-      if (data.inventory?.length) {
-        await db.inventory.clear();
-        await db.inventory.bulkAdd(data.inventory);
-      }
-      if (data.inventoryTransactions?.length) {
-        await db.inventoryTransactions.clear();
-        await db.inventoryTransactions.bulkAdd(data.inventoryTransactions);
-      }
-      if (data.dailySummaries?.length) {
-        await db.dailySummaries.clear();
-        await db.dailySummaries.bulkAdd(data.dailySummaries);
-      }
-      if (data.settings?.length) {
-        await db.settings.clear();
-        await db.settings.bulkAdd(data.settings);
-      }
+      await db.orderItems.clear();
+      await db.orders.clear();
+      await db.inventoryTransactions.clear();
+      await db.inventory.clear();
+      await db.shifts.clear();
+      await db.employees.clear();
+      await db.diningTables.clear();
+      await db.modifiers.clear();
+      await db.modifierGroups.clear();
+      await db.productRecipes.clear();
+      await db.ingredients.clear();
+      await db.products.clear();
+      await db.categories.clear();
+      await db.dailySummaries.clear();
+      await db.settings.clear();
+
+      if (categories.length) await db.categories.bulkAdd(categories);
+      if (products.length) await db.products.bulkAdd(products);
+      if (ingredients.length) await db.ingredients.bulkAdd(ingredients);
+      if (productRecipes.length) await db.productRecipes.bulkAdd(productRecipes);
+      if (modifierGroups.length) await db.modifierGroups.bulkAdd(modifierGroups);
+      if (modifiers.length) await db.modifiers.bulkAdd(modifiers);
+      if (tables.length) await db.diningTables.bulkAdd(tables);
+      if (orders.length) await db.orders.bulkAdd(orders);
+      if (orderItems.length) await db.orderItems.bulkAdd(orderItems);
+      if (employees.length) await db.employees.bulkAdd(employees);
+      if (shifts.length) await db.shifts.bulkAdd(shifts);
+      if (inventory.length) await db.inventory.bulkAdd(inventory);
+      if (inventoryTransactions.length) await db.inventoryTransactions.bulkAdd(inventoryTransactions);
+      if (dailySummaries.length) await db.dailySummaries.bulkAdd(dailySummaries);
+      if (settings.length) await db.settings.bulkAdd(settings);
     }
   );
 }
 
 export async function exportMenuData(): Promise<string> {
   const data = {
-    version: '1.0',
+    version: '2.0',
     type: 'menu',
     exportedAt: new Date().toISOString(),
     categories: await db.categories.toArray(),
     products: await db.products.toArray(),
+    ingredients: await db.ingredients.toArray(),
+    productRecipes: await db.productRecipes.toArray(),
     modifierGroups: await db.modifierGroups.toArray(),
     modifiers: await db.modifiers.toArray(),
+    inventory: await db.inventory.toArray(),
   };
   return JSON.stringify(data, null, 2);
 }
 
 export async function importMenuData(jsonString: string): Promise<void> {
   const data = JSON.parse(jsonString);
-  if (!data.version) throw new Error('無效的菜單資料格式');
+  if (!data.version) {
+    throw new Error('無效的菜單資料格式');
+  }
+
+  const categories = asArray<Category>(data.categories);
+  const products = asArray<Product>(data.products);
+  const ingredients = asArray<Ingredient>(data.ingredients);
+  const productRecipes = asArray<ProductRecipeItem>(data.productRecipes);
+  const modifierGroups = asArray<ModifierGroup>(data.modifierGroups);
+  const modifiers = asArray<Modifier>(data.modifiers);
+  const inventory = normalizeInventoryRecords(data.inventory);
 
   await db.transaction(
     'rw',
-    [db.categories, db.products, db.modifierGroups, db.modifiers, db.inventory],
+    [
+      db.categories,
+      db.products,
+      db.ingredients,
+      db.productRecipes,
+      db.modifierGroups,
+      db.modifiers,
+      db.inventory,
+    ],
     async () => {
-      if (data.categories?.length) {
-        await db.categories.clear();
-        await db.categories.bulkAdd(data.categories);
-      }
-      if (data.modifierGroups?.length) {
-        await db.modifierGroups.clear();
-        await db.modifierGroups.bulkAdd(data.modifierGroups);
-      }
-      if (data.modifiers?.length) {
-        await db.modifiers.clear();
-        await db.modifiers.bulkAdd(data.modifiers);
-      }
-      if (data.products?.length) {
-        await db.products.clear();
-        await db.products.bulkAdd(data.products);
+      await db.inventory.clear();
+      await db.productRecipes.clear();
+      await db.ingredients.clear();
+      await db.modifiers.clear();
+      await db.modifierGroups.clear();
+      await db.products.clear();
+      await db.categories.clear();
 
-        // Recreate inventory for products that track inventory
-        await db.inventory.clear();
-        const now = new Date().toISOString();
-        for (const product of data.products) {
-          if (product.trackInventory && product.id) {
-            await db.inventory.add({
-              productId: product.id,
-              productName: product.name,
-              currentStock: 50,
-              lowStockThreshold: 10,
-              unit: '份',
-              lastUpdated: now,
-            });
-          }
-        }
-      }
+      if (categories.length) await db.categories.bulkAdd(categories);
+      if (products.length) await db.products.bulkAdd(products);
+      if (ingredients.length) await db.ingredients.bulkAdd(ingredients);
+      if (productRecipes.length) await db.productRecipes.bulkAdd(productRecipes);
+      if (modifierGroups.length) await db.modifierGroups.bulkAdd(modifierGroups);
+      if (modifiers.length) await db.modifiers.bulkAdd(modifiers);
+      if (inventory.length) await db.inventory.bulkAdd(inventory);
     }
   );
 }

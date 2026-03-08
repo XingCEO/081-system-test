@@ -1,15 +1,47 @@
+import { endOfDay, format, startOfDay } from 'date-fns';
 import { db } from '../db/database';
-import type { CartItem, Order, OrderItem, OrderStatus, OrderItemStatus } from '../db/types';
-import { format } from 'date-fns';
+import type { CartItem, Order, OrderItem, OrderItemStatus, OrderStatus } from '../db/types';
+import {
+  applyIngredientStockChange,
+  getIngredientUsageForProduct,
+  mergeIngredientUsages,
+} from './bomService';
+import { getSettingValue } from './settingsService';
+
+async function buildIngredientUsageForItems(
+  items: Array<Pick<CartItem, 'productId' | 'quantity' | 'isCombo' | 'comboItems'>>
+) {
+  const usages = [];
+
+  for (const item of items) {
+    if (item.isCombo && item.comboItems?.length) {
+      for (const comboItem of item.comboItems) {
+        usages.push(
+          ...(await getIngredientUsageForProduct(
+            comboItem.productId,
+            comboItem.quantity * item.quantity
+          ))
+        );
+      }
+      continue;
+    }
+
+    usages.push(...(await getIngredientUsageForProduct(item.productId, item.quantity)));
+  }
+
+  return mergeIngredientUsages(usages);
+}
 
 export async function getNextOrderNumber(): Promise<string> {
-  const today = format(new Date(), 'yyyyMMdd');
+  const now = new Date();
+  const today = format(now, 'yyyyMMdd');
+  const prefix = await getSettingValue('orderNumberPrefix');
   const todaysOrders = await db.orders
-    .where('orderNumber')
-    .startsWith(today)
+    .where('createdAt')
+    .between(startOfDay(now).toISOString(), endOfDay(now).toISOString(), true, true)
     .count();
   const seq = (todaysOrders + 1).toString().padStart(3, '0');
-  return `${today}-${seq}`;
+  return prefix ? `${prefix}-${today}-${seq}` : `${today}-${seq}`;
 }
 
 export async function createOrder(params: {
@@ -66,55 +98,17 @@ export async function createOrder(params: {
 
   await db.orderItems.bulkAdd(orderItems);
 
-  // Deduct inventory
-  for (const item of params.items) {
-    if (item.isCombo && item.comboItems?.length) {
-      // Combo: deduct inventory for each sub-product
-      for (const sub of item.comboItems) {
-        const inv = await db.inventory.where('productId').equals(sub.productId).first();
-        if (inv && inv.id) {
-          const deductQty = sub.quantity * item.quantity;
-          const newStock = Math.max(0, inv.currentStock - deductQty);
-          await db.inventory.update(inv.id, { currentStock: newStock, lastUpdated: now });
-          await db.inventoryTransactions.add({
-            productId: sub.productId,
-            productName: sub.productName,
-            type: 'sale',
-            quantity: -deductQty,
-            previousStock: inv.currentStock,
-            newStock,
-            orderId: orderId as number,
-            note: `訂單 ${orderNumber} (套餐)`,
-            employeeId: params.employeeId,
-            createdAt: now,
-          });
-        }
-      }
-    } else {
-      const inv = await db.inventory.where('productId').equals(item.productId).first();
-      if (inv && inv.id) {
-        const newStock = Math.max(0, inv.currentStock - item.quantity);
-        await db.inventory.update(inv.id, {
-          currentStock: newStock,
-          lastUpdated: now,
-        });
-        await db.inventoryTransactions.add({
-          productId: item.productId,
-          productName: item.productName,
-          type: 'sale',
-          quantity: -item.quantity,
-          previousStock: inv.currentStock,
-          newStock,
-          orderId: orderId as number,
-          note: `訂單 ${orderNumber}`,
-          employeeId: params.employeeId,
-          createdAt: now,
-        });
-      }
-    }
+  const ingredientUsages = await buildIngredientUsageForItems(params.items);
+  if (ingredientUsages.length > 0) {
+    await applyIngredientStockChange({
+      usages: ingredientUsages,
+      employeeId: params.employeeId,
+      note: `訂單 ${orderNumber}`,
+      orderId: orderId as number,
+      type: 'sale',
+    });
   }
 
-  // Update table status
   if (params.tableId) {
     await db.diningTables.where('id').equals(params.tableId).modify({
       status: 'occupied',
@@ -125,10 +119,7 @@ export async function createOrder(params: {
   return { ...order, id: orderId as number };
 }
 
-export async function updateOrderStatus(
-  orderId: number,
-  status: OrderStatus
-): Promise<void> {
+export async function updateOrderStatus(orderId: number, status: OrderStatus): Promise<void> {
   const updates: Partial<Order> = { status };
   if (status === 'completed') {
     updates.completedAt = new Date().toISOString();
@@ -148,71 +139,40 @@ export async function updateOrderStatus(
 
 export async function getOrderWithItems(orderId: number) {
   const order = await db.orders.get(orderId);
-  if (!order) return null;
+  if (!order) {
+    return null;
+  }
   const items = await db.orderItems.where('orderId').equals(orderId).toArray();
   return { order, items };
 }
 
 export async function getTodayOrders(): Promise<Order[]> {
-  const today = format(new Date(), 'yyyyMMdd');
+  const now = new Date();
   return db.orders
-    .where('orderNumber')
-    .startsWith(today)
+    .where('createdAt')
+    .between(startOfDay(now).toISOString(), endOfDay(now).toISOString(), true, true)
     .reverse()
     .toArray();
 }
 
 export async function cancelOrder(orderId: number): Promise<void> {
   const order = await db.orders.get(orderId);
-  if (!order) return;
+  if (!order) {
+    return;
+  }
 
-  // Restore inventory
   const items = await db.orderItems.where('orderId').equals(orderId).toArray();
-  const now = new Date().toISOString();
-  for (const item of items) {
-    if (item.isCombo && item.comboItems?.length) {
-      for (const sub of item.comboItems) {
-        const inv = await db.inventory.where('productId').equals(sub.productId).first();
-        if (inv && inv.id) {
-          const restoreQty = sub.quantity * item.quantity;
-          const newStock = inv.currentStock + restoreQty;
-          await db.inventory.update(inv.id, { currentStock: newStock, lastUpdated: now });
-          await db.inventoryTransactions.add({
-            productId: sub.productId,
-            productName: sub.productName,
-            type: 'adjustment',
-            quantity: restoreQty,
-            previousStock: inv.currentStock,
-            newStock,
-            orderId,
-            note: `取消訂單 ${order.orderNumber} (套餐)`,
-            employeeId: order.employeeId,
-            createdAt: now,
-          });
-        }
-      }
-    } else {
-      const inv = await db.inventory.where('productId').equals(item.productId).first();
-      if (inv && inv.id) {
-        const newStock = inv.currentStock + item.quantity;
-        await db.inventory.update(inv.id, {
-          currentStock: newStock,
-          lastUpdated: now,
-        });
-        await db.inventoryTransactions.add({
-          productId: item.productId,
-          productName: item.productName,
-          type: 'adjustment',
-          quantity: item.quantity,
-          previousStock: inv.currentStock,
-          newStock,
-          orderId,
-          note: `取消訂單 ${order.orderNumber}`,
-          employeeId: order.employeeId,
-          createdAt: now,
-        });
-      }
-    }
+  const ingredientUsages = await buildIngredientUsageForItems(items);
+
+  if (ingredientUsages.length > 0) {
+    await applyIngredientStockChange({
+      usages: ingredientUsages,
+      employeeId: order.employeeId,
+      note: `取消訂單 ${order.orderNumber}`,
+      orderId,
+      type: 'adjustment',
+      restore: true,
+    });
   }
 
   await updateOrderStatus(orderId, 'cancelled');
@@ -224,17 +184,26 @@ export async function updateOrderItemStatus(
 ): Promise<void> {
   await db.orderItems.update(orderItemId, { itemStatus: status });
 
-  // Auto-advance: if ALL items in the order are completed, set order to 'ready'
   const item = await db.orderItems.get(orderItemId);
-  if (!item) return;
+  if (!item) {
+    return;
+  }
 
   const allItems = await db.orderItems.where('orderId').equals(item.orderId).toArray();
-  const allCompleted = allItems.every((i) => i.itemStatus === 'completed');
+  const allCompleted = allItems.every((orderItem) => orderItem.itemStatus === 'completed');
+  const order = await db.orders.get(item.orderId);
+  if (!order) {
+    return;
+  }
 
   if (allCompleted) {
-    const order = await db.orders.get(item.orderId);
-    if (order && (order.status === 'pending' || order.status === 'preparing')) {
+    if (order.status === 'pending' || order.status === 'preparing') {
       await updateOrderStatus(item.orderId, 'ready');
     }
+    return;
+  }
+
+  if (order.status === 'ready') {
+    await updateOrderStatus(item.orderId, 'preparing');
   }
 }

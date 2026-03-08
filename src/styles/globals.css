@@ -4,6 +4,17 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  :root {
+    --theme-primary: #1e40af;
+    --theme-primary-hover: #1a378f;
+    --theme-primary-active: #162f7a;
+    --theme-primary-gradient-end: #122764;
+    --theme-primary-soft: rgba(30, 64, 175, 0.12);
+    --theme-primary-soft-strong: rgba(30, 64, 175, 0.18);
+    --theme-primary-ring: rgba(30, 64, 175, 0.32);
+    --theme-primary-contrast: #ffffff;
+  }
+
   html, body {
     @apply h-full bg-slate-50 text-slate-900 antialiased;
     @apply dark:bg-slate-950 dark:text-slate-100;
@@ -35,8 +46,21 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-[0.97] text-white font-medium px-4 py-2.5 rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 select-none shadow-sm hover:shadow-md;
-    @apply dark:bg-blue-500 dark:hover:bg-blue-600 dark:active:bg-blue-700;
+    @apply active:scale-[0.97] font-medium px-4 py-2.5 rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 select-none shadow-sm hover:shadow-md;
+    background-color: var(--theme-primary);
+    color: var(--theme-primary-contrast);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--theme-primary-hover);
+  }
+
+  .btn-primary:active {
+    background-color: var(--theme-primary-active);
+  }
+
+  .btn-primary:focus-visible {
+    box-shadow: 0 0 0 3px var(--theme-primary-ring);
   }
 
   .btn-secondary {
@@ -65,8 +89,13 @@
   }
 
   .input-field {
-    @apply w-full px-3 py-2.5 border border-slate-300 rounded-lg text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white;
-    @apply dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-500 dark:focus:ring-blue-400 dark:focus:border-blue-400;
+    @apply w-full px-3 py-2.5 border border-slate-300 rounded-lg text-base transition-all bg-white;
+    @apply dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-500;
+  }
+
+  .input-field:focus {
+    border-color: var(--theme-primary);
+    box-shadow: 0 0 0 2px var(--theme-primary-ring);
   }
 
   .sidebar-link {
@@ -75,8 +104,9 @@
   }
 
   .sidebar-link-active {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 text-blue-700 font-medium select-none;
-    @apply dark:bg-blue-950 dark:text-blue-400;
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg font-medium select-none;
+    background-color: var(--theme-primary-soft);
+    color: var(--theme-primary);
   }
 
   .number-pad-btn {
@@ -134,8 +164,13 @@
   }
 
   .bottom-nav-item-active {
-    @apply flex flex-col items-center justify-center gap-0.5 py-2 px-1 text-xs font-medium text-blue-600;
-    @apply dark:text-blue-400;
+    @apply flex flex-col items-center justify-center gap-0.5 py-2 px-1 text-xs font-medium;
+    color: var(--theme-primary);
+  }
+
+  .accent-gradient {
+    background-image: linear-gradient(135deg, var(--theme-primary), var(--theme-primary-gradient-end));
+    color: var(--theme-primary-contrast);
   }
 }
 

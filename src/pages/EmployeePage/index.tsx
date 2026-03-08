@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { hashPin } from '../../services/authService';
+import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
+import { formatPrice } from '../../utils/currency';
 import { formatDateTime } from '../../utils/date';
 import { ROLE_LABELS } from '../../utils/constants';
 import Modal from '../../components/ui/Modal';
@@ -11,6 +13,7 @@ import toast from 'react-hot-toast';
 import type { Employee, EmployeeRole } from '../../db/types';
 
 export default function EmployeePage() {
+  useAppSettingsStore((state) => state.settings.currency);
   const [showForm, setShowForm] = useState(false);
   const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
@@ -23,13 +26,15 @@ export default function EmployeePage() {
   );
 
   const handleSave = async (data: { name: string; username: string; pin: string; role: EmployeeRole }) => {
-    const pinHash = await hashPin(data.pin);
     if (editEmployee?.id) {
       const updates: Partial<Employee> = { name: data.name, username: data.username, role: data.role };
-      if (data.pin) updates.pin = pinHash;
+      if (data.pin) {
+        updates.pin = await hashPin(data.pin);
+      }
       await db.employees.update(editEmployee.id, updates);
       toast.success('員工已更新');
     } else {
+      const pinHash = await hashPin(data.pin);
       await db.employees.add({
         ...data,
         pin: pinHash,
@@ -128,7 +133,7 @@ export default function EmployeePage() {
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-slate-900 dark:text-white">訂單：{shift.totalOrders}</p>
-                    <p className="text-sm text-blue-600 dark:text-blue-400">NT${shift.totalRevenue.toLocaleString()}</p>
+                    <p className="text-sm text-blue-600 dark:text-blue-400">{formatPrice(shift.totalRevenue)}</p>
                   </div>
                 </div>
               ))
@@ -192,7 +197,7 @@ function EmployeeFormModal({ employee, onSave, onClose }: {
         <div className="flex gap-2 pt-2">
           <button onClick={onClose} className="btn-secondary flex-1">取消</button>
           <button
-            onClick={() => name && username && (employee || pin) && onSave({ name, username, pin: pin || '0000', role })}
+            onClick={() => name && username && (employee || pin) && onSave({ name, username, pin, role })}
             disabled={!name || !username || (!employee && !pin)}
             className="btn-primary flex-1"
           >

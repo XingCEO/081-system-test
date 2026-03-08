@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { cancelOrder, getOrderWithItems } from '../../services/orderService';
+import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
 import { formatPrice } from '../../utils/currency';
 import { formatDateTime } from '../../utils/date';
+import { getShortOrderNumber } from '../../utils/orderNumber';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '../../utils/constants';
 import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -12,6 +14,7 @@ import toast from 'react-hot-toast';
 import type { Order, OrderItem, OrderStatus } from '../../db/types';
 
 export default function OrderHistoryPage() {
+  useAppSettingsStore((state) => state.settings.currency);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const [selectedOrder, setSelectedOrder] = useState<{ order: Order; items: OrderItem[] } | null>(null);
   const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
@@ -79,7 +82,7 @@ export default function OrderHistoryPage() {
               >
                 <div className="flex items-center gap-3">
                   <span className="font-mono font-bold text-slate-900 dark:text-white">
-                    #{order.orderNumber.split('-')[1]}
+                    #{getShortOrderNumber(order.orderNumber)}
                   </span>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${ORDER_STATUS_COLORS[order.status]}`}>
                     {ORDER_STATUS_LABELS[order.status]}

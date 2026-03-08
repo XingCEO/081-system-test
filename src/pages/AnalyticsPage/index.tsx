@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAnalytics, type AnalyticsData } from '../../services/analyticsService';
+import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
 import { getTodayRange, getWeekRange, getMonthRange } from '../../utils/date';
 import { formatPrice } from '../../utils/currency';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
@@ -8,6 +9,7 @@ import { IconChart } from '../../components/ui/Icons';
 type Period = 'today' | 'week' | 'month' | 'custom';
 
 export default function AnalyticsPage() {
+  useAppSettingsStore((state) => state.settings.currency);
   const [period, setPeriod] = useState<Period>('today');
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,7 +120,7 @@ export default function AnalyticsPage() {
                     <XAxis dataKey="date" stroke={isDark ? '#64748b' : '#94a3b8'} fontSize={12} />
                     <YAxis stroke={isDark ? '#64748b' : '#94a3b8'} fontSize={12} />
                     <Tooltip
-                      formatter={((value: number) => [`NT$${value.toLocaleString()}`, '營收']) as never}
+                      formatter={((value: number) => [formatPrice(value), '營收']) as never}
                       contentStyle={{ backgroundColor: isDark ? '#1e293b' : '#fff', border: isDark ? '1px solid #334155' : '1px solid #e2e8f0', borderRadius: '8px' }}
                     />
                     <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6' }} />

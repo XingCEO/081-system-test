@@ -1,71 +1,99 @@
-import { useState, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../../db/database';
-import { formatPrice } from '../../utils/currency';
-import { exportMenuData, importMenuData } from '../../services/syncService';
-import { addInventoryForProduct } from '../../services/inventoryService';
-import Modal from '../../components/ui/Modal';
-import ConfirmDialog from '../../components/ui/ConfirmDialog';
-import { IconPencil, IconUpload, IconDownload, getCategoryIcon, CATEGORY_ICON_KEYS } from '../../components/ui/Icons';
 import toast from 'react-hot-toast';
-import type { Product, Category, ComboItem } from '../../db/types';
+import { db } from '../../db/database';
+import type {
+  Category,
+  ComboItem,
+  Ingredient,
+  Product,
+  ProductRecipeItem,
+} from '../../db/types';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { CATEGORY_ICON_KEYS, getCategoryIcon, IconDownload, IconPencil, IconUpload } from '../../components/ui/Icons';
+import Modal from '../../components/ui/Modal';
+import { replaceProductRecipe } from '../../services/bomService';
+import { exportMenuData, importMenuData } from '../../services/syncService';
+import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
+import { formatPrice } from '../../utils/currency';
+
+type DeleteTarget = { type: 'product' | 'category'; id: number; name: string } | null;
 
 export default function MenuManagementPage() {
+  useAppSettingsStore((state) => state.settings.currency);
+  const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
   const [showProductForm, setShowProductForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [editCategory, setEditCategory] = useState<Category | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'product' | 'category'; id: number; name: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
   const importRef = useRef<HTMLInputElement>(null);
 
   const products = useLiveQuery(() => db.products.orderBy('sortOrder').toArray());
   const categories = useLiveQuery(() => db.categories.orderBy('sortOrder').toArray());
   const modifierGroups = useLiveQuery(() => db.modifierGroups.toArray());
+  const ingredients = useLiveQuery(() => db.ingredients.filter((ingredient) => ingredient.isActive).sortBy('sortOrder'));
+  const productRecipes = useLiveQuery(() => db.productRecipes.toArray());
+
+  const recipeCountByProductId = useMemo(() => {
+    const map = new Map<number, number>();
+    productRecipes?.forEach((recipe) => {
+      map.set(recipe.productId, (map.get(recipe.productId) ?? 0) + 1);
+    });
+    return map;
+  }, [productRecipes]);
 
   const handleExport = async () => {
     const data = await exportMenuData();
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `menu-export-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `menu-export-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.click();
     URL.revokeObjectURL(url);
     toast.success('菜單已匯出');
   };
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
     try {
       const text = await file.text();
       await importMenuData(text);
-      toast.success('菜單匯入成功！');
+      toast.success('菜單已匯入');
     } catch {
-      toast.error('匯入失敗，請檢查檔案格式');
+      toast.error('菜單匯入失敗');
     }
-    if (importRef.current) importRef.current.value = '';
+
+    if (importRef.current) {
+      importRef.current.value = '';
+    }
   };
 
-  const handleSaveProduct = async (data: Partial<Product>) => {
+  const handleSaveProduct = async (data: Partial<Product> & { recipeItems: Array<{ ingredientId: number; ingredientName: string; quantity: number }> }) => {
     const now = new Date().toISOString();
+    const { recipeItems, ...productData } = data;
+
     if (editProduct?.id) {
-      await db.products.update(editProduct.id, { ...data, updatedAt: now });
+      await db.products.update(editProduct.id, { ...productData, updatedAt: now });
+      await replaceProductRecipe(editProduct.id, productData.trackInventory && !productData.isCombo ? recipeItems : []);
       toast.success('商品已更新');
     } else {
-      const id = await db.products.add({
-        ...data,
+      const productId = await db.products.add({
+        ...productData,
         createdAt: now,
         updatedAt: now,
         isActive: true,
         sortOrder: (products?.length || 0) + 1,
       } as Product);
-      if (data.trackInventory) {
-        await addInventoryForProduct(id as number, data.name || '');
-      }
+      await replaceProductRecipe(productId as number, productData.trackInventory && !productData.isCombo ? recipeItems : []);
       toast.success('商品已新增');
     }
+
     setShowProductForm(false);
     setEditProduct(null);
   };
@@ -85,20 +113,29 @@ export default function MenuManagementPage() {
       } as Category);
       toast.success('分類已新增');
     }
+
     setShowCategoryForm(false);
     setEditCategory(null);
   };
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget) {
+      return;
+    }
+
     if (deleteTarget.type === 'product') {
       await db.products.update(deleteTarget.id, { isActive: false });
     } else {
       await db.categories.update(deleteTarget.id, { isActive: false });
     }
+
     setDeleteTarget(null);
-    toast.success('已刪除');
+    toast.success('已停用');
   };
+
+  const initialRecipe = editProduct?.id
+    ? (productRecipes?.filter((recipe) => recipe.productId === editProduct.id) ?? [])
+    : [];
 
   return (
     <div className="h-full flex flex-col">
@@ -112,24 +149,33 @@ export default function MenuManagementPage() {
               onClick={() => setActiveTab('products')}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'products' ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
             >
-              商品 ({products?.filter(p => p.isActive).length || 0})
+              商品 ({products?.filter((product) => product.isActive).length || 0})
             </button>
             <button
               onClick={() => setActiveTab('categories')}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'categories' ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
             >
-              分類 ({categories?.filter(c => c.isActive).length || 0})
+              分類 ({categories?.filter((category) => category.isActive).length || 0})
             </button>
           </div>
         </div>
+
         <div className="flex gap-2 flex-shrink-0">
-          <button onClick={handleExport} className="btn-secondary flex items-center gap-1.5 text-sm"><IconUpload className="w-4 h-4" /> 匯出</button>
-          <button onClick={() => importRef.current?.click()} className="btn-secondary flex items-center gap-1.5 text-sm"><IconDownload className="w-4 h-4" /> 匯入</button>
+          <button onClick={handleExport} className="btn-secondary flex items-center gap-1.5 text-sm">
+            <IconUpload className="w-4 h-4" /> 匯出
+          </button>
+          <button onClick={() => importRef.current?.click()} className="btn-secondary flex items-center gap-1.5 text-sm">
+            <IconDownload className="w-4 h-4" /> 匯入
+          </button>
           <input ref={importRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
           {activeTab === 'products' ? (
-            <button onClick={() => { setEditProduct(null); setShowProductForm(true); }} className="btn-primary text-sm">+ 新增商品</button>
+            <button onClick={() => { setEditProduct(null); setShowProductForm(true); }} className="btn-primary text-sm">
+              + 新增商品
+            </button>
           ) : (
-            <button onClick={() => { setEditCategory(null); setShowCategoryForm(true); }} className="btn-primary text-sm">+ 新增分類</button>
+            <button onClick={() => { setEditCategory(null); setShowCategoryForm(true); }} className="btn-primary text-sm">
+              + 新增分類
+            </button>
           )}
         </div>
       </div>
@@ -137,37 +183,40 @@ export default function MenuManagementPage() {
       <div className="flex-1 overflow-auto p-4">
         {activeTab === 'products' ? (
           <div className="space-y-2">
-            {products?.filter(p => p.isActive).map((product, i) => {
-              const catIcon = categories?.find(c => c.id === product.categoryId)?.icon || 'restaurant';
+            {products?.filter((product) => product.isActive).map((product, index) => {
+              const categoryIcon = categories?.find((category) => category.id === product.categoryId)?.icon || 'restaurant';
+              const recipeCount = recipeCountByProductId.get(product.id!) ?? 0;
               return (
-                <div key={product.id} className={`card px-4 py-3 flex items-center justify-between animate-slide-up stagger-${Math.min(i + 1, 6)}`}>
+                <div key={product.id} className={`card px-4 py-3 flex items-center justify-between animate-slide-up stagger-${Math.min(index + 1, 6)}`}>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-400">
-                      {getCategoryIcon(catIcon, { className: 'w-6 h-6' })}
+                      {getCategoryIcon(categoryIcon, { className: 'w-6 h-6' })}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-slate-900 dark:text-white">{product.name}</h3>
                         {product.isCombo && (
                           <span className="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-400 px-1.5 py-0.5 rounded-full">
                             套餐
                           </span>
                         )}
+                        {!product.isCombo && product.trackInventory && (
+                          <span className="text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 px-1.5 py-0.5 rounded-full">
+                            配方 {recipeCount} 項
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {categories?.find(c => c.id === product.categoryId)?.name || '未分類'}
+                        {categories?.find((category) => category.id === product.categoryId)?.name || '-'}
                         {product.description && ` · ${product.description}`}
                       </p>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">{formatPrice(product.price)}</span>
-                    <button onClick={() => { setEditProduct(product); setShowProductForm(true); }} className="btn-secondary text-sm px-3 py-1.5">
-                      編輯
-                    </button>
-                    <button onClick={() => setDeleteTarget({ type: 'product', id: product.id!, name: product.name })} className="text-red-400 hover:text-red-600 dark:hover:text-red-400 text-sm transition-colors">
-                      刪除
-                    </button>
+                    <button onClick={() => { setEditProduct(product); setShowProductForm(true); }} className="btn-secondary text-sm px-3 py-1.5">編輯</button>
+                    <button onClick={() => setDeleteTarget({ type: 'product', id: product.id!, name: product.name })} className="text-red-400 hover:text-red-600 dark:hover:text-red-400 text-sm transition-colors">停用</button>
                   </div>
                 </div>
               );
@@ -175,25 +224,22 @@ export default function MenuManagementPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {categories?.filter(c => c.isActive).map((cat, i) => (
-              <div key={cat.id} className={`card px-4 py-3 flex items-center justify-between animate-slide-up stagger-${Math.min(i + 1, 6)}`}>
+            {categories?.filter((category) => category.isActive).map((category, index) => (
+              <div key={category.id} className={`card px-4 py-3 flex items-center justify-between animate-slide-up stagger-${Math.min(index + 1, 6)}`}>
                 <div className="flex items-center gap-4">
                   <div className="text-slate-600 dark:text-slate-400">
-                    {getCategoryIcon(cat.icon, { className: 'w-8 h-8' })}
+                    {getCategoryIcon(category.icon, { className: 'w-8 h-8' })}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">{cat.name}</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{cat.description}</p>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">{category.name}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{category.description}</p>
                   </div>
                 </div>
+
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-slate-400 dark:text-slate-500">排序：{cat.sortOrder}</span>
-                  <button onClick={() => { setEditCategory(cat); setShowCategoryForm(true); }} className="btn-secondary text-sm px-3 py-1.5">
-                    編輯
-                  </button>
-                  <button onClick={() => setDeleteTarget({ type: 'category', id: cat.id!, name: cat.name })} className="text-red-400 hover:text-red-600 dark:hover:text-red-400 text-sm transition-colors">
-                    刪除
-                  </button>
+                  <span className="text-sm text-slate-400 dark:text-slate-500">排序 {category.sortOrder}</span>
+                  <button onClick={() => { setEditCategory(category); setShowCategoryForm(true); }} className="btn-secondary text-sm px-3 py-1.5">編輯</button>
+                  <button onClick={() => setDeleteTarget({ type: 'category', id: category.id!, name: category.name })} className="text-red-400 hover:text-red-600 dark:hover:text-red-400 text-sm transition-colors">停用</button>
                 </div>
               </div>
             ))}
@@ -201,31 +247,37 @@ export default function MenuManagementPage() {
         )}
       </div>
 
-      {/* Product Form Modal */}
       {showProductForm && (
         <ProductFormModal
           product={editProduct}
           categories={categories || []}
+          ingredients={ingredients || []}
           modifierGroups={modifierGroups || []}
+          initialRecipe={initialRecipe}
           onSave={handleSaveProduct}
-          onClose={() => { setShowProductForm(false); setEditProduct(null); }}
+          onClose={() => {
+            setShowProductForm(false);
+            setEditProduct(null);
+          }}
         />
       )}
 
-      {/* Category Form Modal */}
       {showCategoryForm && (
         <CategoryFormModal
           category={editCategory}
           onSave={handleSaveCategory}
-          onClose={() => { setShowCategoryForm(false); setEditCategory(null); }}
+          onClose={() => {
+            setShowCategoryForm(false);
+            setEditCategory(null);
+          }}
         />
       )}
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="刪除確認"
-        message={`確定要刪除「${deleteTarget?.name}」？`}
-        confirmText="刪除"
+        title="停用確認"
+        message={`確定要停用「${deleteTarget?.name}」？`}
+        confirmText="確認停用"
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
@@ -234,13 +286,24 @@ export default function MenuManagementPage() {
   );
 }
 
-function ProductFormModal({ product, categories, modifierGroups, onSave, onClose }: {
+function ProductFormModal({
+  product,
+  categories,
+  ingredients,
+  modifierGroups,
+  initialRecipe,
+  onSave,
+  onClose,
+}: {
   product: Product | null;
   categories: Category[];
+  ingredients: Ingredient[];
   modifierGroups: { id?: number; name: string }[];
-  onSave: (data: Partial<Product>) => void;
+  initialRecipe: ProductRecipeItem[];
+  onSave: (data: Partial<Product> & { recipeItems: Array<{ ingredientId: number; ingredientName: string; quantity: number }> }) => void;
   onClose: () => void;
 }) {
+  const currency = useAppSettingsStore((state) => state.settings.currency);
   const [name, setName] = useState(product?.name || '');
   const [description, setDescription] = useState(product?.description || '');
   const [price, setPrice] = useState(product?.price?.toString() || '');
@@ -250,47 +313,109 @@ function ProductFormModal({ product, categories, modifierGroups, onSave, onClose
   const [imageUrl, setImageUrl] = useState(product?.imageUrl || '');
   const [isCombo, setIsCombo] = useState(product?.isCombo ?? false);
   const [comboItems, setComboItems] = useState<ComboItem[]>(product?.comboItems || []);
+  const [recipeItems, setRecipeItems] = useState<Array<{ ingredientId: number; ingredientName: string; quantity: number }>>(
+    initialRecipe.map((recipe) => ({
+      ingredientId: recipe.ingredientId,
+      ingredientName: recipe.ingredientName,
+      quantity: recipe.quantity,
+    }))
+  );
+  const [selectedIngredientId, setSelectedIngredientId] = useState<number>(ingredients[0]?.id || 0);
+  const [recipeQuantity, setRecipeQuantity] = useState('1');
 
-  // All active products for combo sub-item selection (exclude self)
   const allProducts = useLiveQuery(
-    () => db.products.filter(p => p.isActive && p.id !== product?.id).sortBy('name')
+    () => db.products.filter((candidate) => candidate.isActive && candidate.id !== product?.id).sortBy('name')
   );
 
-  const handleAddComboItem = (prod: Product) => {
-    const existing = comboItems.find(ci => ci.productId === prod.id!);
+  const handleAddComboItem = (selectedProduct: Product) => {
+    const existing = comboItems.find((comboItem) => comboItem.productId === selectedProduct.id!);
     if (existing) {
-      setComboItems(prev =>
-        prev.map(ci => ci.productId === prod.id! ? { ...ci, quantity: ci.quantity + 1 } : ci)
+      setComboItems((current) =>
+        current.map((comboItem) =>
+          comboItem.productId === selectedProduct.id!
+            ? { ...comboItem, quantity: comboItem.quantity + 1 }
+            : comboItem
+        )
       );
-    } else {
-      setComboItems(prev => [...prev, { productId: prod.id!, productName: prod.name, quantity: 1 }]);
+      return;
     }
-  };
 
-  const handleRemoveComboItem = (productId: number) => {
-    setComboItems(prev => prev.filter(ci => ci.productId !== productId));
+    setComboItems((current) => [
+      ...current,
+      { productId: selectedProduct.id!, productName: selectedProduct.name, quantity: 1 },
+    ]);
   };
 
   const handleComboItemQty = (productId: number, delta: number) => {
-    setComboItems(prev =>
-      prev
-        .map(ci => ci.productId === productId ? { ...ci, quantity: Math.max(0, ci.quantity + delta) } : ci)
-        .filter(ci => ci.quantity > 0)
+    setComboItems((current) =>
+      current
+        .map((comboItem) =>
+          comboItem.productId === productId
+            ? { ...comboItem, quantity: Math.max(0, comboItem.quantity + delta) }
+            : comboItem
+        )
+        .filter((comboItem) => comboItem.quantity > 0)
+    );
+  };
+
+  const handleAddRecipeItem = () => {
+    const quantity = Number(recipeQuantity);
+    const ingredient = ingredients.find((item) => item.id === selectedIngredientId);
+    if (!ingredient || !Number.isFinite(quantity) || quantity <= 0) {
+      return;
+    }
+
+    setRecipeItems((current) => {
+      const existing = current.find((item) => item.ingredientId === ingredient.id);
+      if (existing) {
+        return current.map((item) =>
+          item.ingredientId === ingredient.id
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      }
+
+      return [
+        ...current,
+        {
+          ingredientId: ingredient.id!,
+          ingredientName: ingredient.name,
+          quantity,
+        },
+      ];
+    });
+
+    setRecipeQuantity('1');
+  };
+
+  const handleRecipeQuantityChange = (ingredientId: number, quantity: number) => {
+    setRecipeItems((current) =>
+      current
+        .map((item) =>
+          item.ingredientId === ingredientId
+            ? { ...item, quantity: Math.max(0, quantity) }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
     );
   };
 
   const handleSubmit = () => {
-    if (!name || !price) return;
+    if (!name.trim() || !price) {
+      return;
+    }
+
     onSave({
-      name,
+      name: name.trim(),
       description,
-      price: parseInt(price),
+      price: Number.parseInt(price, 10),
       categoryId,
       trackInventory: isCombo ? false : trackInventory,
       modifierGroupIds: isCombo ? [] : selectedModGroups,
       imageUrl,
       isCombo,
       comboItems: isCombo ? comboItems : undefined,
+      recipeItems: isCombo || !trackInventory ? [] : recipeItems,
     });
   };
 
@@ -300,137 +425,172 @@ function ProductFormModal({ product, categories, modifierGroups, onSave, onClose
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">商品名稱 *</label>
-            <input value={name} onChange={e => setName(e.target.value)} className="input-field" placeholder="例：滷肉飯" />
+            <input value={name} onChange={(event) => setName(event.target.value)} className="input-field" placeholder="例如：滷肉飯" />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">價格 (NT$) *</label>
-            <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="input-field" placeholder="85" min={0} />
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">{`價格 (${currency}) *`}</label>
+            <input type="number" value={price} onChange={(event) => setPrice(event.target.value)} className="input-field" min={0} />
           </div>
         </div>
+
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">描述</label>
-          <input value={description} onChange={e => setDescription(e.target.value)} className="input-field" placeholder="商品描述" />
+          <input value={description} onChange={(event) => setDescription(event.target.value)} className="input-field" />
         </div>
+
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">分類</label>
-          <select value={categoryId} onChange={e => setCategoryId(+e.target.value)} className="input-field">
-            {categories.filter(c => c.isActive).map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+          <select value={categoryId} onChange={(event) => setCategoryId(Number(event.target.value))} className="input-field">
+            {categories.filter((category) => category.isActive).map((category) => (
+              <option key={category.id} value={category.id}>{category.name}</option>
             ))}
           </select>
         </div>
+
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">圖片URL</label>
-          <input value={imageUrl} onChange={e => setImageUrl(e.target.value)} className="input-field" placeholder="https://..." />
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">圖片網址</label>
+          <input value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} className="input-field" placeholder="https://..." />
         </div>
 
-        {/* Combo Toggle */}
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
-          <input
-            type="checkbox"
-            id="isCombo"
-            checked={isCombo}
-            onChange={e => setIsCombo(e.target.checked)}
-            className="w-5 h-5 rounded accent-purple-600"
-          />
-          <label htmlFor="isCombo" className="text-sm font-medium text-purple-700 dark:text-purple-400">
-            設為套餐商品
-          </label>
-        </div>
+        <label className="flex items-center gap-2 p-3 rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
+          <input type="checkbox" checked={isCombo} onChange={(event) => setIsCombo(event.target.checked)} className="w-5 h-5 rounded accent-purple-600" />
+          <span className="text-sm font-medium text-purple-700 dark:text-purple-400">這是套餐商品</span>
+        </label>
 
-        {/* Combo Sub-Item Picker */}
-        {isCombo && (
+        {isCombo ? (
           <div className="border border-purple-200 dark:border-purple-800 rounded-lg p-3 space-y-3">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block">套餐內容</label>
 
-            {/* Selected combo items */}
             {comboItems.length > 0 && (
               <div className="space-y-2">
-                {comboItems.map(ci => (
-                  <div key={ci.productId} className="flex items-center justify-between bg-purple-50 dark:bg-purple-950/30 rounded-lg px-3 py-2">
-                    <span className="text-sm font-medium text-slate-900 dark:text-white">{ci.productName}</span>
+                {comboItems.map((comboItem) => (
+                  <div key={comboItem.productId} className="flex items-center justify-between bg-purple-50 dark:bg-purple-950/30 rounded-lg px-3 py-2">
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">{comboItem.productName}</span>
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleComboItemQty(ci.productId, -1)}
-                        className="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center text-sm font-bold"
-                      >
-                        −
-                      </button>
-                      <span className="w-8 text-center font-semibold text-sm">{ci.quantity}</span>
-                      <button
-                        onClick={() => handleComboItemQty(ci.productId, 1)}
-                        className="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center text-sm font-bold"
-                      >
-                        +
-                      </button>
-                      <button
-                        onClick={() => handleRemoveComboItem(ci.productId)}
-                        className="text-red-400 hover:text-red-600 text-xs ml-1"
-                      >
-                        移除
-                      </button>
+                      <button onClick={() => handleComboItemQty(comboItem.productId, -1)} className="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center text-sm font-bold">-</button>
+                      <span className="w-8 text-center font-semibold text-sm">{comboItem.quantity}</span>
+                      <button onClick={() => handleComboItemQty(comboItem.productId, 1)} className="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center text-sm font-bold">+</button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Add sub-item from products */}
             <div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">點擊商品加入套餐</label>
+              <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">加入商品到套餐</label>
               <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
-                {allProducts?.filter(p => !p.isCombo).map(p => (
+                {allProducts?.filter((candidate) => !candidate.isCombo).map((candidate) => (
                   <button
-                    key={p.id}
-                    onClick={() => handleAddComboItem(p)}
+                    key={candidate.id}
+                    onClick={() => handleAddComboItem(candidate)}
                     className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                      comboItems.some(ci => ci.productId === p.id!)
+                      comboItems.some((comboItem) => comboItem.productId === candidate.id!)
                         ? 'border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-400'
                         : 'border-slate-200 text-slate-600 hover:border-purple-300 dark:border-slate-700 dark:text-slate-400 dark:hover:border-purple-600'
                     }`}
                   >
-                    {p.name}
+                    {candidate.name}
                   </button>
                 ))}
               </div>
             </div>
           </div>
-        )}
+        ) : (
+          <>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={trackInventory} onChange={(event) => setTrackInventory(event.target.checked)} className="w-5 h-5 rounded" />
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">依食材配方追蹤庫存</span>
+            </label>
 
-        {/* Modifier Groups (hidden for combos) */}
-        {!isCombo && (
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">修改群組</label>
-            <div className="flex flex-wrap gap-2">
-              {modifierGroups.map(g => (
-                <button
-                  key={g.id}
-                  onClick={() => setSelectedModGroups(prev =>
-                    prev.includes(g.id!) ? prev.filter(id => id !== g.id!) : [...prev, g.id!]
-                  )}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
-                    selectedModGroups.includes(g.id!) ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400' : 'border-slate-200 dark:border-slate-700 dark:text-slate-400'
-                  }`}
-                >
-                  {g.name}
-                </button>
-              ))}
+            {trackInventory && (
+              <div className="border border-amber-200 dark:border-amber-900 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">商品配方</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">每賣出 1 份商品會扣除以下食材。</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[1fr_120px_auto] gap-2">
+                  <select value={selectedIngredientId} onChange={(event) => setSelectedIngredientId(Number(event.target.value))} className="input-field">
+                    {ingredients.map((ingredient) => (
+                      <option key={ingredient.id} value={ingredient.id}>
+                        {ingredient.name} ({ingredient.unit})
+                      </option>
+                    ))}
+                  </select>
+                  <input type="number" min={0} step="0.1" value={recipeQuantity} onChange={(event) => setRecipeQuantity(event.target.value)} className="input-field" />
+                  <button onClick={handleAddRecipeItem} className="btn-secondary px-4">加入</button>
+                </div>
+
+                {ingredients.length === 0 && (
+                  <p className="text-sm text-amber-600 dark:text-amber-400">目前沒有食材，請先到庫存頁新增食材。</p>
+                )}
+
+                {recipeItems.length > 0 ? (
+                  <div className="space-y-2">
+                    {recipeItems.map((item) => {
+                      const ingredient = ingredients.find((candidate) => candidate.id === item.ingredientId);
+                      return (
+                        <div key={item.ingredientId} className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2">
+                          <div>
+                            <p className="font-medium text-slate-900 dark:text-white">{item.ingredientName}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{ingredient?.unit || '份'}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min={0}
+                              step="0.1"
+                              value={item.quantity}
+                              onChange={(event) => handleRecipeQuantityChange(item.ingredientId, Number(event.target.value))}
+                              className="input-field w-28"
+                            />
+                            <button onClick={() => handleRecipeQuantityChange(item.ingredientId, 0)} className="text-red-500 text-sm">移除</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500 dark:text-slate-400">尚未設定配方，商品將無法計算實際耗料。</p>
+                )}
+              </div>
+            )}
+
+            <div>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">可用加料群組</label>
+              <div className="flex flex-wrap gap-2">
+                {modifierGroups.map((group) => (
+                  <button
+                    key={group.id}
+                    onClick={() => setSelectedModGroups((current) =>
+                      current.includes(group.id!)
+                        ? current.filter((id) => id !== group.id!)
+                        : [...current, group.id!]
+                    )}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
+                      selectedModGroups.includes(group.id!)
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
+                        : 'border-slate-200 dark:border-slate-700 dark:text-slate-400'
+                    }`}
+                  >
+                    {group.name}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Track Inventory (hidden for combos) */}
-        {!isCombo && (
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="trackInv" checked={trackInventory} onChange={e => setTrackInventory(e.target.checked)} className="w-5 h-5 rounded" />
-            <label htmlFor="trackInv" className="text-sm font-medium text-slate-700 dark:text-slate-300">追蹤庫存</label>
-          </div>
+          </>
         )}
 
         <div className="flex gap-2 pt-4">
           <button onClick={onClose} className="btn-secondary flex-1">取消</button>
-          <button onClick={handleSubmit} disabled={!name || !price || (isCombo && comboItems.length === 0)} className="btn-primary flex-1">
-            {product ? '更新商品' : '新增商品'}
+          <button
+            onClick={handleSubmit}
+            disabled={!name.trim() || !price || (isCombo && comboItems.length === 0)}
+            className="btn-primary flex-1"
+          >
+            {product ? '儲存商品' : '新增商品'}
           </button>
         </div>
       </div>
@@ -438,7 +598,11 @@ function ProductFormModal({ product, categories, modifierGroups, onSave, onClose
   );
 }
 
-function CategoryFormModal({ category, onSave, onClose }: {
+function CategoryFormModal({
+  category,
+  onSave,
+  onClose,
+}: {
   category: Category | null;
   onSave: (data: Partial<Category>) => void;
   onClose: () => void;
@@ -453,16 +617,16 @@ function CategoryFormModal({ category, onSave, onClose }: {
       <div className="space-y-4">
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">分類名稱 *</label>
-          <input value={name} onChange={e => setName(e.target.value)} className="input-field" placeholder="例：主餐" />
+          <input value={name} onChange={(event) => setName(event.target.value)} className="input-field" placeholder="例如：主餐" />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">描述</label>
-          <input value={description} onChange={e => setDescription(e.target.value)} className="input-field" placeholder="分類描述" />
+          <input value={description} onChange={(event) => setDescription(event.target.value)} className="input-field" />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">圖示</label>
           <div className="flex flex-wrap gap-2">
-            {CATEGORY_ICON_KEYS.map(key => (
+            {CATEGORY_ICON_KEYS.map((key) => (
               <button
                 key={key}
                 onClick={() => setIcon(key)}
@@ -475,12 +639,12 @@ function CategoryFormModal({ category, onSave, onClose }: {
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">顏色</label>
-          <input type="color" value={color} onChange={e => setColor(e.target.value)} className="w-full h-10 rounded-lg cursor-pointer" />
+          <input type="color" value={color} onChange={(event) => setColor(event.target.value)} className="w-full h-10 rounded-lg cursor-pointer" />
         </div>
         <div className="flex gap-2 pt-2">
           <button onClick={onClose} className="btn-secondary flex-1">取消</button>
           <button onClick={() => name && onSave({ name, description, icon, color })} disabled={!name} className="btn-primary flex-1">
-            {category ? '更新' : '新增'}
+            {category ? '儲存分類' : '新增分類'}
           </button>
         </div>
       </div>

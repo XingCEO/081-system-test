@@ -1,5 +1,6 @@
 import { useCartStore } from '../../stores/useCartStore';
-import { formatPrice } from '../../utils/currency';
+import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
+import { formatPrice, formatPriceDelta } from '../../utils/currency';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { useState } from 'react';
@@ -11,6 +12,7 @@ interface CartPanelProps {
 }
 
 export default function CartPanel({ onCheckout }: CartPanelProps) {
+  useAppSettingsStore((state) => state.settings.currency);
   const { items, removeItem, updateQuantity, setTable, tableId, tableName, clearCart, getSubtotal, getItemCount } = useCartStore();
   const [showTableSelect, setShowTableSelect] = useState(false);
   const subtotal = getSubtotal();
@@ -80,7 +82,7 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
                               className="text-xs bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-1.5 py-0.5 rounded"
                             >
                               +{mod.name}
-                              {mod.price !== 0 && ` $${mod.price}`}
+                              {mod.price !== 0 && ` ${formatPriceDelta(mod.price)}`}
                             </span>
                           ))}
                         </div>

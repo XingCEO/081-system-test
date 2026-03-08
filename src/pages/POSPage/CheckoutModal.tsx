@@ -1,37 +1,47 @@
-import { useState, useRef } from 'react';
-import { useCartStore } from '../../stores/useCartStore';
-import { useAuthStore } from '../../stores/useAuthStore';
-import { createOrder } from '../../services/orderService';
-import { formatPrice } from '../../utils/currency';
-import { CASH_DENOMINATIONS } from '../../utils/constants';
+import { useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+import type { CartItem, Order } from '../../db/types';
+import { IconCheck, IconMapPin, IconPrinter } from '../../components/ui/Icons';
 import Modal from '../../components/ui/Modal';
 import NumberPad from '../../components/ui/NumberPad';
-import { IconCheck, IconPrinter, IconMapPin } from '../../components/ui/Icons';
-import toast from 'react-hot-toast';
-import type { Order } from '../../db/types';
+import { createOrder } from '../../services/orderService';
+import { useAuthStore } from '../../stores/useAuthStore';
+import { useCartStore } from '../../stores/useCartStore';
+import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
+import { CASH_DENOMINATIONS } from '../../utils/constants';
+import { formatPrice, formatPriceDelta, formatPriceShort } from '../../utils/currency';
 
 interface CheckoutModalProps {
   onClose: () => void;
 }
 
 export default function CheckoutModal({ onClose }: CheckoutModalProps) {
-  const { items, tableId, tableName, note, getSubtotal, clearCart } = useCartStore();
+  const { clearCart, getSubtotal, items, note, tableId, tableName } = useCartStore();
   const { currentEmployee } = useAuthStore();
+  const { receiptFooter, receiptHeader, storeAddress, storeName, storePhone } = useAppSettingsStore(
+    (state) => state.settings
+  );
   const [cashInput, setCashInput] = useState('');
-  const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
+  const [completedOrder, setCompletedOrder] = useState<{ order: Order; items: CartItem[] } | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const total = getSubtotal();
-  const cashReceived = parseInt(cashInput) || 0;
+  const cashReceived = Number.parseInt(cashInput, 10) || 0;
   const change = cashReceived - total;
 
   const handleConfirm = async () => {
     if (cashReceived < total) {
-      toast.error('金額不足！');
+      toast.error('收款金額不足');
       return;
     }
 
     try {
+      const receiptItems = items.map((item) => ({
+        ...item,
+        modifiers: item.modifiers.map((modifier) => ({ ...modifier })),
+        comboItems: item.comboItems?.map((comboItem) => ({ ...comboItem })),
+      }));
+
       const order = await createOrder({
         items,
         employeeId: currentEmployee?.id || 0,
@@ -43,11 +53,11 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
         note,
       });
 
-      setCompletedOrder(order);
+      setCompletedOrder({ order, items: receiptItems });
       clearCart();
-      toast.success('付款成功！');
+      toast.success('付款成功');
     } catch {
-      toast.error('結帳失敗，請重試');
+      toast.error('付款失敗，請再試一次');
     }
   };
 
@@ -56,47 +66,57 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
   };
 
   if (completedOrder) {
+    const { order, items: receiptItems } = completedOrder;
+
     return (
       <Modal open={true} onClose={onClose} title="付款成功" size="md">
         <div className="text-center">
           <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-in">
             <IconCheck className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">付款完成！</h3>
-          <p className="text-slate-600 dark:text-slate-400 mb-1">訂單編號：{completedOrder.orderNumber}</p>
+          <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">付款完成</h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-1">訂單編號：{order.orderNumber}</p>
           <p className="text-slate-600 dark:text-slate-400 mb-1">
-            {completedOrder.tableName !== '外帶' && `桌位：${completedOrder.tableName} · `}
-            總計：{formatPrice(completedOrder.total)}
+            {order.tableName !== '外帶' && `桌位：${order.tableName} · `}
+            總計：{formatPrice(order.total)}
           </p>
           <p className="text-slate-600 dark:text-slate-400">
-            收款：{formatPrice(completedOrder.cashReceived)} · 找零：{formatPrice(completedOrder.changeGiven)}
+            收款：{formatPrice(order.cashReceived)} · 找零：{formatPrice(order.changeGiven)}
           </p>
 
-          {/* Receipt for printing */}
           <div ref={receiptRef} className="receipt-print hidden print:block text-left mt-4 font-mono text-xs">
             <div className="text-center mb-2">
-              <p className="font-bold text-sm">美味餐廳</p>
+              <p className="font-bold text-sm">{storeName}</p>
+              {receiptHeader && <p>{receiptHeader}</p>}
+              {storeAddress && <p>{storeAddress}</p>}
+              {storePhone && <p>{storePhone}</p>}
               <p>================================</p>
             </div>
-            <p>訂單：{completedOrder.orderNumber}</p>
-            <p>桌位：{completedOrder.tableName}</p>
-            <p>員工：{completedOrder.employeeName}</p>
-            <p>時間：{new Date(completedOrder.createdAt).toLocaleString('zh-TW')}</p>
+
+            <p>訂單：{order.orderNumber}</p>
+            <p>桌位：{order.tableName}</p>
+            <p>員工：{order.employeeName}</p>
+            <p>時間：{new Date(order.createdAt).toLocaleString('zh-TW')}</p>
             <p>--------------------------------</p>
-            {items.map((item, i) => (
-              <div key={i}>
-                <p>{item.productName} x{item.quantity}  ${(item.unitPrice + item.modifiersTotal) * item.quantity}</p>
-                {item.modifiers.map((m, j) => (
-                  <p key={j} className="pl-2">  +{m.name} {m.price > 0 ? `+$${m.price}` : ''}</p>
+
+            {receiptItems.map((item) => (
+              <div key={item.cartItemId} className="mb-1">
+                <p>{item.productName} x{item.quantity}  {formatPrice((item.unitPrice + item.modifiersTotal) * item.quantity)}</p>
+                {item.modifiers.map((modifier) => (
+                  <p key={`${item.cartItemId}-${modifier.modifierId}`} className="pl-2">
+                    +{modifier.name} {formatPriceDelta(modifier.price)}
+                  </p>
                 ))}
+                {item.note && <p className="pl-2">備註：{item.note}</p>}
               </div>
             ))}
+
             <p>================================</p>
-            <p className="font-bold">總計：{formatPrice(completedOrder.total)}</p>
-            <p>收款：{formatPrice(completedOrder.cashReceived)}</p>
-            <p>找零：{formatPrice(completedOrder.changeGiven)}</p>
+            <p className="font-bold">總計：{formatPrice(order.total)}</p>
+            <p>收款：{formatPrice(order.cashReceived)}</p>
+            <p>找零：{formatPrice(order.changeGiven)}</p>
             <p>================================</p>
-            <p className="text-center mt-2">謝謝光臨，歡迎再來！</p>
+            {receiptFooter && <p className="text-center mt-2">{receiptFooter}</p>}
           </div>
 
           <div className="flex gap-3 mt-6">
@@ -115,24 +135,25 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
   return (
     <Modal open={true} onClose={onClose} title="結帳" size="md">
       <div className="space-y-5">
-        {/* Amount Due */}
-        <div className="text-center bg-blue-50 dark:bg-blue-950/50 rounded-2xl p-5">
+        <div className="text-center rounded-2xl p-5" style={{ backgroundColor: 'var(--theme-primary-soft)' }}>
           <p className="text-slate-600 dark:text-slate-400 text-sm">應收金額</p>
-          <p className="text-4xl font-bold text-blue-600 dark:text-blue-400 mt-1">{formatPrice(total)}</p>
+          <p className="text-4xl font-bold mt-1" style={{ color: 'var(--theme-primary)' }}>
+            {formatPrice(total)}
+          </p>
           {tableId && (
-            <p className="text-slate-500 dark:text-slate-500 text-sm mt-1 flex items-center justify-center gap-1"><IconMapPin className="w-3.5 h-3.5 inline" /> {tableName}</p>
+            <p className="text-slate-500 dark:text-slate-500 text-sm mt-1 flex items-center justify-center gap-1">
+              <IconMapPin className="w-3.5 h-3.5 inline" /> {tableName}
+            </p>
           )}
         </div>
 
-        {/* Cash Input Display */}
         <div className="text-center">
-          <p className="text-slate-600 dark:text-slate-400 text-sm">收到金額</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">收款金額</p>
           <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-            {cashInput ? formatPrice(cashReceived) : 'NT$0'}
+            {cashInput ? formatPrice(cashReceived) : formatPrice(0)}
           </p>
         </div>
 
-        {/* Quick Amount Buttons */}
         <div className="flex gap-2">
           {CASH_DENOMINATIONS.map((amount) => (
             <button
@@ -140,7 +161,7 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
               onClick={() => setCashInput(String(amount))}
               className="btn-secondary flex-1 text-base"
             >
-              ${amount}
+              {formatPriceShort(amount)}
             </button>
           ))}
           <button
@@ -151,10 +172,8 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
           </button>
         </div>
 
-        {/* Number Pad */}
         <NumberPad value={cashInput} onChange={setCashInput} maxLength={6} />
 
-        {/* Change */}
         {cashReceived > 0 && (
           <div className={`text-center p-4 rounded-xl animate-fade-in ${
             change >= 0
@@ -162,15 +181,14 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
               : 'bg-red-50 dark:bg-red-950/50'
           }`}>
             <p className={`text-sm ${change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-              {change >= 0 ? '找零' : '金額不足'}
+              {change >= 0 ? '找零' : '收款不足'}
             </p>
             <p className={`text-2xl font-bold ${change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-              {change >= 0 ? formatPrice(change) : formatPrice(Math.abs(change))}
+              {formatPrice(Math.abs(change))}
             </p>
           </div>
         )}
 
-        {/* Actions */}
         <div className="flex gap-3">
           <button onClick={onClose} className="btn-secondary flex-1">
             取消
@@ -180,7 +198,7 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
             disabled={cashReceived < total}
             className="btn-success flex-[2] text-lg py-3"
           >
-            確認收款
+            確認付款
           </button>
         </div>
       </div>

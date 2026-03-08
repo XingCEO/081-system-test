@@ -36,6 +36,27 @@ export interface Product {
   updatedAt: string;
 }
 
+// ==================== 食材 & BOM ====================
+export interface Ingredient {
+  id?: number;
+  name: string;
+  unit: string;
+  costPerUnit: number;
+  lowStockThreshold: number;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductRecipeItem {
+  id?: number;
+  productId: number;
+  ingredientId: number;
+  ingredientName: string;
+  quantity: number;
+}
+
 // ==================== 修改群組 & 修改選項 ====================
 export interface ModifierGroup {
   id?: number;
@@ -145,8 +166,8 @@ export interface Shift {
 // ==================== 庫存 ====================
 export interface InventoryRecord {
   id?: number;
-  productId: number;
-  productName: string;
+  ingredientId: number;
+  ingredientName: string;
   currentStock: number;
   lowStockThreshold: number;
   unit: string;
@@ -157,8 +178,8 @@ export type InventoryTransactionType = 'sale' | 'restock' | 'adjustment' | 'wast
 
 export interface InventoryTransaction {
   id?: number;
-  productId: number;
-  productName: string;
+  ingredientId: number;
+  ingredientName: string;
   type: InventoryTransactionType;
   quantity: number;
   previousStock: number;
