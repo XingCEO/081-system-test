@@ -26,11 +26,9 @@ import { useThemeStore } from '../../stores/useThemeStore';
 const THEME_COLOR_PRESETS = ['#1e40af', '#0f766e', '#b45309', '#be123c', '#334155'];
 
 export default function SettingsPage() {
-  const { settings, hydrated, saveSettings } = useAppSettingsStore((state) => ({
-    settings: state.settings,
-    hydrated: state.hydrated,
-    saveSettings: state.saveSettings,
-  }));
+  const settings = useAppSettingsStore((state) => state.settings);
+  const hydrated = useAppSettingsStore((state) => state.hydrated);
+  const saveSettings = useAppSettingsStore((state) => state.saveSettings);
   const { theme, setTheme } = useThemeStore();
   const [formValues, setFormValues] = useState<AppSettings>(settings);
   const [isSaving, setIsSaving] = useState(false);
