@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import toast from 'react-hot-toast';
 import { db } from '../db/database';
 import type { Employee } from '../db/types';
-import NumberPad from '../components/ui/NumberPad';
 import { IconRestaurant } from '../components/ui/Icons';
 import { loginEmployee, getDefaultRoute } from '../services/authService';
 import { useAuthStore } from '../stores/useAuthStore';
@@ -23,6 +22,8 @@ export default function LoginPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
+  const [showPin, setShowPin] = useState(false);
+  const pinRef = useRef<HTMLInputElement>(null);
 
   const employees = useLiveQuery(() => db.employees.filter((employee) => employee.isActive).toArray());
 
@@ -33,6 +34,12 @@ export default function LoginPage() {
     }
   }
 
+  useEffect(() => {
+    if (selectedEmployee && pinRef.current) {
+      pinRef.current.focus();
+    }
+  }, [selectedEmployee]);
+
   const handleLogin = async () => {
     if (!selectedEmployee?.id || pin.length < 4) {
       return;
@@ -42,7 +49,7 @@ export default function LoginPage() {
 
     const result = await loginEmployee(selectedEmployee.id, pin);
     if (!result) {
-      setError('PIN 錯誤');
+      setError('PIN 碼錯誤，請重新輸入');
       setPin('');
       return;
     }
@@ -52,113 +59,148 @@ export default function LoginPage() {
     navigate(getDefaultRoute(result.employee.role), { replace: true });
   };
 
-  const handlePinChange = (nextPin: string) => {
-    setPin(nextPin);
+  const handlePinInput = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 4);
+    setPin(digits);
     setError('');
 
-    if (nextPin.length === 4) {
+    if (digits.length === 4) {
       window.setTimeout(() => {
         document.getElementById('login-btn')?.click();
-      }, 100);
+      }, 150);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && pin.length === 4) {
+      void handleLogin();
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
-      <div className="w-full max-w-md animate-slide-up">
-        {/* Logo area */}
+      <div className="w-full max-w-sm animate-slide-up">
+        {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 mb-4 shadow-lg">
-            <IconRestaurant className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 mb-4 shadow-lg shadow-indigo-600/20">
+            <IconRestaurant className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{storeName}</h1>
-          <p className="mt-1 text-gray-500 dark:text-gray-400 text-sm">請選擇員工並輸入 PIN 登入</p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{storeName}</h1>
+          <p className="mt-1 text-gray-400 text-sm">員工登入</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="p-6">
             {!selectedEmployee ? (
-              <div>
-                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">選擇員工</h2>
-                <div className="grid grid-cols-2 gap-3">
+              <>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">選擇員工</p>
+                <div className="space-y-2">
                   {employees?.map((employee) => {
                     const role = ROLE_STYLES[employee.role] || ROLE_STYLES.cashier;
                     return (
                       <button
                         key={employee.id}
                         onClick={() => setSelectedEmployee(employee)}
-                        className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors active:scale-[0.97]"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors active:scale-[0.98]"
                       >
-                        <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                          <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                        <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+                          <span className="text-base font-bold text-indigo-600 dark:text-indigo-400">
                             {employee.name.charAt(0)}
                           </span>
                         </div>
-                        <span className="font-medium text-gray-700 dark:text-gray-200 text-sm">{employee.name}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${role.bg} ${role.text} font-medium`}>
-                          {role.label}
-                        </span>
+                        <div className="flex-1 text-left">
+                          <p className="font-medium text-gray-800 dark:text-gray-100 text-sm">{employee.name}</p>
+                          <span className={`text-[11px] px-1.5 py-0.5 rounded ${role.bg} ${role.text} font-medium`}>
+                            {role.label}
+                          </span>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
                       </button>
                     );
                   })}
                 </div>
-              </div>
+              </>
             ) : (
               <div className="animate-fade-in">
+                {/* Back */}
                 <button
                   onClick={() => {
                     setSelectedEmployee(null);
                     setPin('');
                     setError('');
                   }}
-                  className="text-sm font-medium mb-5 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1 transition-colors"
+                  className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex items-center gap-1 mb-6 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
-                  返回選擇
+                  切換員工
                 </button>
 
+                {/* Selected employee */}
                 <div className="text-center mb-6">
-                  <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mx-auto mb-3">
-                    <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                  <div className="w-14 h-14 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center mx-auto mb-2">
+                    <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
                       {selectedEmployee.name.charAt(0)}
                     </span>
                   </div>
-                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white">{selectedEmployee.name}</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{selectedEmployee.name}</h3>
                 </div>
 
-                {/* PIN dots */}
-                <div className="mb-5">
-                  <div className="flex justify-center gap-3 mb-3">
-                    {[0, 1, 2, 3].map((index) => (
-                      <div
-                        key={index}
-                        className={`w-3.5 h-3.5 rounded-full transition-all duration-200 ${
-                          index < pin.length
-                            ? 'bg-indigo-600 scale-110'
-                            : 'bg-gray-200 dark:bg-gray-700'
-                        }`}
-                      />
-                    ))}
+                {/* PIN input */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">
+                    輸入 4 位 PIN 碼
+                  </label>
+                  <div className="relative">
+                    <input
+                      ref={pinRef}
+                      type={showPin ? 'text' : 'password'}
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={pin}
+                      onChange={(e) => handlePinInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="••••"
+                      autoComplete="off"
+                      className={`input-field text-center text-2xl tracking-[0.5em] font-mono pr-12 ${
+                        error ? '!border-red-400 !ring-red-100' : ''
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPin(!showPin)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
+                    >
+                      {showPin ? (
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
 
                   {error && (
-                    <p className="text-sm text-center text-red-500 animate-shake">{error}</p>
+                    <p className="text-sm text-red-500 animate-shake">{error}</p>
                   )}
+
+                  <button
+                    id="login-btn"
+                    onClick={handleLogin}
+                    disabled={pin.length < 4}
+                    className="btn-primary w-full py-3 text-base mt-1"
+                  >
+                    登入
+                  </button>
                 </div>
-
-                <NumberPad value={pin} onChange={handlePinChange} maxLength={4} />
-
-                <button
-                  id="login-btn"
-                  onClick={handleLogin}
-                  disabled={pin.length < 4}
-                  className="btn-primary w-full mt-5 py-3 text-base"
-                >
-                  登入
-                </button>
               </div>
             )}
           </div>
