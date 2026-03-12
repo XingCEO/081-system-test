@@ -22,7 +22,7 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
 
   return (
     <>
-      <div className="w-full lg:w-96 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col h-full">
+      <div className="w-full lg:w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col h-full">
         {/* Header */}
         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <h2 className="font-bold text-base text-gray-800 dark:text-white">

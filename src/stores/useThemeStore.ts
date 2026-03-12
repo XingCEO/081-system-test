@@ -5,8 +5,11 @@ type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeState {
   theme: Theme;
+  _v: number;
   setTheme: (theme: Theme) => void;
 }
+
+const THEME_VERSION = 2;
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
@@ -22,6 +25,7 @@ export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
       theme: 'light',
+      _v: THEME_VERSION,
       setTheme: (theme) => {
         applyTheme(theme);
         set({ theme });
@@ -30,7 +34,13 @@ export const useThemeStore = create<ThemeState>()(
     {
       name: 'pos-theme',
       onRehydrateStorage: () => (state) => {
-        if (state) applyTheme(state.theme);
+        if (!state || state._v !== THEME_VERSION) {
+          // Force reset to light on version mismatch (old dark default)
+          useThemeStore.setState({ theme: 'light', _v: THEME_VERSION });
+          applyTheme('light');
+        } else {
+          applyTheme(state.theme);
+        }
       },
     }
   )
