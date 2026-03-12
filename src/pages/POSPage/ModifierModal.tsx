@@ -102,15 +102,15 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
             {formatPrice(product.price)}
           </span>
           {product.description && (
-            <p className="text-slate-500 dark:text-slate-400 mt-1">{product.description}</p>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">{product.description}</p>
           )}
         </div>
 
         {groups?.map(({ group, modifiers }) => (
           <div key={group.id}>
             <div className="flex items-center gap-2 mb-3">
-              <h3 className="font-semibold text-slate-900 dark:text-white">{group.name}</h3>
-              <span className="text-xs bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 px-2 py-0.5 rounded-full">
+              <h3 className="font-semibold text-gray-800 dark:text-white">{group.name}</h3>
+              <span className="text-xs bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 px-2 py-0.5 rounded-full">
                 {group.required ? '必選' : '可選'}
                 {group.multiSelect ? ` · 最多 ${Math.max(1, group.maxSelections)} 項` : ' · 單選'}
               </span>
@@ -133,10 +133,10 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
                     className={`p-3 rounded-xl border-2 text-left transition-all active:scale-[0.97] ${
                       isSelected
                         ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950 dark:border-indigo-400'
-                        : 'border-slate-200 hover:border-indigo-300 dark:border-white/[0.1] dark:hover:border-indigo-500'
+                        : 'border-gray-200 hover:border-indigo-300 dark:border-gray-600 dark:hover:border-indigo-500'
                     }`}
                   >
-                    <span className="font-medium text-slate-900 dark:text-white">{mod.name}</span>
+                    <span className="font-medium text-gray-800 dark:text-white">{mod.name}</span>
                     {mod.price !== 0 && (
                       <span className={`text-sm ml-1 ${mod.price > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                         {formatPriceDelta(mod.price)}
@@ -156,7 +156,7 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
         )}
 
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">備註</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 block">備註</label>
           <input
             type="text"
             value={note}
@@ -166,9 +166,9 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
           />
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/[0.06]">
+        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
           <div>
-            <span className="text-slate-500 dark:text-slate-400 text-sm">總計</span>
+            <span className="text-gray-500 dark:text-gray-400 text-sm">總計</span>
             <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{formatPrice(totalPrice)}</p>
           </div>
           <div className="flex gap-2">

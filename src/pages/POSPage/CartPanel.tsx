@@ -22,18 +22,18 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
 
   return (
     <>
-      <div className="w-full lg:w-96 bg-white dark:bg-[#13102b] border-l border-slate-200 dark:border-white/[0.06] flex flex-col h-full transition-colors">
+      <div className="w-full lg:w-96 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col h-full">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-slate-200 dark:border-white/[0.06] flex items-center justify-between">
-          <h2 className="font-bold text-base text-slate-900 dark:text-white">
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <h2 className="font-bold text-base text-gray-800 dark:text-white">
             當前訂單 {itemCount > 0 && <span className="text-indigo-600 dark:text-indigo-400">({itemCount})</span>}
           </h2>
           <button
             onClick={() => setShowTableSelect(true)}
-            className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1 active:scale-95 ${
+            className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1 ${
               tableId
-                ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-900'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                ? 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:bg-indigo-900/30'
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
             }`}
           >
             <IconMapPin className="w-3.5 h-3.5" />
@@ -44,23 +44,23 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-600 p-8">
+            <div className="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 p-8">
               <IconCart className="w-12 h-12 mb-3" />
-              <p className="text-lg font-medium">尚未加入商品</p>
-              <p className="text-sm mt-1">從左側菜單選擇商品</p>
+              <p className="text-base font-medium text-gray-400">尚未加入商品</p>
+              <p className="text-sm mt-1 text-gray-300">從左側菜單選擇商品</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
               {items.map((item) => (
-                <div key={item.cartItemId} className="px-4 py-3 animate-fade-in">
+                <div key={item.cartItemId} className="px-4 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <h4 className="font-medium text-slate-900 dark:text-white truncate text-sm">
+                        <h4 className="font-medium text-gray-800 dark:text-white truncate text-sm">
                           {item.productName}
                         </h4>
                         {item.isCombo && (
-                          <span className="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                          <span className="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
                             套餐
                           </span>
                         )}
@@ -68,7 +68,7 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
                       {item.isCombo && item.comboItems && item.comboItems.length > 0 && (
                         <div className="mt-1 ml-2 space-y-0.5">
                           {item.comboItems.map((sub, si) => (
-                            <p key={si} className="text-xs text-slate-500 dark:text-slate-400">
+                            <p key={si} className="text-xs text-gray-400">
                               └ {sub.quantity}x {sub.productName}
                             </p>
                           ))}
@@ -79,7 +79,7 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
                           {item.modifiers.map((mod, i) => (
                             <span
                               key={i}
-                              className="text-xs bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-1.5 py-0.5 rounded"
+                              className="text-xs bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 px-1.5 py-0.5 rounded"
                             >
                               +{mod.name}
                               {mod.price !== 0 && ` ${formatPriceDelta(mod.price)}`}
@@ -94,7 +94,7 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
                       )}
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                      <p className="font-semibold text-gray-800 dark:text-white text-sm">
                         {formatPrice((item.unitPrice + item.modifiersTotal) * item.quantity)}
                       </p>
                     </div>
@@ -104,23 +104,23 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => updateQuantity(item.cartItemId, -1)}
-                        className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-lg font-bold text-slate-600 dark:text-slate-400 active:scale-90 transition-all"
+                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-lg font-bold text-gray-500 dark:text-gray-400 active:scale-90 transition-all"
                       >
                         −
                       </button>
-                      <span className="w-10 text-center font-semibold text-base text-slate-900 dark:text-white">
+                      <span className="w-10 text-center font-semibold text-base text-gray-800 dark:text-white">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() => updateQuantity(item.cartItemId, 1)}
-                        className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-lg font-bold text-slate-600 dark:text-slate-400 active:scale-90 transition-all"
+                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center text-lg font-bold text-gray-500 dark:text-gray-400 active:scale-90 transition-all"
                       >
                         +
                       </button>
                     </div>
                     <button
                       onClick={() => removeItem(item.cartItemId)}
-                      className="text-red-400 hover:text-red-600 dark:hover:text-red-400 text-sm font-medium transition-colors"
+                      className="text-red-400 hover:text-red-600 text-sm font-medium transition-colors"
                     >
                       刪除
                     </button>
@@ -133,9 +133,9 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="border-t border-slate-200 dark:border-white/[0.06] p-4 space-y-3">
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-3">
             <div className="flex justify-between text-lg font-bold">
-              <span className="text-slate-700 dark:text-slate-300">總計</span>
+              <span className="text-gray-700 dark:text-gray-200">總計</span>
               <span className="text-indigo-600 dark:text-indigo-400">{formatPrice(subtotal)}</span>
             </div>
             <div className="flex gap-2">
@@ -163,14 +163,14 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
               setTable(null, '');
               setShowTableSelect(false);
             }}
-            className={`p-4 rounded-xl border-2 text-center font-medium transition-all active:scale-95 ${
+            className={`p-4 rounded-xl border-2 text-center font-medium transition-colors active:scale-95 ${
               !tableId
-                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400'
-                : 'border-slate-200 hover:border-indigo-300 dark:border-white/[0.1] dark:hover:border-indigo-500'
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400'
+                : 'border-gray-200 hover:border-indigo-300 dark:border-gray-700 dark:hover:border-indigo-500'
             }`}
           >
             <IconBag className="w-6 h-6 mx-auto mb-1" />
-            <span className="dark:text-slate-300">外帶</span>
+            <span className="dark:text-gray-300">外帶</span>
           </button>
           {tables?.filter(t => t.status === 'available' || t.id === tableId).map((table) => (
             <button
@@ -179,15 +179,15 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
                 setTable(table.id!, `${table.number} ${table.name}`);
                 setShowTableSelect(false);
               }}
-              className={`p-4 rounded-xl border-2 text-center font-medium transition-all active:scale-95 ${
+              className={`p-4 rounded-xl border-2 text-center font-medium transition-colors active:scale-95 ${
                 tableId === table.id
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400'
-                  : 'border-slate-200 hover:border-indigo-300 dark:border-white/[0.1] dark:hover:border-indigo-500'
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400'
+                  : 'border-gray-200 hover:border-indigo-300 dark:border-gray-700 dark:hover:border-indigo-500'
               }`}
             >
               <IconChair className="w-6 h-6 mx-auto mb-1" />
-              <span className="dark:text-slate-300">{table.number}</span>
-              <span className="block text-xs text-slate-400 dark:text-slate-500">{table.name}</span>
+              <span className="dark:text-gray-300">{table.number}</span>
+              <span className="block text-xs text-gray-400">{table.name}</span>
             </button>
           ))}
         </div>

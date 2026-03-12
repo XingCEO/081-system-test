@@ -56,80 +56,40 @@ export default function Sidebar() {
     hasPermission(currentEmployee.role, item.permission)
   );
 
-  // Split into main and management groups
   const mainItems = filteredItems.filter((item) => MAIN_PERMISSIONS.has(item.permission));
   const mgmtItems = filteredItems.filter((item) => !MAIN_PERMISSIONS.has(item.permission));
 
-  const renderNavItem = (item: typeof NAV_ITEMS[number], i: number) => (
+  const renderNavItem = (item: typeof NAV_ITEMS[number]) => (
     <NavLink
       key={item.path}
       to={item.path}
       onClick={() => setSidebarOpen(false)}
       className={({ isActive }) =>
         isActive
-          ? `group relative flex items-center gap-3 px-4 py-3 rounded-xl font-medium select-none
-             bg-gradient-to-r from-[var(--theme-primary-soft)] to-[var(--theme-primary-soft-strong)]
-             dark:from-white/[0.08] dark:to-white/[0.04]
-             animate-slide-up stagger-${Math.min(i + 1, 6)}`
-          : `group relative flex items-center gap-3 px-4 py-3 rounded-xl font-medium select-none
-             text-slate-500 dark:text-slate-400
-             hover:bg-slate-100/70 hover:text-slate-800
-             dark:hover:bg-white/[0.06] dark:hover:text-slate-200
-             hover:backdrop-blur-sm
-             transition-all duration-200 ease-out
-             animate-slide-up stagger-${Math.min(i + 1, 6)}`
+          ? 'flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium select-none bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400'
+          : 'flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium select-none text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 transition-colors'
       }
     >
       {({ isActive }) => (
         <>
-          {/* Active indicator — gradient left bar */}
-          {isActive && (
-            <span
-              className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full"
-              style={{
-                background: `linear-gradient(180deg, var(--theme-primary), var(--theme-primary-gradient-end))`,
-              }}
-            />
-          )}
-
           <item.icon
-            className={`w-5 h-5 flex-shrink-0 transition-colors duration-200 ${
+            className={`w-5 h-5 flex-shrink-0 ${
               isActive
-                ? 'text-[var(--theme-primary)] dark:text-[var(--theme-primary)]'
-                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+                ? 'text-indigo-600 dark:text-indigo-400'
+                : 'text-gray-400 dark:text-gray-500'
             }`}
           />
 
-          <span
-            className={`transition-colors duration-200 ${
-              isActive
-                ? 'text-[var(--theme-primary)] dark:text-white'
-                : ''
-            }`}
-          >
-            {item.label}
-          </span>
+          <span>{item.label}</span>
 
-          {/* Badge: low stock */}
           {item.permission === 'inventory' && (lowStockCount ?? 0) > 0 && (
-            <span
-              className="ml-auto min-w-[22px] px-1.5 py-0.5 rounded-full text-[11px] font-bold text-white text-center
-                         bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.45)]
-                         dark:bg-red-500/90 dark:shadow-[0_0_10px_rgba(239,68,68,0.35)]
-                         animate-bounce-in"
-            >
+            <span className="ml-auto min-w-[20px] px-1.5 py-0.5 rounded-full text-[11px] font-bold text-white text-center bg-red-500">
               {lowStockCount}
             </span>
           )}
 
-          {/* Badge: pending orders */}
           {item.permission === 'kitchen' && (pendingOrderCount ?? 0) > 0 && (
-            <span
-              className="ml-auto min-w-[22px] px-1.5 py-0.5 rounded-full text-[11px] font-bold text-white text-center
-                         bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.45)]
-                         dark:bg-amber-500/90 dark:shadow-[0_0_10px_rgba(245,158,11,0.35)]
-                         animate-bounce-in"
-            >
+            <span className="ml-auto min-w-[20px] px-1.5 py-0.5 rounded-full text-[11px] font-bold text-white text-center bg-amber-500">
               {pendingOrderCount}
             </span>
           )}
@@ -143,57 +103,49 @@ export default function Sidebar() {
       {/* Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden animate-fade-in"
+          className="fixed inset-0 bg-black/30 z-30 lg:hidden animate-fade-in"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-60 flex flex-col
-          bg-white/95 dark:bg-[#0c0a1d]
-          bg-gradient-to-r dark:from-[#0c0a1d] dark:to-[#110e24]
-          border-r border-slate-200/80 dark:border-white/[0.06]
-          transition-transform duration-300 ease-out
+        className={`fixed lg:static inset-y-0 left-0 z-40 w-56 flex flex-col
+          bg-white dark:bg-gray-900
+          border-r border-gray-200 dark:border-gray-700
+          transition-transform duration-200
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
-        {/* Main nav */}
         <nav className="flex-1 px-3 py-3 overflow-y-auto scrollbar-hide">
-          {/* Operations section */}
           {mainItems.length > 0 && (
             <div className="space-y-0.5">
-              {mainItems.map((item, i) => renderNavItem(item, i))}
+              {mainItems.map((item) => renderNavItem(item))}
             </div>
           )}
 
-          {/* Divider between sections */}
           {mainItems.length > 0 && mgmtItems.length > 0 && (
-            <div className="my-3 mx-2 flex items-center gap-2">
-              <div className="flex-1 h-px bg-slate-200/70 dark:bg-white/[0.06]" />
-              <span className="text-[10px] uppercase tracking-widest font-semibold text-slate-400/70 dark:text-slate-600 select-none">
+            <div className="my-3 mx-2">
+              <div className="h-px bg-gray-200 dark:bg-gray-700" />
+              <p className="text-[10px] uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mt-3 mb-1 px-1">
                 管理
-              </span>
-              <div className="flex-1 h-px bg-slate-200/70 dark:bg-white/[0.06]" />
+              </p>
             </div>
           )}
 
-          {/* Management section */}
           {mgmtItems.length > 0 && (
             <div className="space-y-0.5">
-              {mgmtItems.map((item, i) => renderNavItem(item, i + mainItems.length))}
+              {mgmtItems.map((item) => renderNavItem(item))}
             </div>
           )}
         </nav>
 
-        {/* Logout */}
-        <div className="p-3 border-t border-slate-200/70 dark:border-white/[0.06]">
+        <div className="p-3 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium select-none
-                       text-red-400 dark:text-red-400/80
-                       hover:bg-red-50/80 hover:text-red-600
-                       dark:hover:bg-red-500/[0.08] dark:hover:text-red-300
-                       transition-all duration-200 ease-out"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl font-medium select-none
+                       text-gray-400 hover:bg-red-50 hover:text-red-600
+                       dark:text-gray-500 dark:hover:bg-red-900/10 dark:hover:text-red-400
+                       transition-colors"
           >
             <IconLogout className="w-5 h-5" />
             <span>登出</span>

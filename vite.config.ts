@@ -16,7 +16,7 @@ export default defineConfig({
         name: 'POS 餐飲管理系統',
         short_name: 'POS系統',
         description: '專業餐飲 POS 系統',
-        theme_color: '#6366f1',
+        theme_color: '#4f46e5',
         background_color: '#f8fafc',
         display: 'standalone',
         orientation: 'any',

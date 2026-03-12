@@ -142,25 +142,25 @@ export default function MenuManagementPage() {
     <div className="h-full flex flex-col">
       <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
             <IconPencil className="w-6 h-6 text-indigo-500" /> 菜單管理
           </h1>
           <div className="flex gap-2 mt-3">
             <button
               onClick={() => setActiveTab('products')}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'products' ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'products' ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}
             >
               商品 ({products?.filter((product) => product.isActive).length || 0})
             </button>
             <button
               onClick={() => setActiveTab('categories')}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'categories' ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'categories' ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}
             >
               分類 ({categories?.filter((category) => category.isActive).length || 0})
             </button>
             <button
               onClick={() => setActiveTab('modifierGroups')}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'modifierGroups' ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'modifierGroups' ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}
             >
               加料群組 ({modifierGroups?.length || 0})
             </button>
@@ -185,7 +185,7 @@ export default function MenuManagementPage() {
             </button>
           ) : null}
           {activeTab === 'modifierGroups' && (
-            <span className="text-xs text-slate-500 dark:text-slate-400 self-center">
+            <span className="text-xs text-gray-500 dark:text-gray-400 self-center">
               可在列表內直接新增與編輯群組
             </span>
           )}
@@ -201,12 +201,12 @@ export default function MenuManagementPage() {
               return (
                 <div key={product.id} className={`card px-4 py-3 flex items-center justify-between animate-slide-up stagger-${Math.min(index + 1, 6)}`}>
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-400">
+                    <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400">
                       {getCategoryIcon(categoryIcon, { className: 'w-6 h-6' })}
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-slate-900 dark:text-white">{product.name}</h3>
+                        <h3 className="font-semibold text-gray-800 dark:text-white">{product.name}</h3>
                         {product.isCombo && (
                           <span className="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-400 px-1.5 py-0.5 rounded-full">
                             套餐
@@ -218,7 +218,7 @@ export default function MenuManagementPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {categories?.find((category) => category.id === product.categoryId)?.name || '-'}
                         {product.description && ` · ${product.description}`}
                       </p>
@@ -239,17 +239,17 @@ export default function MenuManagementPage() {
             {categories?.filter((category) => category.isActive).map((category, index) => (
               <div key={category.id} className={`card px-4 py-3 flex items-center justify-between animate-slide-up stagger-${Math.min(index + 1, 6)}`}>
                 <div className="flex items-center gap-4">
-                  <div className="text-slate-600 dark:text-slate-400">
+                  <div className="text-gray-500 dark:text-gray-400">
                     {getCategoryIcon(category.icon, { className: 'w-8 h-8' })}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">{category.name}</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{category.description}</p>
+                    <h3 className="font-semibold text-gray-800 dark:text-white">{category.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{category.description}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-slate-400 dark:text-slate-500">排序 {category.sortOrder}</span>
+                  <span className="text-sm text-gray-400 dark:text-gray-500">排序 {category.sortOrder}</span>
                   <button onClick={() => { setEditCategory(category); setShowCategoryForm(true); }} className="btn-secondary text-sm px-3 py-1.5">編輯</button>
                   <button onClick={() => setDeleteTarget({ type: 'category', id: category.id!, name: category.name })} className="text-red-400 hover:text-red-600 dark:hover:text-red-400 text-sm transition-colors">停用</button>
                 </div>
@@ -438,22 +438,22 @@ function ProductFormModal({
       <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">商品名稱 *</label>
+            <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">商品名稱 *</label>
             <input value={name} onChange={(event) => setName(event.target.value)} className="input-field" placeholder="例如：滷肉飯" />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">{`價格 (${currency}) *`}</label>
+            <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">{`價格 (${currency}) *`}</label>
             <input type="number" value={price} onChange={(event) => setPrice(event.target.value)} className="input-field" min={0} />
           </div>
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">描述</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">描述</label>
           <input value={description} onChange={(event) => setDescription(event.target.value)} className="input-field" />
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">分類</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">分類</label>
           <select value={categoryId} onChange={(event) => setCategoryId(Number(event.target.value))} className="input-field">
             {categories.filter((category) => category.isActive).map((category) => (
               <option key={category.id} value={category.id}>{category.name}</option>
@@ -462,7 +462,7 @@ function ProductFormModal({
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">圖片網址</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">圖片網址</label>
           <input value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} className="input-field" placeholder="https://..." />
         </div>
 
@@ -473,17 +473,17 @@ function ProductFormModal({
 
         {isCombo ? (
           <div className="border border-purple-200 dark:border-purple-800 rounded-lg p-3 space-y-3">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block">套餐內容</label>
+            <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block">套餐內容</label>
 
             {comboItems.length > 0 && (
               <div className="space-y-2">
                 {comboItems.map((comboItem) => (
                   <div key={comboItem.productId} className="flex items-center justify-between bg-purple-50 dark:bg-purple-950/30 rounded-lg px-3 py-2">
-                    <span className="text-sm font-medium text-slate-900 dark:text-white">{comboItem.productName}</span>
+                    <span className="text-sm font-medium text-gray-800 dark:text-white">{comboItem.productName}</span>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handleComboItemQty(comboItem.productId, -1)} className="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center text-sm font-bold">-</button>
+                      <button onClick={() => handleComboItemQty(comboItem.productId, -1)} className="w-7 h-7 rounded bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 flex items-center justify-center text-sm font-bold">-</button>
                       <span className="w-8 text-center font-semibold text-sm">{comboItem.quantity}</span>
-                      <button onClick={() => handleComboItemQty(comboItem.productId, 1)} className="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center text-sm font-bold">+</button>
+                      <button onClick={() => handleComboItemQty(comboItem.productId, 1)} className="w-7 h-7 rounded bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 flex items-center justify-center text-sm font-bold">+</button>
                     </div>
                   </div>
                 ))}
@@ -491,7 +491,7 @@ function ProductFormModal({
             )}
 
             <div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">加入商品到套餐</label>
+              <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">加入商品到套餐</label>
               <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
                 {allProducts?.filter((candidate) => !candidate.isCombo).map((candidate) => (
                   <button
@@ -500,7 +500,7 @@ function ProductFormModal({
                     className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                       comboItems.some((comboItem) => comboItem.productId === candidate.id!)
                         ? 'border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-400'
-                        : 'border-slate-200 text-slate-600 hover:border-purple-300 dark:border-white/[0.1] dark:text-slate-400 dark:hover:border-purple-600'
+                        : 'border-gray-200 text-gray-500 hover:border-purple-300 dark:border-gray-600 dark:text-gray-400 dark:hover:border-purple-600'
                     }`}
                   >
                     {candidate.name}
@@ -513,15 +513,15 @@ function ProductFormModal({
           <>
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={trackInventory} onChange={(event) => setTrackInventory(event.target.checked)} className="w-5 h-5 rounded" />
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">依食材配方追蹤庫存</span>
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-300">依食材配方追蹤庫存</span>
             </label>
 
             {trackInventory && (
               <div className="border border-amber-200 dark:border-amber-900 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">商品配方</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">每賣出 1 份商品會扣除以下食材。</p>
+                    <h3 className="font-semibold text-gray-800 dark:text-white">商品配方</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">每賣出 1 份商品會扣除以下食材。</p>
                   </div>
                 </div>
 
@@ -546,10 +546,10 @@ function ProductFormModal({
                     {recipeItems.map((item) => {
                       const ingredient = ingredients.find((candidate) => candidate.id === item.ingredientId);
                       return (
-                        <div key={item.ingredientId} className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/[0.06] px-3 py-2">
+                        <div key={item.ingredientId} className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2">
                           <div>
-                            <p className="font-medium text-slate-900 dark:text-white">{item.ingredientName}</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{ingredient?.unit || '份'}</p>
+                            <p className="font-medium text-gray-800 dark:text-white">{item.ingredientName}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{ingredient?.unit || '份'}</p>
                           </div>
                           <div className="flex items-center gap-2">
                             <input
@@ -567,13 +567,13 @@ function ProductFormModal({
                     })}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 dark:text-slate-400">尚未設定配方，商品將無法計算實際耗料。</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">尚未設定配方，商品將無法計算實際耗料。</p>
                 )}
               </div>
             )}
 
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">可用加料群組</label>
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-2">可用加料群組</label>
               <div className="flex flex-wrap gap-2">
                 {modifierGroups.map((group) => (
                   <button
@@ -586,7 +586,7 @@ function ProductFormModal({
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
                       selectedModGroups.includes(group.id!)
                         ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400'
-                        : 'border-slate-200 dark:border-white/[0.1] dark:text-slate-400'
+                        : 'border-gray-200 dark:border-gray-600 dark:text-gray-400'
                     }`}
                   >
                     {group.name}
@@ -630,21 +630,21 @@ function CategoryFormModal({
     <Modal open={true} onClose={onClose} title={category ? '編輯分類' : '新增分類'} size="sm">
       <div className="space-y-4">
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">分類名稱 *</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">分類名稱 *</label>
           <input value={name} onChange={(event) => setName(event.target.value)} className="input-field" placeholder="例如：主餐" />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">描述</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">描述</label>
           <input value={description} onChange={(event) => setDescription(event.target.value)} className="input-field" />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">圖示</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-2">圖示</label>
           <div className="flex flex-wrap gap-2">
             {CATEGORY_ICON_KEYS.map((key) => (
               <button
                 key={key}
                 onClick={() => setIcon(key)}
-                className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 text-slate-600 dark:text-slate-400 transition-all ${icon === key ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950' : 'border-slate-200 dark:border-white/[0.1]'}`}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 text-gray-500 dark:text-gray-400 transition-all ${icon === key ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950' : 'border-gray-200 dark:border-gray-600'}`}
               >
                 {getCategoryIcon(key, { className: 'w-5 h-5' })}
               </button>
@@ -652,7 +652,7 @@ function CategoryFormModal({
           </div>
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">顏色</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">顏色</label>
           <input type="color" value={color} onChange={(event) => setColor(event.target.value)} className="w-full h-10 rounded-lg cursor-pointer" />
         </div>
         <div className="flex gap-2 pt-2">

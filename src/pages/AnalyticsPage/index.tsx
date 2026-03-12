@@ -175,11 +175,11 @@ export default function AnalyticsPage() {
     <div className="h-full flex flex-col">
       <div className="page-header flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
             <IconChart className="w-6 h-6 text-indigo-500" />
             營運分析
           </h1>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             可查看區間營收、時段銷售、每小時分布，並匯出 Excel。
           </p>
           <div className="flex gap-2 mt-3 flex-wrap items-center">
@@ -190,7 +190,7 @@ export default function AnalyticsPage() {
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
                   period === value
                     ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500'
-                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                    : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
                 }`}
               >
                 {value === 'today'
@@ -210,7 +210,7 @@ export default function AnalyticsPage() {
                   onChange={(event) => setCustomStart(event.target.value)}
                   className="input-field text-sm py-1.5"
                 />
-                <span className="text-slate-400">~</span>
+                <span className="text-gray-400">~</span>
                 <input
                   type="date"
                   value={customEnd}
@@ -259,7 +259,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
         ) : !data ? (
-          <div className="text-center py-16 text-slate-400 dark:text-slate-600 animate-fade-in">
+          <div className="text-center py-16 text-gray-400 dark:text-gray-500 animate-fade-in">
             <IconChart className="w-12 h-12 mx-auto mb-3" />
             <p className="text-lg font-medium">
               {invalidCustomRange
@@ -272,7 +272,7 @@ export default function AnalyticsPage() {
         ) : (
           <div className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 報表區間：{range?.label}
               </p>
               {data.peakTimeSlot && (
@@ -284,35 +284,35 @@ export default function AnalyticsPage() {
 
             <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
               <div className="card p-5 animate-slide-up stagger-1">
-                <p className="text-sm text-slate-500 dark:text-slate-400">總營收</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">總營收</p>
                 <p className="text-2xl lg:text-3xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
                   {formatPrice(data.totalRevenue)}
                 </p>
               </div>
               <div className="card p-5 animate-slide-up stagger-2">
-                <p className="text-sm text-slate-500 dark:text-slate-400">總訂單數</p>
-                <p className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                <p className="text-sm text-gray-500 dark:text-gray-400">總訂單數</p>
+                <p className="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white mt-1">
                   {data.totalOrders}
                 </p>
               </div>
               <div className="card p-5 animate-slide-up stagger-3">
-                <p className="text-sm text-slate-500 dark:text-slate-400">平均客單價</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">平均客單價</p>
                 <p className="text-2xl lg:text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                   {formatPrice(data.averageOrderValue)}
                 </p>
               </div>
               <div className="card p-5 animate-slide-up stagger-4">
-                <p className="text-sm text-slate-500 dark:text-slate-400">熱銷商品</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">熱銷商品</p>
                 <p className="text-xl lg:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1 truncate">
                   {data.topItems[0]?.name || '-'}
                 </p>
               </div>
               <div className="card p-5 animate-slide-up stagger-5">
-                <p className="text-sm text-slate-500 dark:text-slate-400">尖峰時段</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">尖峰時段</p>
                 <p className="text-xl lg:text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
                   {data.peakTimeSlot?.label || '-'}
                 </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   {data.peakTimeSlot ? formatPrice(data.peakTimeSlot.revenue) : '尚無資料'}
                 </p>
               </div>
@@ -320,7 +320,7 @@ export default function AnalyticsPage() {
 
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)]">
               <div className="card p-5 animate-slide-up stagger-6">
-                <h3 className="font-semibold text-slate-900 dark:text-white mb-4">
+                <h3 className="font-semibold text-gray-800 dark:text-white mb-4">
                   時段營收
                 </h3>
                 <ResponsiveContainer width="100%" height={320}>
@@ -356,21 +356,21 @@ export default function AnalyticsPage() {
               </div>
 
               <div className="card p-5 animate-slide-up stagger-6">
-                <h3 className="font-semibold text-slate-900 dark:text-white mb-4">
+                <h3 className="font-semibold text-gray-800 dark:text-white mb-4">
                   時段摘要
                 </h3>
                 <div className="space-y-3">
                   {data.timeSlotBreakdown.map((slot) => (
                     <div
                       key={slot.key}
-                      className="rounded-xl border border-slate-200 dark:border-white/[0.06] px-4 py-3"
+                      className="rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <p className="font-semibold text-slate-900 dark:text-white">
+                          <p className="font-semibold text-gray-800 dark:text-white">
                             {slot.label}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {slot.hoursLabel}
                           </p>
                         </div>
@@ -378,7 +378,7 @@ export default function AnalyticsPage() {
                           {formatPrice(slot.revenue)}
                         </p>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 mt-3 text-sm text-slate-500 dark:text-slate-400">
+                      <div className="grid grid-cols-2 gap-2 mt-3 text-sm text-gray-500 dark:text-gray-400">
                         <span>訂單數：{slot.orders}</span>
                         <span>客單價：{formatPrice(slot.averageOrderValue)}</span>
                       </div>
@@ -390,7 +390,7 @@ export default function AnalyticsPage() {
 
             {data.revenueByDay.length > 1 && (
               <div className="card p-5 animate-slide-up stagger-6">
-                <h3 className="font-semibold text-slate-900 dark:text-white mb-4">
+                <h3 className="font-semibold text-gray-800 dark:text-white mb-4">
                   營收趨勢
                 </h3>
                 <ResponsiveContainer width="100%" height={300}>
@@ -430,11 +430,11 @@ export default function AnalyticsPage() {
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <div className="card p-5 animate-slide-up stagger-6">
-                <h3 className="font-semibold text-slate-900 dark:text-white mb-4">
+                <h3 className="font-semibold text-gray-800 dark:text-white mb-4">
                   熱銷排行
                 </h3>
                 {data.topItems.length === 0 ? (
-                  <p className="text-slate-400 dark:text-slate-600 text-center py-8">
+                  <p className="text-gray-400 dark:text-gray-500 text-center py-8">
                     尚無資料
                   </p>
                 ) : (
@@ -471,11 +471,11 @@ export default function AnalyticsPage() {
               </div>
 
               <div className="card p-5 animate-slide-up stagger-6">
-                <h3 className="font-semibold text-slate-900 dark:text-white mb-4">
+                <h3 className="font-semibold text-gray-800 dark:text-white mb-4">
                   每小時訂單分布
                 </h3>
                 {data.hourlyBreakdown.length === 0 ? (
-                  <p className="text-slate-400 dark:text-slate-600 text-center py-8">
+                  <p className="text-gray-400 dark:text-gray-500 text-center py-8">
                     尚無資料
                   </p>
                 ) : (

@@ -63,13 +63,13 @@ export default function EmployeePage() {
   return (
     <div className="h-full flex flex-col">
       <div className="page-header flex items-center justify-between">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><IconUsers className="w-6 h-6 text-indigo-500" /> 員工管理</h1>
+        <h1 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2"><IconUsers className="w-6 h-6 text-indigo-500" /> 員工管理</h1>
         <button onClick={() => { setEditEmployee(null); setShowForm(true); }} className="btn-primary text-sm">+ 新增員工</button>
       </div>
 
       <div className="flex-1 overflow-auto p-4">
         {!employees?.length ? (
-          <div className="text-center py-16 text-slate-400 dark:text-slate-600 animate-fade-in">
+          <div className="text-center py-16 text-gray-400 dark:text-gray-500 animate-fade-in">
             <IconUsers className="w-12 h-12 mx-auto mb-3" />
             <p className="text-lg font-medium">尚無員工資料</p>
           </div>
@@ -82,9 +82,9 @@ export default function EmployeePage() {
                     <span className="text-xl font-bold text-white">{emp.name.charAt(0)}</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">{emp.name}</h3>
+                    <h3 className="font-semibold text-gray-800 dark:text-white">{emp.name}</h3>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-sm text-slate-500 dark:text-slate-400">@{emp.username}</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">@{emp.username}</span>
                       <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-400 px-2 py-0.5 rounded-full text-xs font-medium">
                         {ROLE_LABELS[emp.role]}
                       </span>
@@ -121,18 +121,18 @@ export default function EmployeePage() {
         <Modal open={true} onClose={() => setShiftEmployeeId(null)} title="班次記錄" size="lg">
           <div className="space-y-2">
             {shifts?.length === 0 ? (
-              <p className="text-center text-slate-400 dark:text-slate-600 py-8">尚無班次記錄</p>
+              <p className="text-center text-gray-400 dark:text-gray-500 py-8">尚無班次記錄</p>
             ) : (
               shifts?.map((shift) => (
-                <div key={shift.id} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/[0.06]">
+                <div key={shift.id} className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700">
                   <div>
-                    <p className="font-medium text-slate-900 dark:text-white">{formatDateTime(shift.startTime)}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="font-medium text-gray-800 dark:text-white">{formatDateTime(shift.startTime)}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {shift.endTime ? `下班：${formatDateTime(shift.endTime)}` : '尚未下班'}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-slate-900 dark:text-white">訂單：{shift.totalOrders}</p>
+                    <p className="font-semibold text-gray-800 dark:text-white">訂單：{shift.totalOrders}</p>
                     <p className="text-sm text-indigo-600 dark:text-indigo-400">{formatPrice(shift.totalRevenue)}</p>
                   </div>
                 </div>
@@ -169,25 +169,25 @@ function EmployeeFormModal({ employee, onSave, onClose }: {
     <Modal open={true} onClose={onClose} title={employee ? '編輯員工' : '新增員工'} size="sm">
       <div className="space-y-4">
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">姓名 *</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">姓名 *</label>
           <input value={name} onChange={e => setName(e.target.value)} className="input-field" placeholder="員工姓名" />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">帳號 *</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">帳號 *</label>
           <input value={username} onChange={e => setUsername(e.target.value)} className="input-field" placeholder="登入帳號" />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">{employee ? 'PIN碼 (留空不修改)' : 'PIN碼 *'}</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">{employee ? 'PIN碼 (留空不修改)' : 'PIN碼 *'}</label>
           <input value={pin} onChange={e => setPin(e.target.value)} className="input-field" type="password" placeholder="4位數PIN碼" maxLength={4} />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">角色</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-2">角色</label>
           <div className="flex gap-2">
             {(['admin', 'cashier', 'kitchen'] as const).map(r => (
               <button
                 key={r}
                 onClick={() => setRole(r)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${role === r ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400' : 'border-slate-200 dark:border-white/[0.1] dark:text-slate-400'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${role === r ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400' : 'border-gray-200 dark:border-gray-600 dark:text-gray-400'}`}
               >
                 {ROLE_LABELS[r]}
               </button>

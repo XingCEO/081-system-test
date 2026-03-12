@@ -100,10 +100,10 @@ export default function TableMapPage() {
       {/* Header */}
       <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">桌位管理</h1>
+          <h1 className="text-xl font-bold text-gray-800 dark:text-white">桌位管理</h1>
           <div className="flex gap-4 mt-1">
             {Object.entries(statusCounts).map(([status, count]) => (
-              <span key={status} className="text-sm text-slate-500 dark:text-slate-400">
+              <span key={status} className="text-sm text-gray-500 dark:text-gray-400">
                 {TABLE_STATUS_LABELS[status]}：<span className="font-semibold">{count}</span>
               </span>
             ))}
@@ -111,13 +111,13 @@ export default function TableMapPage() {
         </div>
         <div className="flex gap-2 items-center">
           {/* View Mode Toggle */}
-          <div className="flex rounded-lg border border-slate-200 dark:border-white/[0.1] overflow-hidden">
+          <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
             <button
               onClick={() => setViewMode('canvas')}
               className={`px-3 py-1.5 text-sm font-medium transition-all ${
                 viewMode === 'canvas'
                   ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-                  : 'bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                  : 'bg-white text-gray-500 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
               }`}
             >
               畫布
@@ -127,7 +127,7 @@ export default function TableMapPage() {
               className={`px-3 py-1.5 text-sm font-medium transition-all ${
                 viewMode === 'list'
                   ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-                  : 'bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                  : 'bg-white text-gray-500 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
               }`}
             >
               列表
@@ -154,7 +154,7 @@ export default function TableMapPage() {
       {/* Canvas View */}
       {viewMode === 'canvas' && (
         <div
-          className="flex-1 relative overflow-auto bg-slate-100 dark:bg-[#0c0a1d] p-4"
+          className="flex-1 relative overflow-auto bg-gray-100 dark:bg-gray-950 p-4"
           onMouseMove={handleDragMove}
           onMouseUp={handleDragEnd}
           onMouseLeave={handleDragEnd}
@@ -212,10 +212,10 @@ export default function TableMapPage() {
                     {table.number}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">
+                    <h3 className="font-semibold text-gray-800 dark:text-white">
                       {table.number} {table.name}
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {table.capacity} 人座 · {table.shape === 'square' ? '方形' : table.shape === 'round' ? '圓形' : '長方形'}
                     </p>
                   </div>
@@ -244,7 +244,7 @@ export default function TableMapPage() {
               </div>
             ))}
             {(!tables || tables.length === 0) && (
-              <div className="text-center py-16 text-slate-400 dark:text-slate-600">
+              <div className="text-center py-16 text-gray-400 dark:text-gray-500">
                 <p className="text-lg font-medium">尚無桌位</p>
                 <p className="text-sm mt-1">請切換至編輯模式新增桌位</p>
               </div>
@@ -268,7 +268,7 @@ export default function TableMapPage() {
               }`}>
                 {TABLE_STATUS_LABELS[selectedTable.status]}
               </span>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">容納 {selectedTable.capacity} 人</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">容納 {selectedTable.capacity} 人</p>
             </div>
 
             {selectedTable.status === 'available' && (
@@ -362,25 +362,25 @@ function AddTableModal({ onClose, onAdd }: {
     <Modal open={true} onClose={onClose} title="新增桌位" size="sm">
       <div className="space-y-4">
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">桌號</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">桌號</label>
           <input value={number} onChange={e => setNumber(e.target.value)} className="input-field" placeholder="例：A1" />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">名稱</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">名稱</label>
           <input value={name} onChange={e => setName(e.target.value)} className="input-field" placeholder="例：窗邊座位" />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">容納人數</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">容納人數</label>
           <input type="number" value={capacity} onChange={e => setCapacity(+e.target.value)} className="input-field" min={1} max={20} />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">形狀</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">形狀</label>
           <div className="flex gap-2">
             {(['square', 'round', 'rectangle'] as const).map(s => (
               <button
                 key={s}
                 onClick={() => setShape(s)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${shape === s ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400' : 'border-slate-200 dark:border-white/[0.1] dark:text-slate-400'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${shape === s ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400' : 'border-gray-200 dark:border-gray-600 dark:text-gray-400'}`}
               >
                 {s === 'square' ? '方形' : s === 'round' ? '圓形' : '長方形'}
               </button>

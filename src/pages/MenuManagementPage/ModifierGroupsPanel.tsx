@@ -79,11 +79,11 @@ export default function ModifierGroupsPanel() {
       <div className="space-y-4">
         <div className="card p-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
               <IconSparkles className="w-5 h-5 text-amber-500" />
               自訂加料群組
             </h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               可自行管理必選/多選規則與加料品項，商品即可直接套用。
             </p>
           </div>
@@ -99,9 +99,9 @@ export default function ModifierGroupsPanel() {
         </div>
 
         {groups === undefined ? (
-          <div className="card p-6 text-slate-500 dark:text-slate-400">讀取中...</div>
+          <div className="card p-6 text-gray-500 dark:text-gray-400">讀取中...</div>
         ) : groups.length === 0 ? (
-          <div className="card p-10 text-center text-slate-500 dark:text-slate-400">
+          <div className="card p-10 text-center text-gray-500 dark:text-gray-400">
             尚未建立任何加料群組。
           </div>
         ) : (
@@ -114,13 +114,13 @@ export default function ModifierGroupsPanel() {
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                         {entry.group.name}
                       </h3>
-                      <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+                      <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-500 dark:text-gray-300">
                         {entry.group.required ? '必選' : '可選'}
                       </span>
-                      <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+                      <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-500 dark:text-gray-300">
                         {entry.group.multiSelect
                           ? `多選，最多 ${entry.group.maxSelections} 項`
                           : '單選'}
@@ -136,8 +136,8 @@ export default function ModifierGroupsPanel() {
                           key={modifier.id}
                           className={`rounded-lg border px-3 py-1.5 text-sm ${
                             modifier.isActive
-                              ? 'border-slate-200 text-slate-700 dark:border-white/[0.1] dark:text-slate-300'
-                              : 'border-slate-200/70 text-slate-400 dark:border-white/[0.06] dark:text-slate-500'
+                              ? 'border-gray-200 text-gray-600 dark:border-gray-600 dark:text-gray-300'
+                              : 'border-gray-200/70 text-gray-400 dark:border-gray-700 dark:text-gray-500'
                           }`}
                         >
                           {modifier.name}
@@ -284,7 +284,7 @@ function ModifierGroupFormModal({
     >
       <div className="space-y-5 max-h-[75vh] overflow-y-auto pr-1">
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">
             群組名稱 *
           </label>
           <input
@@ -296,26 +296,26 @@ function ModifierGroupFormModal({
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-          <label className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-white/[0.06] px-4 py-3">
+          <label className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3">
             <input
               type="checkbox"
               checked={required}
               onChange={(event) => setRequired(event.target.checked)}
               className="w-5 h-5 rounded"
             />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
               此群組為必選
             </span>
           </label>
 
-          <label className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-white/[0.06] px-4 py-3">
+          <label className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3">
             <input
               type="checkbox"
               checked={multiSelect}
               onChange={(event) => setMultiSelect(event.target.checked)}
               className="w-5 h-5 rounded"
             />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
               允許多選
             </span>
           </label>
@@ -323,7 +323,7 @@ function ModifierGroupFormModal({
 
         {multiSelect && (
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">
+            <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">
               最多可選數量
             </label>
             <input
@@ -339,8 +339,8 @@ function ModifierGroupFormModal({
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-white">加料選項</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <h3 className="font-semibold text-gray-800 dark:text-white">加料選項</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 可設定加價或折扣，負數代表折扣。
               </p>
             </div>
@@ -356,7 +356,7 @@ function ModifierGroupFormModal({
             {options.map((option) => (
               <div
                 key={option.localId}
-                className="grid gap-2 rounded-xl border border-slate-200 dark:border-white/[0.06] p-3 md:grid-cols-[minmax(0,1fr)_140px_auto_auto]"
+                className="grid gap-2 rounded-xl border border-gray-200 dark:border-gray-700 p-3 md:grid-cols-[minmax(0,1fr)_140px_auto_auto]"
               >
                 <input
                   value={option.name}
@@ -371,7 +371,7 @@ function ModifierGroupFormModal({
                   className="input-field"
                   placeholder="0"
                 />
-                <label className="flex items-center gap-2 justify-center text-sm text-slate-600 dark:text-slate-300">
+                <label className="flex items-center gap-2 justify-center text-sm text-gray-500 dark:text-gray-300">
                   <input
                     type="checkbox"
                     checked={option.isActive}
@@ -391,7 +391,7 @@ function ModifierGroupFormModal({
               </div>
             ))}
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             至少需要保留一個啟用中的選項，商品才能在 POS 端正常使用這個群組。
           </p>
         </div>

@@ -40,26 +40,28 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="px-4 pt-4 pb-2">
+      {/* Search */}
+      <div className="px-4 pt-4 pb-3">
         <div className="relative">
-          <IconSearch className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+          <IconSearch className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="搜尋商品..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            className="input-field pl-9"
+            className="input-field pl-10"
           />
         </div>
       </div>
 
-      <div className="px-4 pb-2 flex gap-2 overflow-x-auto flex-shrink-0 scrollbar-hide">
+      {/* Category pills */}
+      <div className="px-4 pb-3 flex gap-2 overflow-x-auto flex-shrink-0 scrollbar-hide">
         <button
           onClick={() => setActiveCategoryId(null)}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
             activeCategoryId === null
-              ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-white/[0.1] dark:hover:bg-slate-700'
+              ? 'bg-indigo-600 text-white'
+              : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50 border border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700'
           }`}
         >
           全部
@@ -69,10 +71,10 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
           <button
             key={category.id}
             onClick={() => setActiveCategoryId(category.id!)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeCategoryId === category.id
-                ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-white/[0.1] dark:hover:bg-slate-700'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50 border border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700'
             }`}
           >
             {getCategoryIcon(category.icon, { className: 'w-4 h-4' })}
@@ -81,9 +83,10 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
         ))}
       </div>
 
+      {/* Product grid */}
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {filteredProducts?.map((product, index) => {
+          {filteredProducts?.map((product) => {
             const availability = availabilityMap?.get(product.id!);
             const isSoldOut = product.trackInventory && (availability?.isSoldOut ?? false);
             const availableQuantity = availability?.availableQuantity ?? null;
@@ -98,11 +101,11 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
                   }
                 }}
                 disabled={isSoldOut}
-                className={`card p-3 text-left transition-all active:scale-[0.97] animate-fade-in ${
+                className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 text-left transition-all ${
                   isSoldOut
                     ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500 cursor-pointer'
-                } stagger-${Math.min((index % 8) + 1, 6)}`}
+                    : 'hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-600 cursor-pointer active:scale-[0.98]'
+                }`}
               >
                 {product.imageUrl ? (
                   <img
@@ -111,24 +114,24 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
                     className="w-full h-24 object-cover rounded-lg mb-2"
                   />
                 ) : (
-                  <div className="w-full h-24 bg-slate-100 dark:bg-slate-800 rounded-lg mb-2 flex items-center justify-center text-slate-400 dark:text-slate-600">
+                  <div className="w-full h-24 bg-gray-50 dark:bg-gray-700 rounded-lg mb-2 flex items-center justify-center text-gray-300 dark:text-gray-500">
                     {getCategoryIcon(categoryIcon, { className: 'w-8 h-8' })}
                   </div>
                 )}
 
                 <div className="flex items-center gap-1.5">
-                  <h3 className="font-semibold text-slate-900 dark:text-white text-sm truncate">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm truncate">
                     {product.name}
                   </h3>
                   {product.isCombo && (
-                    <span className="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                    <span className="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
                       套餐
                     </span>
                   )}
                 </div>
 
                 {product.description && (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                  <p className="text-xs text-gray-400 truncate mt-0.5">
                     {product.description}
                   </p>
                 )}
@@ -139,7 +142,7 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
                   </span>
 
                   {isSoldOut && (
-                    <span className="text-xs font-medium bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-medium bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400 px-2 py-0.5 rounded-full">
                       售完
                     </span>
                   )}
@@ -156,7 +159,7 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
         </div>
 
         {filteredProducts?.length === 0 && (
-          <div className="text-center py-16 text-slate-400 dark:text-slate-600">
+          <div className="text-center py-16 text-gray-400">
             <IconSearch className="w-12 h-12 mx-auto mb-3" />
             <p className="text-lg font-medium">找不到符合條件的商品</p>
             <p className="text-sm mt-1">請調整搜尋字詞或切換分類</p>
