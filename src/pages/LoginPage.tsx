@@ -246,8 +246,22 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Footer */}
-          <p className="text-center text-xs text-gray-300 dark:text-gray-600 mt-8">
+          {/* Test credentials */}
+          <div className="mt-8 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30">
+            <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              測試帳號
+            </p>
+            <div className="space-y-1 text-xs text-amber-800/80 dark:text-amber-300/70 font-mono">
+              <p>管理員 — PIN: <span className="font-bold text-amber-900 dark:text-amber-300">0000</span></p>
+              <p>收銀員小明 — PIN: <span className="font-bold text-amber-900 dark:text-amber-300">1234</span></p>
+              <p>廚師阿華 — PIN: <span className="font-bold text-amber-900 dark:text-amber-300">5678</span></p>
+            </div>
+          </div>
+
+          <p className="text-center text-xs text-gray-300 dark:text-gray-600 mt-4">
             POS 餐飲管理系統 v2.0
           </p>
         </div>
