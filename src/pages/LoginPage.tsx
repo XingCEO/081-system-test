@@ -5,9 +5,11 @@ import toast from 'react-hot-toast';
 import { db } from '../db/database';
 import type { Employee } from '../db/types';
 import { IconRestaurant } from '../components/ui/Icons';
+import UserAvatar from '../components/ui/UserAvatar';
 import { loginEmployee, getDefaultRoute } from '../services/authService';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useAppSettingsStore } from '../stores/useAppSettingsStore';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 const ROLE_LABEL: Record<string, string> = {
   admin: '管理員',
@@ -15,26 +17,21 @@ const ROLE_LABEL: Record<string, string> = {
   kitchen: '廚房',
 };
 
-const AVATAR_COLORS = [
-  'from-indigo-500 to-violet-500',
-  'from-sky-500 to-cyan-500',
-  'from-emerald-500 to-teal-500',
-  'from-rose-500 to-pink-500',
-  'from-amber-500 to-orange-500',
-  'from-fuchsia-500 to-purple-500',
-];
-
 export default function LoginPage() {
   const navigate = useNavigate();
   const { isAuthenticated, login } = useAuthStore();
   const storeName = useAppSettingsStore((state) => state.settings.storeName);
+  const isOnline = useOnlineStatus();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [showPin, setShowPin] = useState(false);
+  const [time, setTime] = useState(new Date());
   const pinRef = useRef<HTMLInputElement>(null);
 
   const employees = useLiveQuery(() => db.employees.filter((e) => e.isActive).toArray());
+  const productCount = useLiveQuery(() => db.products.filter(p => p.isActive).count());
+  const categoryCount = useLiveQuery(() => db.categories.filter(c => c.isActive).count());
 
   if (isAuthenticated) {
     const { currentEmployee } = useAuthStore.getState();
@@ -42,6 +39,11 @@ export default function LoginPage() {
       navigate(getDefaultRoute(currentEmployee.role), { replace: true });
     }
   }
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setTime(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (selectedEmployee && pinRef.current) {
@@ -76,14 +78,13 @@ export default function LoginPage() {
     if (e.key === 'Enter' && pin.length === 4) void handleLogin();
   };
 
-  const selectedIndex = selectedEmployee
-    ? (employees?.findIndex(e => e.id === selectedEmployee.id) ?? 0)
-    : 0;
+  const dateStr = time.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+  const timeStr = time.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   return (
     <div className="min-h-screen flex dark:bg-gray-950">
       {/* ========== Left brand panel (desktop) ========== */}
-      <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden items-end justify-start p-12"
+      <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden flex-col justify-between p-12"
         style={{ background: 'linear-gradient(160deg, #312e81 0%, #4338ca 35%, #6366f1 70%, #818cf8 100%)' }}
       >
         {/* Grid dot pattern */}
@@ -94,35 +95,35 @@ export default function LoginPage() {
           }}
         />
 
-        {/* Large decorative rings */}
+        {/* Decorative rings */}
         <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full border border-white/[0.06]" />
         <div className="absolute -top-16 -right-16 w-[400px] h-[400px] rounded-full border border-white/[0.04]" />
         <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full border border-white/[0.05]" />
 
-        <div className="relative z-10 max-w-md">
-          {/* Logo */}
-          <div className="flex items-center gap-4 mb-10">
-            <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/15 shadow-lg shadow-black/10">
-              <IconRestaurant className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">{storeName}</h1>
-              <p className="text-sm text-indigo-300/80">餐飲管理系統</p>
-            </div>
+        {/* Top — Logo */}
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/15">
+            <IconRestaurant className="w-6 h-6 text-white" />
           </div>
+          <div>
+            <h1 className="text-xl font-bold text-white tracking-tight">{storeName}</h1>
+            <p className="text-xs text-indigo-300/80">餐飲管理系統</p>
+          </div>
+        </div>
 
-          {/* Tagline */}
-          <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight mb-5 tracking-tight">
+        {/* Center — Tagline */}
+        <div className="relative z-10">
+          <h2 className="text-4xl xl:text-[44px] font-bold text-white leading-[1.15] mb-5 tracking-tight">
             更聰明的方式<br />管理您的餐廳
           </h2>
-          <p className="text-indigo-200/70 text-base leading-relaxed mb-10 max-w-sm">
+          <p className="text-indigo-200/70 text-[15px] leading-relaxed mb-8 max-w-sm">
             從點餐到出餐、庫存到報表，一站式解決所有營運需求。
           </p>
 
           {/* Feature chips */}
           <div className="flex flex-wrap gap-2">
             {['即時點餐', '廚房管理', '庫存追蹤', '營運報表', '多角色權限', '離線運作'].map((label) => (
-              <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 text-indigo-100 border border-white/10 backdrop-blur-sm">
+              <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 text-indigo-100 border border-white/10">
                 <svg className="w-3 h-3 text-indigo-300" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
@@ -131,11 +132,25 @@ export default function LoginPage() {
             ))}
           </div>
         </div>
+
+        {/* Bottom — Live system stats */}
+        <div className="relative z-10 flex items-center gap-5 text-xs text-indigo-200/60">
+          <div className="flex items-center gap-1.5">
+            <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-red-400'}`} />
+            {isOnline ? '連線正常' : '離線模式'}
+          </div>
+          <div className="w-px h-3 bg-indigo-400/20" />
+          <span>{employees?.length ?? 0} 位員工</span>
+          <div className="w-px h-3 bg-indigo-400/20" />
+          <span>{productCount ?? 0} 項商品</span>
+          <div className="w-px h-3 bg-indigo-400/20" />
+          <span>{categoryCount ?? 0} 個分類</span>
+        </div>
       </div>
 
       {/* ========== Right form panel ========== */}
       <div className="flex-1 flex flex-col bg-white dark:bg-gray-900">
-        {/* Top bar — mobile logo + version */}
+        {/* Top bar */}
         <div className="flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-8">
           <div className="flex items-center gap-2.5 lg:opacity-0">
             <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
@@ -143,10 +158,13 @@ export default function LoginPage() {
             </div>
             <span className="font-bold text-gray-900 dark:text-white text-sm">{storeName}</span>
           </div>
-          <span className="text-[11px] text-gray-300 dark:text-gray-600 font-medium tracking-wide">v2.0</span>
+          <div className="text-right">
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 font-mono tabular-nums">{timeStr}</p>
+            <p className="text-[10px] text-gray-300 dark:text-gray-600">{dateStr}</p>
+          </div>
         </div>
 
-        {/* Form area — vertically centered */}
+        {/* Form — vertically centered */}
         <div className="flex-1 flex items-center justify-center px-6 sm:px-10 pb-6">
           <div className="w-full max-w-[380px]">
 
@@ -158,35 +176,28 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  {employees?.map((employee, i) => {
-                    const gradient = AVATAR_COLORS[i % AVATAR_COLORS.length];
-                    return (
-                      <button
-                        key={employee.id}
-                        onClick={() => setSelectedEmployee(employee)}
-                        className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border border-transparent hover:bg-gray-50 hover:border-gray-100 dark:hover:bg-gray-800 dark:hover:border-gray-700 transition-all active:scale-[0.99] group"
-                      >
-                        <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-                          <span className="text-sm font-bold text-white">
-                            {employee.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div className="flex-1 text-left min-w-0">
-                          <p className="font-semibold text-gray-900 dark:text-gray-100 text-[15px] truncate">
-                            {employee.name}
-                          </p>
-                          <p className="text-[13px] text-gray-400 dark:text-gray-500">
-                            {ROLE_LABEL[employee.role] || employee.role}
-                          </p>
-                        </div>
-                        <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </div>
-                      </button>
-                    );
-                  })}
+                  {employees?.map((employee) => (
+                    <button
+                      key={employee.id}
+                      onClick={() => setSelectedEmployee(employee)}
+                      className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border border-transparent hover:bg-gray-50 hover:border-gray-100 dark:hover:bg-gray-800 dark:hover:border-gray-700 transition-all active:scale-[0.99] group"
+                    >
+                      <UserAvatar name={employee.name} size={44} className="flex-shrink-0" />
+                      <div className="flex-1 text-left min-w-0">
+                        <p className="font-semibold text-gray-900 dark:text-gray-100 text-[15px] truncate">
+                          {employee.name}
+                        </p>
+                        <p className="text-[13px] text-gray-400 dark:text-gray-500">
+                          {ROLE_LABEL[employee.role] || employee.role}
+                        </p>
+                      </div>
+                      <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </button>
+                  ))}
                 </div>
 
                 {/* Test credentials */}
@@ -208,7 +219,7 @@ export default function LoginPage() {
               </div>
             ) : (
               <div className="animate-fade-in">
-                {/* Selected user + back */}
+                {/* Back */}
                 <button
                   onClick={() => { setSelectedEmployee(null); setPin(''); setError(''); }}
                   className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors mb-8 group"
@@ -221,13 +232,9 @@ export default function LoginPage() {
                   <span>切換帳號</span>
                 </button>
 
-                {/* Avatar + name */}
+                {/* Selected user */}
                 <div className="flex items-center gap-4 mb-8">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${AVATAR_COLORS[selectedIndex % AVATAR_COLORS.length]} flex items-center justify-center shadow-lg shadow-indigo-500/15`}>
-                    <span className="text-xl font-bold text-white">
-                      {selectedEmployee.name.charAt(0)}
-                    </span>
-                  </div>
+                  <UserAvatar name={selectedEmployee.name} size={56} className="flex-shrink-0 shadow-lg" />
                   <div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white">{selectedEmployee.name}</h3>
                     <p className="text-sm text-gray-400">{ROLE_LABEL[selectedEmployee.role] || selectedEmployee.role}</p>
@@ -297,12 +304,22 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="px-6 pb-5 sm:px-10 flex items-center justify-between">
-          <p className="text-[11px] text-gray-300 dark:text-gray-700">POS 餐飲管理系統</p>
-          <div className="flex items-center gap-1.5 text-[11px] text-gray-300 dark:text-gray-700">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            系統正常運行
+        {/* Bottom status bar */}
+        <div className="px-6 pb-5 sm:px-10">
+          <div className="flex items-center justify-between text-[11px] text-gray-300 dark:text-gray-600">
+            <div className="flex items-center gap-3">
+              <span>POS v2.0</span>
+              <div className="w-px h-3 bg-gray-200 dark:bg-gray-700" />
+              <div className="flex items-center gap-1.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                {isOnline ? '連線正常' : '離線中'}
+              </div>
+              <div className="w-px h-3 bg-gray-200 dark:bg-gray-700" />
+              <span>{employees?.length ?? '-'} 員工</span>
+              <div className="w-px h-3 bg-gray-200 dark:bg-gray-700" />
+              <span>{productCount ?? '-'} 品項</span>
+            </div>
+            <span className="font-mono tabular-nums">{timeStr}</span>
           </div>
         </div>
       </div>

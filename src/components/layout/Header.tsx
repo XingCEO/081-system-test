@@ -9,6 +9,7 @@ import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
 import { useUIStore } from '../../stores/useUIStore';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { IconWarning } from '../ui/Icons';
+import UserAvatar from '../ui/UserAvatar';
 
 export default function Header() {
   const navigate = useNavigate();
@@ -58,11 +59,7 @@ export default function Header() {
       <div className="flex items-center gap-2.5">
         {currentEmployee && (
           <div className="flex items-center gap-2 text-sm">
-            <div className="w-7 h-7 bg-indigo-100 dark:bg-indigo-900/40 rounded-full flex items-center justify-center">
-              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                {currentEmployee.name.charAt(0)}
-              </span>
-            </div>
+            <UserAvatar name={currentEmployee.name} size={28} />
             <span className="hidden sm:inline font-medium text-gray-600 dark:text-gray-300 text-sm">
               {currentEmployee.name}
             </span>
