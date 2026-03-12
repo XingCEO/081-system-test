@@ -19,7 +19,7 @@ The server listens on `PORT` when provided, otherwise `3001`.
 
 ```bash
 docker build -t pos-system .
-docker run -p 10000:10000 -e PORT=10000 -e DB_PATH=/app/data/pos.db pos-system
+docker run -p 8080:8080 -e PORT=8080 -e DB_PATH=/app/data/pos.db pos-system
 ```
 
 Mount a volume to `/app/data` if you want SQLite data to survive container replacement.
