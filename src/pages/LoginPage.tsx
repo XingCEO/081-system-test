@@ -16,8 +16,12 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 const AVATAR_COLORS = [
-  'bg-indigo-600', 'bg-violet-600', 'bg-sky-600', 'bg-teal-600',
-  'bg-rose-600', 'bg-amber-600', 'bg-emerald-600', 'bg-fuchsia-600',
+  'from-indigo-500 to-violet-500',
+  'from-sky-500 to-cyan-500',
+  'from-emerald-500 to-teal-500',
+  'from-rose-500 to-pink-500',
+  'from-amber-500 to-orange-500',
+  'from-fuchsia-500 to-purple-500',
 ];
 
 export default function LoginPage() {
@@ -72,124 +76,170 @@ export default function LoginPage() {
     if (e.key === 'Enter' && pin.length === 4) void handleLogin();
   };
 
+  const selectedIndex = selectedEmployee
+    ? (employees?.findIndex(e => e.id === selectedEmployee.id) ?? 0)
+    : 0;
+
   return (
     <div className="min-h-screen flex dark:bg-gray-950">
-      {/* Left brand panel — hidden on mobile */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-[50%] relative overflow-hidden items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 40%, #818cf8 100%)' }}
+      {/* ========== Left brand panel (desktop) ========== */}
+      <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden items-end justify-start p-12"
+        style={{ background: 'linear-gradient(160deg, #312e81 0%, #4338ca 35%, #6366f1 70%, #818cf8 100%)' }}
       >
-        {/* Subtle pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.07]"
+        {/* Grid dot pattern */}
+        <div className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
           }}
         />
 
-        <div className="relative z-10 px-12 max-w-md text-center">
-          <div className="w-20 h-20 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center mx-auto mb-8 border border-white/20">
-            <IconRestaurant className="w-10 h-10 text-white" />
+        {/* Large decorative rings */}
+        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full border border-white/[0.06]" />
+        <div className="absolute -top-16 -right-16 w-[400px] h-[400px] rounded-full border border-white/[0.04]" />
+        <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full border border-white/[0.05]" />
+
+        <div className="relative z-10 max-w-md">
+          {/* Logo */}
+          <div className="flex items-center gap-4 mb-10">
+            <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/15 shadow-lg shadow-black/10">
+              <IconRestaurant className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white tracking-tight">{storeName}</h1>
+              <p className="text-sm text-indigo-300/80">餐飲管理系統</p>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-3 tracking-tight">{storeName}</h1>
-          <p className="text-indigo-200 text-base leading-relaxed">
-            餐飲管理系統
+
+          {/* Tagline */}
+          <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight mb-5 tracking-tight">
+            更聰明的方式<br />管理您的餐廳
+          </h2>
+          <p className="text-indigo-200/70 text-base leading-relaxed mb-10 max-w-sm">
+            從點餐到出餐、庫存到報表，一站式解決所有營運需求。
           </p>
-          <div className="mt-10 flex items-center justify-center gap-6 text-indigo-200/70 text-sm">
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <span>即時點餐</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <span>庫存追蹤</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <span>營運分析</span>
-            </div>
+
+          {/* Feature chips */}
+          <div className="flex flex-wrap gap-2">
+            {['即時點餐', '廚房管理', '庫存追蹤', '營運報表', '多角色權限', '離線運作'].map((label) => (
+              <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 text-indigo-100 border border-white/10 backdrop-blur-sm">
+                <svg className="w-3 h-3 text-indigo-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                {label}
+              </span>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 bg-white dark:bg-gray-900">
-        <div className="w-full max-w-[380px]">
-          {/* Mobile logo — visible only on small screens */}
-          <div className="lg:hidden text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-600 mb-3">
-              <IconRestaurant className="w-6 h-6 text-white" />
+      {/* ========== Right form panel ========== */}
+      <div className="flex-1 flex flex-col bg-white dark:bg-gray-900">
+        {/* Top bar — mobile logo + version */}
+        <div className="flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-8">
+          <div className="flex items-center gap-2.5 lg:opacity-0">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
+              <IconRestaurant className="w-4.5 h-4.5 text-white" />
             </div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">{storeName}</h1>
+            <span className="font-bold text-gray-900 dark:text-white text-sm">{storeName}</span>
           </div>
+          <span className="text-[11px] text-gray-300 dark:text-gray-600 font-medium tracking-wide">v2.0</span>
+        </div>
 
-          {!selectedEmployee ? (
-            <div className="animate-fade-in">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">歡迎回來</h2>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">選擇您的帳號以繼續</p>
-              </div>
+        {/* Form area — vertically centered */}
+        <div className="flex-1 flex items-center justify-center px-6 sm:px-10 pb-6">
+          <div className="w-full max-w-[380px]">
 
-              <div className="space-y-2">
-                {employees?.map((employee, i) => {
-                  const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
-                  return (
-                    <button
-                      key={employee.id}
-                      onClick={() => setSelectedEmployee(employee)}
-                      className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors active:scale-[0.99] group"
-                    >
-                      <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center flex-shrink-0`}>
-                        <span className="text-sm font-semibold text-white">
-                          {employee.name.charAt(0)}
-                        </span>
+            {!selectedEmployee ? (
+              <div className="animate-fade-in">
+                <div className="mb-8">
+                  <h2 className="text-[28px] font-bold text-gray-900 dark:text-white leading-tight">歡迎回來</h2>
+                  <p className="text-gray-400 mt-2 text-[15px]">選擇您的帳號以繼續</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  {employees?.map((employee, i) => {
+                    const gradient = AVATAR_COLORS[i % AVATAR_COLORS.length];
+                    return (
+                      <button
+                        key={employee.id}
+                        onClick={() => setSelectedEmployee(employee)}
+                        className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border border-transparent hover:bg-gray-50 hover:border-gray-100 dark:hover:bg-gray-800 dark:hover:border-gray-700 transition-all active:scale-[0.99] group"
+                      >
+                        <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                          <span className="text-sm font-bold text-white">
+                            {employee.name.charAt(0)}
+                          </span>
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                          <p className="font-semibold text-gray-900 dark:text-gray-100 text-[15px] truncate">
+                            {employee.name}
+                          </p>
+                          <p className="text-[13px] text-gray-400 dark:text-gray-500">
+                            {ROLE_LABEL[employee.role] || employee.role}
+                          </p>
+                        </div>
+                        <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Test credentials */}
+                <div className="mt-8 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50">
+                  <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2.5">測試帳號 PIN 碼</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { name: '管理員', pin: '0000' },
+                      { name: '小明', pin: '1234' },
+                      { name: '阿華', pin: '5678' },
+                    ].map((item) => (
+                      <div key={item.pin} className="text-center">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.name}</p>
+                        <p className="text-sm font-bold text-gray-800 dark:text-gray-200 font-mono tracking-widest mt-0.5">{item.pin}</p>
                       </div>
-                      <div className="flex-1 text-left min-w-0">
-                        <p className="font-medium text-gray-900 dark:text-gray-100 text-[15px] truncate">
-                          {employee.name}
-                        </p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">
-                          {ROLE_LABEL[employee.role] || employee.role}
-                        </p>
-                      </div>
-                      <svg className="w-4 h-4 text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="animate-fade-in">
-              {/* Selected user header */}
-              <div className="flex items-center gap-3 mb-8">
-                <button
-                  onClick={() => { setSelectedEmployee(null); setPin(''); setError(''); }}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className={`w-10 h-10 rounded-full ${AVATAR_COLORS[(employees?.findIndex(e => e.id === selectedEmployee.id) ?? 0) % AVATAR_COLORS.length]} flex items-center justify-center flex-shrink-0`}>
-                    <span className="text-sm font-semibold text-white">
-                      {selectedEmployee.name.charAt(0)}
-                    </span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-gray-900 dark:text-white text-[15px] truncate">{selectedEmployee.name}</p>
-                    <p className="text-xs text-gray-400">{ROLE_LABEL[selectedEmployee.role] || selectedEmployee.role}</p>
+                    ))}
                   </div>
                 </div>
               </div>
+            ) : (
+              <div className="animate-fade-in">
+                {/* Selected user + back */}
+                <button
+                  onClick={() => { setSelectedEmployee(null); setPin(''); setError(''); }}
+                  className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors mb-8 group"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </div>
+                  <span>切換帳號</span>
+                </button>
 
-              {/* PIN form */}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">輸入 PIN 碼</h2>
-                <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">請輸入您的 4 位數 PIN 碼</p>
+                {/* Avatar + name */}
+                <div className="flex items-center gap-4 mb-8">
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${AVATAR_COLORS[selectedIndex % AVATAR_COLORS.length]} flex items-center justify-center shadow-lg shadow-indigo-500/15`}>
+                    <span className="text-xl font-bold text-white">
+                      {selectedEmployee.name.charAt(0)}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{selectedEmployee.name}</h3>
+                    <p className="text-sm text-gray-400">{ROLE_LABEL[selectedEmployee.role] || selectedEmployee.role}</p>
+                  </div>
+                </div>
 
-                <div className="space-y-4">
-                  <div className="relative">
+                {/* PIN form */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    PIN 碼
+                  </label>
+                  <div className="relative mb-4">
                     <input
                       ref={pinRef}
                       type={showPin ? 'text' : 'password'}
@@ -198,18 +248,18 @@ export default function LoginPage() {
                       value={pin}
                       onChange={(e) => handlePinInput(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="輸入 PIN 碼"
+                      placeholder="請輸入 4 位數字"
                       autoComplete="off"
-                      className={`w-full h-12 px-4 pr-11 rounded-xl text-base transition-all border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none ${
+                      className={`w-full h-12 px-4 pr-11 rounded-xl text-base transition-all border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-500 outline-none ${
                         error
-                          ? 'border-red-400 focus:ring-red-400/20 focus:border-red-400'
+                          ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500 bg-red-50 dark:bg-red-900/10'
                           : 'border-gray-200 dark:border-gray-700'
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPin(!showPin)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400 transition-colors"
                     >
                       {showPin ? (
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,45 +275,35 @@ export default function LoginPage() {
                   </div>
 
                   {error && (
-                    <p className="text-sm text-red-500 flex items-center gap-1.5 animate-shake">
-                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800/30 mb-4 animate-shake">
+                      <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      {error}
-                    </p>
+                      <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                    </div>
                   )}
 
                   <button
                     id="login-btn"
                     onClick={handleLogin}
                     disabled={pin.length < 4}
-                    className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-base transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-gray-200 dark:disabled:bg-gray-800 text-white disabled:text-gray-400 font-semibold text-base transition-all disabled:cursor-not-allowed shadow-sm shadow-indigo-600/20 disabled:shadow-none"
                   >
                     登入
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Test credentials */}
-          <div className="mt-8 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30">
-            <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              測試帳號
-            </p>
-            <div className="space-y-1 text-xs text-amber-800/80 dark:text-amber-300/70 font-mono">
-              <p>管理員 — PIN: <span className="font-bold text-amber-900 dark:text-amber-300">0000</span></p>
-              <p>收銀員小明 — PIN: <span className="font-bold text-amber-900 dark:text-amber-300">1234</span></p>
-              <p>廚師阿華 — PIN: <span className="font-bold text-amber-900 dark:text-amber-300">5678</span></p>
-            </div>
+            )}
           </div>
+        </div>
 
-          <p className="text-center text-xs text-gray-300 dark:text-gray-600 mt-4">
-            POS 餐飲管理系統 v2.0
-          </p>
+        {/* Bottom bar */}
+        <div className="px-6 pb-5 sm:px-10 flex items-center justify-between">
+          <p className="text-[11px] text-gray-300 dark:text-gray-700">POS 餐飲管理系統</p>
+          <div className="flex items-center gap-1.5 text-[11px] text-gray-300 dark:text-gray-700">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            系統正常運行
+          </div>
         </div>
       </div>
     </div>
