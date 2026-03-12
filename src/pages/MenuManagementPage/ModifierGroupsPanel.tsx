@@ -125,7 +125,7 @@ export default function ModifierGroupsPanel() {
                           ? `多選，最多 ${entry.group.maxSelections} 項`
                           : '單選'}
                       </span>
-                      <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
+                      <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-blue-300">
                         套用商品 {entry.productCount}
                       </span>
                     </div>
@@ -136,8 +136,8 @@ export default function ModifierGroupsPanel() {
                           key={modifier.id}
                           className={`rounded-lg border px-3 py-1.5 text-sm ${
                             modifier.isActive
-                              ? 'border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-300'
-                              : 'border-slate-200/70 text-slate-400 dark:border-slate-800 dark:text-slate-500'
+                              ? 'border-slate-200 text-slate-700 dark:border-white/[0.1] dark:text-slate-300'
+                              : 'border-slate-200/70 text-slate-400 dark:border-white/[0.06] dark:text-slate-500'
                           }`}
                         >
                           {modifier.name}
@@ -296,7 +296,7 @@ function ModifierGroupFormModal({
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-          <label className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3">
+          <label className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-white/[0.06] px-4 py-3">
             <input
               type="checkbox"
               checked={required}
@@ -308,7 +308,7 @@ function ModifierGroupFormModal({
             </span>
           </label>
 
-          <label className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3">
+          <label className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-white/[0.06] px-4 py-3">
             <input
               type="checkbox"
               checked={multiSelect}
@@ -356,7 +356,7 @@ function ModifierGroupFormModal({
             {options.map((option) => (
               <div
                 key={option.localId}
-                className="grid gap-2 rounded-xl border border-slate-200 dark:border-slate-800 p-3 md:grid-cols-[minmax(0,1fr)_140px_auto_auto]"
+                className="grid gap-2 rounded-xl border border-slate-200 dark:border-white/[0.06] p-3 md:grid-cols-[minmax(0,1fr)_140px_auto_auto]"
               >
                 <input
                   value={option.name}

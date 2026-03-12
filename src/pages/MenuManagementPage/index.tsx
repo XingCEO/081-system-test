@@ -143,24 +143,24 @@ export default function MenuManagementPage() {
       <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <IconPencil className="w-6 h-6 text-blue-500" /> 菜單管理
+            <IconPencil className="w-6 h-6 text-indigo-500" /> 菜單管理
           </h1>
           <div className="flex gap-2 mt-3">
             <button
               onClick={() => setActiveTab('products')}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'products' ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'products' ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
             >
               商品 ({products?.filter((product) => product.isActive).length || 0})
             </button>
             <button
               onClick={() => setActiveTab('categories')}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'categories' ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'categories' ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
             >
               分類 ({categories?.filter((category) => category.isActive).length || 0})
             </button>
             <button
               onClick={() => setActiveTab('modifierGroups')}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'modifierGroups' ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'modifierGroups' ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}
             >
               加料群組 ({modifierGroups?.length || 0})
             </button>
@@ -226,7 +226,7 @@ export default function MenuManagementPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">{formatPrice(product.price)}</span>
+                    <span className="font-bold text-indigo-600 dark:text-indigo-400 text-lg">{formatPrice(product.price)}</span>
                     <button onClick={() => { setEditProduct(product); setShowProductForm(true); }} className="btn-secondary text-sm px-3 py-1.5">編輯</button>
                     <button onClick={() => setDeleteTarget({ type: 'product', id: product.id!, name: product.name })} className="text-red-400 hover:text-red-600 dark:hover:text-red-400 text-sm transition-colors">停用</button>
                   </div>
@@ -500,7 +500,7 @@ function ProductFormModal({
                     className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                       comboItems.some((comboItem) => comboItem.productId === candidate.id!)
                         ? 'border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-400'
-                        : 'border-slate-200 text-slate-600 hover:border-purple-300 dark:border-slate-700 dark:text-slate-400 dark:hover:border-purple-600'
+                        : 'border-slate-200 text-slate-600 hover:border-purple-300 dark:border-white/[0.1] dark:text-slate-400 dark:hover:border-purple-600'
                     }`}
                   >
                     {candidate.name}
@@ -546,7 +546,7 @@ function ProductFormModal({
                     {recipeItems.map((item) => {
                       const ingredient = ingredients.find((candidate) => candidate.id === item.ingredientId);
                       return (
-                        <div key={item.ingredientId} className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2">
+                        <div key={item.ingredientId} className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/[0.06] px-3 py-2">
                           <div>
                             <p className="font-medium text-slate-900 dark:text-white">{item.ingredientName}</p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">{ingredient?.unit || '份'}</p>
@@ -585,8 +585,8 @@ function ProductFormModal({
                     )}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
                       selectedModGroups.includes(group.id!)
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
-                        : 'border-slate-200 dark:border-slate-700 dark:text-slate-400'
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400'
+                        : 'border-slate-200 dark:border-white/[0.1] dark:text-slate-400'
                     }`}
                   >
                     {group.name}
@@ -644,7 +644,7 @@ function CategoryFormModal({
               <button
                 key={key}
                 onClick={() => setIcon(key)}
-                className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 text-slate-600 dark:text-slate-400 transition-all ${icon === key ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' : 'border-slate-200 dark:border-slate-700'}`}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 text-slate-600 dark:text-slate-400 transition-all ${icon === key ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950' : 'border-slate-200 dark:border-white/[0.1]'}`}
               >
                 {getCategoryIcon(key, { className: 'w-5 h-5' })}
               </button>

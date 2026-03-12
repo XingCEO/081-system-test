@@ -78,7 +78,7 @@ export default function KitchenPage() {
               </span>
             )}
             {order.tableName !== '外帶' && (
-              <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-0.5">
+              <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-400 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-0.5">
                 <IconMapPin className="w-3 h-3" /> {order.tableName}
               </span>
             )}
@@ -109,7 +109,7 @@ export default function KitchenPage() {
                 }`}>
                   {isDone && <IconCheck className="w-3 h-3" />}
                 </span>
-                <span className={`font-bold min-w-[24px] ${isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                <span className={`font-bold min-w-[24px] ${isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
                   {item.quantity}x
                 </span>
                 <div className="flex-1 min-w-0">

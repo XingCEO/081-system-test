@@ -63,7 +63,7 @@ export default function EmployeePage() {
   return (
     <div className="h-full flex flex-col">
       <div className="page-header flex items-center justify-between">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><IconUsers className="w-6 h-6 text-blue-500" /> 員工管理</h1>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><IconUsers className="w-6 h-6 text-indigo-500" /> 員工管理</h1>
         <button onClick={() => { setEditEmployee(null); setShowForm(true); }} className="btn-primary text-sm">+ 新增員工</button>
       </div>
 
@@ -85,7 +85,7 @@ export default function EmployeePage() {
                     <h3 className="font-semibold text-slate-900 dark:text-white">{emp.name}</h3>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-sm text-slate-500 dark:text-slate-400">@{emp.username}</span>
-                      <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 px-2 py-0.5 rounded-full text-xs font-medium">
+                      <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-400 px-2 py-0.5 rounded-full text-xs font-medium">
                         {ROLE_LABELS[emp.role]}
                       </span>
                       {!emp.isActive && (
@@ -124,7 +124,7 @@ export default function EmployeePage() {
               <p className="text-center text-slate-400 dark:text-slate-600 py-8">尚無班次記錄</p>
             ) : (
               shifts?.map((shift) => (
-                <div key={shift.id} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-800">
+                <div key={shift.id} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/[0.06]">
                   <div>
                     <p className="font-medium text-slate-900 dark:text-white">{formatDateTime(shift.startTime)}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -133,7 +133,7 @@ export default function EmployeePage() {
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-slate-900 dark:text-white">訂單：{shift.totalOrders}</p>
-                    <p className="text-sm text-blue-600 dark:text-blue-400">{formatPrice(shift.totalRevenue)}</p>
+                    <p className="text-sm text-indigo-600 dark:text-indigo-400">{formatPrice(shift.totalRevenue)}</p>
                   </div>
                 </div>
               ))
@@ -187,7 +187,7 @@ function EmployeeFormModal({ employee, onSave, onClose }: {
               <button
                 key={r}
                 onClick={() => setRole(r)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${role === r ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400' : 'border-slate-200 dark:border-slate-700 dark:text-slate-400'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${role === r ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400' : 'border-slate-200 dark:border-white/[0.1] dark:text-slate-400'}`}
               >
                 {ROLE_LABELS[r]}
               </button>

@@ -164,7 +164,7 @@ export default function InventoryPage() {
               <IconPackage className="w-6 h-6 text-amber-500" /> 食材庫存
             </h1>
             <div className="flex gap-2 mt-3">
-              <button onClick={() => setFilter('all')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filter === 'all' ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+              <button onClick={() => setFilter('all')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filter === 'all' ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
                 全部 ({inventoryRows?.length || 0})
               </button>
               <button onClick={() => setFilter('low')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filter === 'low' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
@@ -313,7 +313,7 @@ export default function InventoryPage() {
               <p className="text-center text-slate-400 dark:text-slate-600 py-8">尚無異動記錄</p>
             ) : (
               history.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                <div key={transaction.id} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/[0.06]">
                   <div className="flex items-center gap-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                       transaction.type === 'sale' ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400' :
@@ -404,7 +404,7 @@ export default function InventoryPage() {
               {purchaseSuggestions.map((suggestion) => (
                 <div
                   key={suggestion.ingredientId}
-                  className="rounded-2xl border border-slate-200 dark:border-slate-800 px-4 py-3"
+                  className="rounded-2xl border border-slate-200 dark:border-white/[0.06] px-4 py-3"
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>

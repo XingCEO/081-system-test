@@ -176,7 +176,7 @@ export default function AnalyticsPage() {
       <div className="page-header flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <IconChart className="w-6 h-6 text-blue-500" />
+            <IconChart className="w-6 h-6 text-indigo-500" />
             營運分析
           </h1>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -189,7 +189,7 @@ export default function AnalyticsPage() {
                 onClick={() => setPeriod(value)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
                   period === value
-                    ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500'
+                    ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500'
                     : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
                 }`}
               >
@@ -285,7 +285,7 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
               <div className="card p-5 animate-slide-up stagger-1">
                 <p className="text-sm text-slate-500 dark:text-slate-400">總營收</p>
-                <p className="text-2xl lg:text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">
+                <p className="text-2xl lg:text-3xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
                   {formatPrice(data.totalRevenue)}
                 </p>
               </div>
@@ -363,7 +363,7 @@ export default function AnalyticsPage() {
                   {data.timeSlotBreakdown.map((slot) => (
                     <div
                       key={slot.key}
-                      className="rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3"
+                      className="rounded-xl border border-slate-200 dark:border-white/[0.06] px-4 py-3"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -374,7 +374,7 @@ export default function AnalyticsPage() {
                             {slot.hoursLabel}
                           </p>
                         </div>
-                        <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                        <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
                           {formatPrice(slot.revenue)}
                         </p>
                       </div>

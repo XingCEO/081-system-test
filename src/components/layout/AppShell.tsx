@@ -105,24 +105,31 @@ export default function AppShell() {
   const isPOS = location.pathname === '/pos';
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+    <div className="h-screen flex flex-col bg-[#faf9fc] dark:bg-[#0c0a1d]">
       <Header />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950">
+        <main className="flex-1 overflow-y-auto bg-[#faf9fc] dark:bg-[#0c0a1d]">
           <Outlet />
         </main>
       </div>
 
-      <nav className={`lg:hidden flex-shrink-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-around safe-area-bottom ${isPOS ? 'hidden' : ''}`}>
+      <nav className={`lg:hidden flex-shrink-0 bg-white/80 backdrop-blur-xl border-t border-slate-200/50 dark:bg-[#13102b]/80 dark:backdrop-blur-xl dark:border-t dark:border-white/[0.06] flex items-center justify-around safe-area-bottom ${isPOS ? 'hidden' : ''}`}>
         {filteredBottomNav.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
-            className={({ isActive }) => (isActive ? 'bottom-nav-item-active' : 'bottom-nav-item')}
+            className={({ isActive }) => (isActive ? 'bottom-nav-item-active relative' : 'bottom-nav-item relative')}
           >
-            <item.icon className="w-5 h-5" />
-            <span>{item.label}</span>
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <span className="absolute -top-px left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" />
+                )}
+                <item.icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>

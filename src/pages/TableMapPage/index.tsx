@@ -111,12 +111,12 @@ export default function TableMapPage() {
         </div>
         <div className="flex gap-2 items-center">
           {/* View Mode Toggle */}
-          <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="flex rounded-lg border border-slate-200 dark:border-white/[0.1] overflow-hidden">
             <button
               onClick={() => setViewMode('canvas')}
               className={`px-3 py-1.5 text-sm font-medium transition-all ${
                 viewMode === 'canvas'
-                  ? 'bg-blue-600 text-white dark:bg-blue-500'
+                  ? 'bg-indigo-600 text-white dark:bg-indigo-500'
                   : 'bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
               }`}
             >
@@ -126,7 +126,7 @@ export default function TableMapPage() {
               onClick={() => setViewMode('list')}
               className={`px-3 py-1.5 text-sm font-medium transition-all ${
                 viewMode === 'list'
-                  ? 'bg-blue-600 text-white dark:bg-blue-500'
+                  ? 'bg-indigo-600 text-white dark:bg-indigo-500'
                   : 'bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
               }`}
             >
@@ -154,7 +154,7 @@ export default function TableMapPage() {
       {/* Canvas View */}
       {viewMode === 'canvas' && (
         <div
-          className="flex-1 relative overflow-auto bg-slate-100 dark:bg-slate-950 p-4"
+          className="flex-1 relative overflow-auto bg-slate-100 dark:bg-[#0c0a1d] p-4"
           onMouseMove={handleDragMove}
           onMouseUp={handleDragEnd}
           onMouseLeave={handleDragEnd}
@@ -165,7 +165,7 @@ export default function TableMapPage() {
                 key={table.id}
                 className={`table-item absolute cursor-pointer transition-all hover:shadow-lg flex flex-col items-center justify-center text-center select-none ${
                   TABLE_STATUS_COLORS[table.status]
-                } ${editMode ? 'cursor-move ring-2 ring-dashed ring-blue-300 dark:ring-blue-600' : ''} ${
+                } ${editMode ? 'cursor-move ring-2 ring-dashed ring-indigo-300 dark:ring-indigo-600' : ''} ${
                   table.shape === 'round' ? 'rounded-full' : 'rounded-xl'
                 }`}
                 style={{
@@ -380,7 +380,7 @@ function AddTableModal({ onClose, onAdd }: {
               <button
                 key={s}
                 onClick={() => setShape(s)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${shape === s ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400' : 'border-slate-200 dark:border-slate-700 dark:text-slate-400'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${shape === s ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400' : 'border-slate-200 dark:border-white/[0.1] dark:text-slate-400'}`}
               >
                 {s === 'square' ? '方形' : s === 'round' ? '圓形' : '長方形'}
               </button>

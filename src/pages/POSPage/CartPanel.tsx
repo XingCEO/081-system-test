@@ -22,17 +22,17 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
 
   return (
     <>
-      <div className="w-full lg:w-96 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col h-full transition-colors">
+      <div className="w-full lg:w-96 bg-white dark:bg-[#13102b] border-l border-slate-200 dark:border-white/[0.06] flex flex-col h-full transition-colors">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-white/[0.06] flex items-center justify-between">
           <h2 className="font-bold text-base text-slate-900 dark:text-white">
-            當前訂單 {itemCount > 0 && <span className="text-blue-600 dark:text-blue-400">({itemCount})</span>}
+            當前訂單 {itemCount > 0 && <span className="text-indigo-600 dark:text-indigo-400">({itemCount})</span>}
           </h2>
           <button
             onClick={() => setShowTableSelect(true)}
             className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1 active:scale-95 ${
               tableId
-                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:hover:bg-blue-900'
+                ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-900'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
             }`}
           >
@@ -133,10 +133,10 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="border-t border-slate-200 dark:border-slate-800 p-4 space-y-3">
+          <div className="border-t border-slate-200 dark:border-white/[0.06] p-4 space-y-3">
             <div className="flex justify-between text-lg font-bold">
               <span className="text-slate-700 dark:text-slate-300">總計</span>
-              <span className="text-blue-600 dark:text-blue-400">{formatPrice(subtotal)}</span>
+              <span className="text-indigo-600 dark:text-indigo-400">{formatPrice(subtotal)}</span>
             </div>
             <div className="flex gap-2">
               <button onClick={clearCart} className="btn-secondary flex-1">
@@ -165,8 +165,8 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
             }}
             className={`p-4 rounded-xl border-2 text-center font-medium transition-all active:scale-95 ${
               !tableId
-                ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
-                : 'border-slate-200 hover:border-blue-300 dark:border-slate-700 dark:hover:border-blue-600'
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400'
+                : 'border-slate-200 hover:border-indigo-300 dark:border-white/[0.1] dark:hover:border-indigo-500'
             }`}
           >
             <IconBag className="w-6 h-6 mx-auto mb-1" />
@@ -181,8 +181,8 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
               }}
               className={`p-4 rounded-xl border-2 text-center font-medium transition-all active:scale-95 ${
                 tableId === table.id
-                  ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
-                  : 'border-slate-200 hover:border-blue-300 dark:border-slate-700 dark:hover:border-blue-600'
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400'
+                  : 'border-slate-200 hover:border-indigo-300 dark:border-white/[0.1] dark:hover:border-indigo-500'
               }`}
             >
               <IconChair className="w-6 h-6 mx-auto mb-1" />

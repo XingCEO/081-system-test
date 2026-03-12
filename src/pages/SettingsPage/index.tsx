@@ -117,7 +117,7 @@ export default function SettingsPage() {
                 className={`py-3 rounded-xl text-sm font-medium border-2 transition-all ${
                   theme === mode
                     ? 'border-slate-900 bg-slate-100 text-slate-900 dark:border-slate-200 dark:bg-slate-800 dark:text-white'
-                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                    : 'border-slate-200 dark:border-white/[0.1] text-slate-600 dark:text-slate-400'
                 }`}
               >
                 {mode === 'light' ? '亮色' : mode === 'dark' ? '深色' : '跟隨系統'}
@@ -253,7 +253,7 @@ export default function SettingsPage() {
                   type="color"
                   value={formValues.themeColor}
                   onChange={(event) => updateField('themeColor', event.target.value)}
-                  className="h-11 w-16 rounded-lg cursor-pointer border border-slate-200 dark:border-slate-700"
+                  className="h-11 w-16 rounded-lg cursor-pointer border border-slate-200 dark:border-white/[0.1]"
                 />
                 <input
                   value={formValues.themeColor}
@@ -263,7 +263,7 @@ export default function SettingsPage() {
               </div>
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">儲存後會立即套用到主要按鈕、導覽與登入畫面。</p>
             </div>
-            <label className="md:col-span-2 flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3">
+            <label className="md:col-span-2 flex items-center gap-3 rounded-xl border border-slate-200 dark:border-white/[0.06] px-4 py-3">
               <input
                 type="checkbox"
                 checked={formValues.enableSound}

@@ -98,7 +98,7 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
     <Modal open={true} onClose={onClose} title={product.name} size="md">
       <div className="space-y-5">
         <div className="text-center">
-          <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+          <span className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
             {formatPrice(product.price)}
           </span>
           {product.description && (
@@ -132,8 +132,8 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
                     }
                     className={`p-3 rounded-xl border-2 text-left transition-all active:scale-[0.97] ${
                       isSelected
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950 dark:border-blue-400'
-                        : 'border-slate-200 hover:border-blue-300 dark:border-slate-700 dark:hover:border-blue-600'
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950 dark:border-indigo-400'
+                        : 'border-slate-200 hover:border-indigo-300 dark:border-white/[0.1] dark:hover:border-indigo-500'
                     }`}
                   >
                     <span className="font-medium text-slate-900 dark:text-white">{mod.name}</span>
@@ -166,10 +166,10 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
           />
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/[0.06]">
           <div>
             <span className="text-slate-500 dark:text-slate-400 text-sm">總計</span>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatPrice(totalPrice)}</p>
+            <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{formatPrice(totalPrice)}</p>
           </div>
           <div className="flex gap-2">
             <button onClick={onClose} className="btn-secondary px-6">

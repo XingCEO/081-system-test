@@ -58,8 +58,8 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
           onClick={() => setActiveCategoryId(null)}
           className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
             activeCategoryId === null
-              ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700'
+              ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-white/[0.1] dark:hover:bg-slate-700'
           }`}
         >
           全部
@@ -71,8 +71,8 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
             onClick={() => setActiveCategoryId(category.id!)}
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
               activeCategoryId === category.id
-                ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700'
+                ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-white/[0.1] dark:hover:bg-slate-700'
             }`}
           >
             {getCategoryIcon(category.icon, { className: 'w-4 h-4' })}
@@ -101,7 +101,7 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
                 className={`card p-3 text-left transition-all active:scale-[0.97] animate-fade-in ${
                   isSoldOut
                     ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer'
+                    : 'hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500 cursor-pointer'
                 } stagger-${Math.min((index % 8) + 1, 6)}`}
               >
                 {product.imageUrl ? (
@@ -134,7 +134,7 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
                 )}
 
                 <div className="flex items-center justify-between mt-2 gap-2">
-                  <span className="text-base font-bold text-blue-600 dark:text-blue-400">
+                  <span className="text-base font-bold text-indigo-600 dark:text-indigo-400">
                     {formatPrice(product.price)}
                   </span>
 

@@ -27,7 +27,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   autoLogoutMinutes: 30,
   lowStockDefaultThreshold: 10,
   enableSound: true,
-  themeColor: '#1e40af',
+  themeColor: '#6366f1',
   initialized: true,
 };
 

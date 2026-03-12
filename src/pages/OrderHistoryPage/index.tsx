@@ -47,7 +47,7 @@ export default function OrderHistoryPage() {
   return (
     <div className="h-full flex flex-col">
       <div className="page-header">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><IconClipboard className="w-6 h-6 text-blue-500" /> 訂單記錄</h1>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><IconClipboard className="w-6 h-6 text-indigo-500" /> 訂單記錄</h1>
         <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide">
           {statuses.map((s) => (
             <button
@@ -55,7 +55,7 @@ export default function OrderHistoryPage() {
               onClick={() => setStatusFilter(s)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 statusFilter === s
-                  ? 'bg-blue-600 text-white shadow-md dark:bg-blue-500'
+                  ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
               }`}
             >
@@ -94,7 +94,7 @@ export default function OrderHistoryPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-bold text-blue-600 dark:text-blue-400">{formatPrice(order.total)}</span>
+                  <span className="font-bold text-indigo-600 dark:text-indigo-400">{formatPrice(order.total)}</span>
                   <span className="text-sm text-slate-400 dark:text-slate-500 hidden sm:inline">{formatDateTime(order.createdAt)}</span>
                 </div>
               </div>
@@ -133,7 +133,7 @@ export default function OrderHistoryPage() {
               </div>
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+            <div className="border-t border-slate-200 dark:border-white/[0.06] pt-4">
               <h3 className="font-semibold mb-3 text-slate-900 dark:text-white">訂單明細</h3>
               <div className="space-y-2">
                 {selectedOrder.items.map((item) => (
@@ -152,10 +152,10 @@ export default function OrderHistoryPage() {
               </div>
             </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-1">
+            <div className="border-t border-slate-200 dark:border-white/[0.06] pt-4 space-y-1">
               <div className="flex justify-between font-bold text-lg">
                 <span className="text-slate-900 dark:text-white">總計</span>
-                <span className="text-blue-600 dark:text-blue-400">{formatPrice(selectedOrder.order.total)}</span>
+                <span className="text-indigo-600 dark:text-indigo-400">{formatPrice(selectedOrder.order.total)}</span>
               </div>
               <div className="flex justify-between text-sm text-slate-500 dark:text-slate-400">
                 <span>收款</span>
