@@ -65,14 +65,14 @@ export default function KitchenPage() {
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`w-3 h-3 rounded-full ${statusColor} ${order.status === 'pending' ? 'animate-pulse' : ''}`} />
-            <span className="font-bold text-lg dark:text-white">#{getShortOrderNumber(order.orderNumber)}</span>
+            <span className="font-bold text-lg dark:text-slate-50">#{getShortOrderNumber(order.orderNumber)}</span>
           </div>
           <div className="flex items-center gap-2">
             {totalCount > 0 && (
               <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                 completedCount === totalCount
                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
-                  : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                  : 'bg-gray-100 text-gray-500 dark:bg-[#131c2e] dark:text-slate-400'
               }`}>
                 {completedCount}/{totalCount} 完成
               </span>
@@ -82,7 +82,7 @@ export default function KitchenPage() {
                 <IconMapPin className="w-3 h-3" /> {order.tableName}
               </span>
             )}
-            <span className={`text-sm font-medium ${isUrgent ? 'text-red-600 dark:text-red-400 animate-pulse' : 'text-gray-500 dark:text-gray-400'}`}>
+            <span className={`text-sm font-medium ${isUrgent ? 'text-red-600 dark:text-red-400 animate-pulse' : 'text-gray-500 dark:text-slate-400'}`}>
               {minutes} 分鐘
             </span>
           </div>
@@ -105,7 +105,7 @@ export default function KitchenPage() {
                 <span className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                   isDone
                     ? 'bg-emerald-500 border-emerald-500 text-white'
-                    : 'border-gray-300 dark:border-gray-600'
+                    : 'border-gray-300 dark:border-[#2a3a54]'
                 }`}>
                   {isDone && <IconCheck className="w-3 h-3" />}
                 </span>
@@ -113,20 +113,20 @@ export default function KitchenPage() {
                   {item.quantity}x
                 </span>
                 <div className="flex-1 min-w-0">
-                  <span className={`font-medium ${isDone ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-white'}`}>
+                  <span className={`font-medium ${isDone ? 'line-through text-gray-400 dark:text-slate-500' : 'text-gray-800 dark:text-slate-50'}`}>
                     {item.productName}
                   </span>
                   {item.isCombo && item.comboItems && item.comboItems.length > 0 && (
                     <div className="mt-0.5 ml-2 space-y-0.5">
                       {item.comboItems.map((sub, si) => (
-                        <p key={si} className={`text-xs ${isDone ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-500 dark:text-gray-400'}`}>
+                        <p key={si} className={`text-xs ${isDone ? 'text-gray-400 dark:text-slate-500 line-through' : 'text-gray-500 dark:text-slate-400'}`}>
                           └ {sub.quantity}x {sub.productName}
                         </p>
                       ))}
                     </div>
                   )}
                   {item.modifiers.length > 0 && (
-                    <span className={`text-xs ml-1 ${isDone ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400'}`}>
+                    <span className={`text-xs ml-1 ${isDone ? 'text-gray-400 dark:text-slate-500' : 'text-gray-500 dark:text-slate-400'}`}>
                       ({item.modifiers.map(m => m.name).join(', ')})
                     </span>
                   )}
@@ -184,7 +184,7 @@ export default function KitchenPage() {
       {/* Header */}
       <div className="page-header flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+          <h1 className="text-xl font-bold text-gray-800 dark:text-slate-50 flex items-center gap-2">
             <IconFire className="w-6 h-6 text-orange-500" /> 廚房顯示
           </h1>
           <div className="flex gap-4 mt-1 text-sm">
@@ -196,7 +196,7 @@ export default function KitchenPage() {
       </div>
 
       {noOrders ? (
-        <div className="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500">
+        <div className="flex-1 flex items-center justify-center text-gray-400 dark:text-slate-500">
           <div className="text-center animate-fade-in">
             <IconChefHat className="w-16 h-16 mx-auto mb-4" />
             <p className="text-xl font-medium">目前沒有訂單</p>

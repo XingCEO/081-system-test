@@ -44,13 +44,13 @@ export default function Modal({ open, onClose, title, children, size = 'md' }: M
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-fade-in"
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
-      <div className={`bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col animate-slide-up border border-gray-200 dark:border-gray-700`}>
+      <div className={`bg-white dark:bg-[#0b1120] rounded-2xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col animate-slide-up border border-gray-200 dark:border-[#1e2d4a]`}>
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-[#1e2d4a]">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-slate-50">{title}</h2>
             <button
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a2540] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

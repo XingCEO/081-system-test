@@ -1,3 +1,4 @@
+import { api } from '../api/client';
 import { db } from '../db/database';
 import type {
   InventoryRecord,
@@ -20,11 +21,7 @@ export interface ProductAvailability {
   isLowStock: boolean;
 }
 
-export async function getProductRecipe(productId: number): Promise<ProductRecipeItem[]> {
-  return db.productRecipes.where('productId').equals(productId).toArray();
-}
-
-export async function replaceProductRecipe(
+async function replaceProductRecipeLocal(
   productId: number,
   items: RecipeDraftItem[]
 ): Promise<void> {
@@ -46,35 +43,7 @@ export async function replaceProductRecipe(
   });
 }
 
-export function mergeIngredientUsages(usages: IngredientUsage[]): IngredientUsage[] {
-  const map = new Map<number, IngredientUsage>();
-
-  usages.forEach((usage) => {
-    const existing = map.get(usage.ingredientId);
-    if (existing) {
-      existing.quantity += usage.quantity;
-      return;
-    }
-
-    map.set(usage.ingredientId, { ...usage });
-  });
-
-  return Array.from(map.values());
-}
-
-export async function getIngredientUsageForProduct(
-  productId: number,
-  multiplier = 1
-): Promise<IngredientUsage[]> {
-  const recipe = await getProductRecipe(productId);
-  return recipe.map((item) => ({
-    ingredientId: item.ingredientId,
-    ingredientName: item.ingredientName,
-    quantity: item.quantity * multiplier,
-  }));
-}
-
-export async function applyIngredientStockChange(params: {
+async function applyIngredientStockChangeLocal(params: {
   usages: IngredientUsage[];
   employeeId: number;
   note: string;
@@ -114,6 +83,79 @@ export async function applyIngredientStockChange(params: {
       employeeId: params.employeeId,
       createdAt: now,
     });
+  }
+}
+
+export async function getProductRecipe(productId: number): Promise<ProductRecipeItem[]> {
+  try {
+    return await api.get<ProductRecipeItem[]>(`/recipes/${productId}`);
+  } catch {
+    // Fallback to Dexie
+    return db.productRecipes.where('productId').equals(productId).toArray();
+  }
+}
+
+export async function replaceProductRecipe(
+  productId: number,
+  items: RecipeDraftItem[]
+): Promise<void> {
+  try {
+    await api.put(`/recipes/${productId}`, { items });
+    await replaceProductRecipeLocal(productId, items);
+  } catch {
+    // Fallback to Dexie-only
+    await replaceProductRecipeLocal(productId, items);
+  }
+}
+
+export function mergeIngredientUsages(usages: IngredientUsage[]): IngredientUsage[] {
+  const map = new Map<number, IngredientUsage>();
+
+  usages.forEach((usage) => {
+    const existing = map.get(usage.ingredientId);
+    if (existing) {
+      existing.quantity += usage.quantity;
+      return;
+    }
+
+    map.set(usage.ingredientId, { ...usage });
+  });
+
+  return Array.from(map.values());
+}
+
+export async function getIngredientUsageForProduct(
+  productId: number,
+  multiplier = 1
+): Promise<IngredientUsage[]> {
+  const recipe = await getProductRecipe(productId);
+  return recipe.map((item) => ({
+    ingredientId: item.ingredientId,
+    ingredientName: item.ingredientName,
+    quantity: item.quantity * multiplier,
+  }));
+}
+
+export async function applyIngredientStockChange(params: {
+  usages: IngredientUsage[];
+  employeeId: number;
+  note: string;
+  orderId: number | null;
+  type: InventoryTransactionType;
+  restore?: boolean;
+}): Promise<void> {
+  try {
+    await api.post('/inventory/deduct', {
+      usages: params.usages,
+      employeeId: params.employeeId,
+      note: params.note,
+      orderId: params.orderId,
+      restore: params.restore ?? false,
+    });
+    await applyIngredientStockChangeLocal(params);
+  } catch {
+    // Fallback to Dexie-only
+    await applyIngredientStockChangeLocal(params);
   }
 }
 
@@ -207,31 +249,41 @@ function calculateAvailabilityForUsage(
 }
 
 export async function getProductAvailabilityMap(): Promise<Map<number, ProductAvailability>> {
-  const [products, recipes, inventory] = await Promise.all([
-    db.products.toArray(),
-    db.productRecipes.toArray(),
-    db.inventory.toArray(),
-  ]);
-
-  const usageMap = buildUsageMap(products, recipes);
-  const inventoryByIngredientId = new Map(
-    inventory.map((record) => [record.ingredientId, record])
-  );
-  const availabilityMap = new Map<number, ProductAvailability>();
-
-  products.forEach((product) => {
-    if (!product.id) {
-      return;
+  try {
+    const result = await api.get<Record<string, ProductAvailability>>('/products/availability');
+    const map = new Map<number, ProductAvailability>();
+    for (const [key, value] of Object.entries(result)) {
+      map.set(Number(key), value);
     }
+    return map;
+  } catch {
+    // Fallback to Dexie
+    const [products, recipes, inventory] = await Promise.all([
+      db.products.toArray(),
+      db.productRecipes.toArray(),
+      db.inventory.toArray(),
+    ]);
 
-    availabilityMap.set(
-      product.id,
-      calculateAvailabilityForUsage(
-        usageMap.get(product.id) ?? [],
-        inventoryByIngredientId
-      )
+    const usageMap = buildUsageMap(products, recipes);
+    const inventoryByIngredientId = new Map(
+      inventory.map((record) => [record.ingredientId, record])
     );
-  });
+    const availabilityMap = new Map<number, ProductAvailability>();
 
-  return availabilityMap;
+    products.forEach((product) => {
+      if (!product.id) {
+        return;
+      }
+
+      availabilityMap.set(
+        product.id,
+        calculateAvailabilityForUsage(
+          usageMap.get(product.id) ?? [],
+          inventoryByIngredientId
+        )
+      );
+    });
+
+    return availabilityMap;
+  }
 }

@@ -105,7 +105,7 @@ export default function AppShell() {
   const isPOS = location.pathname === '/pos';
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-[#080e1e]">
       <Header />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
@@ -114,7 +114,7 @@ export default function AppShell() {
         </main>
       </div>
 
-      <nav className={`lg:hidden flex-shrink-0 bg-white border-t border-gray-200 dark:bg-gray-900 dark:border-gray-700 flex items-center justify-around safe-area-bottom ${isPOS ? 'hidden' : ''}`}>
+      <nav className={`lg:hidden flex-shrink-0 bg-white border-t border-gray-200 dark:bg-[#0b1120] dark:border-[#1e2d4a] flex items-center justify-around safe-area-bottom ${isPOS ? 'hidden' : ''}`}>
         {filteredBottomNav.map((item) => (
           <NavLink
             key={item.path}

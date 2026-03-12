@@ -82,7 +82,7 @@ export default function LoginPage() {
   const timeStr = time.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   return (
-    <div className="min-h-screen flex dark:bg-gray-950">
+    <div className="min-h-screen flex dark:bg-[#080e1e]">
       {/* ========== Left brand panel (desktop) ========== */}
       <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden flex-col justify-between p-12"
         style={{ background: 'linear-gradient(160deg, #312e81 0%, #4338ca 35%, #6366f1 70%, #818cf8 100%)' }}
@@ -107,7 +107,7 @@ export default function LoginPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-white tracking-tight">{storeName}</h1>
-            <p className="text-xs text-indigo-300/80">餐飲管理系統</p>
+            <p className="text-xs text-indigo-300/80">超星集團</p>
           </div>
         </div>
 
@@ -149,18 +149,18 @@ export default function LoginPage() {
       </div>
 
       {/* ========== Right form panel ========== */}
-      <div className="flex-1 flex flex-col bg-white dark:bg-gray-900">
+      <div className="flex-1 flex flex-col bg-white dark:bg-[#0b1120]">
         {/* Top bar */}
         <div className="flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-8">
           <div className="flex items-center gap-2.5 lg:opacity-0">
             <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
               <IconRestaurant className="w-4.5 h-4.5 text-white" />
             </div>
-            <span className="font-bold text-gray-900 dark:text-white text-sm">{storeName}</span>
+            <span className="font-bold text-gray-900 dark:text-slate-50 text-sm">{storeName}</span>
           </div>
           <div className="text-right">
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 font-mono tabular-nums">{timeStr}</p>
-            <p className="text-[10px] text-gray-300 dark:text-gray-600">{dateStr}</p>
+            <p className="text-[11px] text-gray-400 dark:text-slate-500 font-mono tabular-nums">{timeStr}</p>
+            <p className="text-[10px] text-gray-300 dark:text-slate-500">{dateStr}</p>
           </div>
         </div>
 
@@ -171,7 +171,7 @@ export default function LoginPage() {
             {!selectedEmployee ? (
               <div className="animate-fade-in">
                 <div className="mb-8">
-                  <h2 className="text-[28px] font-bold text-gray-900 dark:text-white leading-tight">歡迎回來</h2>
+                  <h2 className="text-[28px] font-bold text-gray-900 dark:text-slate-50 leading-tight">歡迎回來</h2>
                   <p className="text-gray-400 mt-2 text-[15px]">選擇您的帳號以繼續</p>
                 </div>
 
@@ -180,18 +180,18 @@ export default function LoginPage() {
                     <button
                       key={employee.id}
                       onClick={() => setSelectedEmployee(employee)}
-                      className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border border-transparent hover:bg-gray-50 hover:border-gray-100 dark:hover:bg-gray-800 dark:hover:border-gray-700 transition-all active:scale-[0.99] group"
+                      className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border border-transparent hover:bg-gray-50 hover:border-gray-100 dark:hover:bg-[#1a2540] dark:hover:border-[#1e2d4a] transition-all active:scale-[0.99] group"
                     >
                       <UserAvatar name={employee.name} size={44} className="flex-shrink-0" />
                       <div className="flex-1 text-left min-w-0">
-                        <p className="font-semibold text-gray-900 dark:text-gray-100 text-[15px] truncate">
+                        <p className="font-semibold text-gray-900 dark:text-slate-100 text-[15px] truncate">
                           {employee.name}
                         </p>
-                        <p className="text-[13px] text-gray-400 dark:text-gray-500">
+                        <p className="text-[13px] text-gray-400 dark:text-slate-500">
                           {ROLE_LABEL[employee.role] || employee.role}
                         </p>
                       </div>
-                      <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-[#131c2e] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                         </svg>
@@ -201,8 +201,8 @@ export default function LoginPage() {
                 </div>
 
                 {/* Test credentials */}
-                <div className="mt-8 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50">
-                  <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2.5">測試帳號 PIN 碼</p>
+                <div className="mt-8 p-4 rounded-2xl bg-gray-50 dark:bg-[#131c2e]/50 border border-gray-100 dark:border-[#1e2d4a]/50">
+                  <p className="text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2.5">測試帳號 PIN 碼</p>
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { name: '管理員', pin: '0000' },
@@ -210,8 +210,8 @@ export default function LoginPage() {
                       { name: '阿華', pin: '5678' },
                     ].map((item) => (
                       <div key={item.pin} className="text-center">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.name}</p>
-                        <p className="text-sm font-bold text-gray-800 dark:text-gray-200 font-mono tracking-widest mt-0.5">{item.pin}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">{item.name}</p>
+                        <p className="text-sm font-bold text-gray-800 dark:text-slate-200 font-mono tracking-widest mt-0.5">{item.pin}</p>
                       </div>
                     ))}
                   </div>
@@ -222,9 +222,9 @@ export default function LoginPage() {
                 {/* Back */}
                 <button
                   onClick={() => { setSelectedEmployee(null); setPin(''); setError(''); }}
-                  className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors mb-8 group"
+                  className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors mb-8 group"
                 >
-                  <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors">
+                  <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-[#131c2e] flex items-center justify-center group-hover:bg-gray-200 dark:group-hover:bg-[#1a2540] transition-colors">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                     </svg>
@@ -236,14 +236,14 @@ export default function LoginPage() {
                 <div className="flex items-center gap-4 mb-8">
                   <UserAvatar name={selectedEmployee.name} size={56} className="flex-shrink-0 shadow-lg" />
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{selectedEmployee.name}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-slate-50">{selectedEmployee.name}</h3>
                     <p className="text-sm text-gray-400">{ROLE_LABEL[selectedEmployee.role] || selectedEmployee.role}</p>
                   </div>
                 </div>
 
                 {/* PIN form */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     PIN 碼
                   </label>
                   <div className="relative mb-4">
@@ -257,16 +257,16 @@ export default function LoginPage() {
                       onKeyDown={handleKeyDown}
                       placeholder="請輸入 4 位數字"
                       autoComplete="off"
-                      className={`w-full h-12 px-4 pr-11 rounded-xl text-base transition-all border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-500 outline-none ${
+                      className={`w-full h-12 px-4 pr-11 rounded-xl text-base transition-all border bg-gray-50 dark:bg-[#131c2e] text-gray-900 dark:text-slate-50 placeholder:text-gray-300 dark:placeholder:text-slate-600 focus:bg-white dark:focus:bg-[#0b1120] focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-500 outline-none ${
                         error
                           ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500 bg-red-50 dark:bg-red-900/10'
-                          : 'border-gray-200 dark:border-gray-700'
+                          : 'border-gray-200 dark:border-[#1e2d4a]'
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPin(!showPin)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
                     >
                       {showPin ? (
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -294,7 +294,7 @@ export default function LoginPage() {
                     id="login-btn"
                     onClick={handleLogin}
                     disabled={pin.length < 4}
-                    className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-gray-200 dark:disabled:bg-gray-800 text-white disabled:text-gray-400 font-semibold text-base transition-all disabled:cursor-not-allowed shadow-sm shadow-indigo-600/20 disabled:shadow-none"
+                    className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-gray-200 dark:disabled:bg-[#131c2e] text-white disabled:text-gray-400 font-semibold text-base transition-all disabled:cursor-not-allowed shadow-sm shadow-indigo-600/20 disabled:shadow-none"
                   >
                     登入
                   </button>
@@ -306,17 +306,17 @@ export default function LoginPage() {
 
         {/* Bottom status bar */}
         <div className="px-6 pb-5 sm:px-10">
-          <div className="flex items-center justify-between text-[11px] text-gray-300 dark:text-gray-600">
+          <div className="flex items-center justify-between text-[11px] text-gray-300 dark:text-slate-500">
             <div className="flex items-center gap-3">
-              <span>POS v2.0</span>
-              <div className="w-px h-3 bg-gray-200 dark:bg-gray-700" />
+              <span>超星集團 POS v2.0</span>
+              <div className="w-px h-3 bg-gray-200 dark:bg-[#1a2540]" />
               <div className="flex items-center gap-1.5">
                 <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-red-400'}`} />
                 {isOnline ? '連線正常' : '離線中'}
               </div>
-              <div className="w-px h-3 bg-gray-200 dark:bg-gray-700" />
+              <div className="w-px h-3 bg-gray-200 dark:bg-[#1a2540]" />
               <span>{employees?.length ?? '-'} 員工</span>
-              <div className="w-px h-3 bg-gray-200 dark:bg-gray-700" />
+              <div className="w-px h-3 bg-gray-200 dark:bg-[#1a2540]" />
               <span>{productCount ?? '-'} 品項</span>
             </div>
             <span className="font-mono tabular-nums">{timeStr}</span>

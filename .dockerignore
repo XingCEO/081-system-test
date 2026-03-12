@@ -1,8 +1,10 @@
 node_modules
+server/node_modules
 dist
+server/dist
+server/data
+coverage
 .git
-.claude
-*.md
-.env*
+.github
 .vscode
-.idea
+*.log

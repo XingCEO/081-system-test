@@ -1,4 +1,5 @@
 import { eachDayOfInterval, format } from 'date-fns';
+import { api } from '../api/client';
 import { db } from '../db/database';
 import type { DailySummary } from '../db/types';
 
@@ -197,6 +198,43 @@ export function buildTimeSlotBreakdown(orders: AnalyticsOrderLike[]): TimeSlotBr
   });
 }
 
+function buildTimeSlotBreakdownFromHourlyBreakdown(
+  hourlyBreakdown: HourlyBreakdownPoint[]
+): TimeSlotBreakdownPoint[] {
+  const slotMap = new Map<string, { orders: number; revenue: number }>();
+
+  TIME_SLOT_DEFINITIONS.forEach((slot) => {
+    slotMap.set(slot.key, { orders: 0, revenue: 0 });
+  });
+
+  hourlyBreakdown.forEach((entry) => {
+    const slot = TIME_SLOT_DEFINITIONS.find((definition) => definition.includesHour(entry.hour));
+    if (!slot) {
+      return;
+    }
+
+    const current = slotMap.get(slot.key);
+    if (!current) {
+      return;
+    }
+
+    current.orders += entry.orders;
+    current.revenue += entry.revenue;
+  });
+
+  return TIME_SLOT_DEFINITIONS.map((slot) => {
+    const current = slotMap.get(slot.key) ?? { orders: 0, revenue: 0 };
+    return {
+      key: slot.key,
+      label: slot.label,
+      hoursLabel: slot.hoursLabel,
+      orders: current.orders,
+      revenue: current.revenue,
+      averageOrderValue: current.orders > 0 ? Math.round(current.revenue / current.orders) : 0,
+    };
+  });
+}
+
 function getPeakTimeSlot(timeSlotBreakdown: TimeSlotBreakdownPoint[]): TimeSlotBreakdownPoint | null {
   return timeSlotBreakdown.reduce<TimeSlotBreakdownPoint | null>((best, current) => {
     if (!best) {
@@ -216,37 +254,67 @@ function getPeakTimeSlot(timeSlotBreakdown: TimeSlotBreakdownPoint[]): TimeSlotB
 }
 
 export async function getAnalytics(startDate: Date, endDate: Date): Promise<AnalyticsData> {
-  const orders = await db.orders
-    .where('createdAt')
-    .between(startDate.toISOString(), endDate.toISOString(), true, true)
-    .filter((order) => order.status === 'completed')
-    .toArray();
+  try {
+    const response = await api.get<{
+      totalRevenue: number;
+      totalOrders: number;
+      averageOrderValue: number;
+      topItems: Array<{ name: string; quantity: number; revenue: number }>;
+      revenueByDay: Array<{ date: string; revenue: number; orders: number }>;
+      hourlyBreakdown: Array<{ hour: number; orders: number; revenue: number }>;
+    }>(`/analytics?start=${encodeURIComponent(startDate.toISOString())}&end=${encodeURIComponent(endDate.toISOString())}`);
 
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-  const totalOrders = orders.length;
-  const averageOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+    const revenueByDay = response.revenueByDay.map((entry) => ({
+      date: entry.date.slice(5).replace('-', '/'),
+      revenue: entry.revenue,
+      orders: entry.orders,
+    }));
+    const hourlyBreakdown = [...response.hourlyBreakdown].sort((left, right) => left.hour - right.hour);
+    const timeSlotBreakdown = buildTimeSlotBreakdownFromHourlyBreakdown(hourlyBreakdown);
 
-  const orderItemsByOrder = await Promise.all(
-    orders
-      .filter((order): order is typeof order & { id: number } => typeof order.id === 'number')
-      .map((order) => db.orderItems.where('orderId').equals(order.id).toArray())
-  );
+    return {
+      totalRevenue: response.totalRevenue,
+      totalOrders: response.totalOrders,
+      averageOrderValue: Math.round(response.averageOrderValue),
+      topItems: response.topItems,
+      revenueByDay,
+      hourlyBreakdown,
+      timeSlotBreakdown,
+      peakTimeSlot: getPeakTimeSlot(timeSlotBreakdown),
+    };
+  } catch {
+    const orders = await db.orders
+      .where('createdAt')
+      .between(startDate.toISOString(), endDate.toISOString(), true, true)
+      .filter((order) => order.status === 'completed')
+      .toArray();
 
-  const topItems = buildTopItems(orderItemsByOrder);
-  const revenueByDay = buildRevenueByDay(orders, startDate, endDate);
-  const hourlyBreakdown = buildHourlyBreakdown(orders);
-  const timeSlotBreakdown = buildTimeSlotBreakdown(orders);
+    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+    const totalOrders = orders.length;
+    const averageOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
-  return {
-    totalRevenue,
-    totalOrders,
-    averageOrderValue,
-    topItems,
-    revenueByDay,
-    hourlyBreakdown,
-    timeSlotBreakdown,
-    peakTimeSlot: getPeakTimeSlot(timeSlotBreakdown),
-  };
+    const orderItemsByOrder = await Promise.all(
+      orders
+        .filter((order): order is typeof order & { id: number } => typeof order.id === 'number')
+        .map((order) => db.orderItems.where('orderId').equals(order.id).toArray())
+    );
+
+    const topItems = buildTopItems(orderItemsByOrder);
+    const revenueByDay = buildRevenueByDay(orders, startDate, endDate);
+    const hourlyBreakdown = buildHourlyBreakdown(orders);
+    const timeSlotBreakdown = buildTimeSlotBreakdown(orders);
+
+    return {
+      totalRevenue,
+      totalOrders,
+      averageOrderValue,
+      topItems,
+      revenueByDay,
+      hourlyBreakdown,
+      timeSlotBreakdown,
+      peakTimeSlot: getPeakTimeSlot(timeSlotBreakdown),
+    };
+  }
 }
 
 function escapeXml(value: string): string {

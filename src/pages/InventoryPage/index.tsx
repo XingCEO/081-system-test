@@ -160,17 +160,17 @@ export default function InventoryPage() {
       <div className="page-header">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+            <h1 className="text-xl font-bold text-gray-800 dark:text-slate-50 flex items-center gap-2">
               <IconPackage className="w-6 h-6 text-amber-500" /> 食材庫存
             </h1>
             <div className="flex gap-2 mt-3">
-              <button onClick={() => setFilter('all')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filter === 'all' ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+              <button onClick={() => setFilter('all')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filter === 'all' ? 'bg-indigo-600 text-white shadow-md dark:bg-indigo-500' : 'bg-gray-100 text-gray-500 dark:bg-[#131c2e] dark:text-slate-400'}`}>
                 全部 ({inventoryRows?.length || 0})
               </button>
-              <button onClick={() => setFilter('low')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filter === 'low' ? 'bg-amber-500 text-white shadow-md' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+              <button onClick={() => setFilter('low')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filter === 'low' ? 'bg-amber-500 text-white shadow-md' : 'bg-gray-100 text-gray-500 dark:bg-[#131c2e] dark:text-slate-400'}`}>
                 低庫存 ({lowCount})
               </button>
-              <button onClick={() => setFilter('out')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filter === 'out' ? 'bg-red-500 text-white shadow-md' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+              <button onClick={() => setFilter('out')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filter === 'out' ? 'bg-red-500 text-white shadow-md' : 'bg-gray-100 text-gray-500 dark:bg-[#131c2e] dark:text-slate-400'}`}>
                 缺貨 ({outCount})
               </button>
             </div>
@@ -192,10 +192,10 @@ export default function InventoryPage() {
                     <IconWarning className="w-4 h-4" />
                     補貨提醒
                   </p>
-                  <h2 className="mt-1 text-lg font-semibold text-gray-800 dark:text-white">
+                  <h2 className="mt-1 text-lg font-semibold text-gray-800 dark:text-slate-50">
                     {purchaseSuggestions.length} 項食材需要補貨
                   </h2>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
                     系統會以低庫存門檻的 2 倍作為建議安全庫存，協助快速產生採購清單。
                   </p>
                 </div>
@@ -209,21 +209,21 @@ export default function InventoryPage() {
             </div>
 
             <div className="card p-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">建議採購量</p>
-              <p className="mt-2 text-2xl font-bold text-gray-800 dark:text-white">
+              <p className="text-sm text-gray-500 dark:text-slate-400">建議採購量</p>
+              <p className="mt-2 text-2xl font-bold text-gray-800 dark:text-slate-50">
                 {formatInventoryQuantity(purchaseSummary.totalSuggestedQuantity)}
               </p>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
                 缺貨 {purchaseSummary.outOfStockCount} 項，低庫存 {purchaseSummary.lowStockCount} 項
               </p>
             </div>
 
             <div className="card p-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">預估採購成本</p>
-              <p className="mt-2 text-2xl font-bold text-gray-800 dark:text-white">
+              <p className="text-sm text-gray-500 dark:text-slate-400">預估採購成本</p>
+              <p className="mt-2 text-2xl font-bold text-gray-800 dark:text-slate-50">
                 {formatPrice(purchaseSummary.totalEstimatedCost)}
               </p>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
                 依食材單位成本自動估算
               </p>
             </div>
@@ -231,7 +231,7 @@ export default function InventoryPage() {
         )}
 
         {!filteredRows?.length ? (
-          <div className="text-center py-16 text-gray-400 dark:text-gray-500 animate-fade-in">
+          <div className="text-center py-16 text-gray-400 dark:text-slate-500 animate-fade-in">
             <IconPackage className="w-12 h-12 mx-auto mb-3" />
             <p className="text-lg font-medium">目前沒有符合條件的食材</p>
           </div>
@@ -244,12 +244,12 @@ export default function InventoryPage() {
                     <p className={`text-2xl font-bold ${row.currentStock <= 0 ? 'text-red-600 dark:text-red-400' : row.currentStock <= row.lowStockThreshold ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                       {row.currentStock}
                     </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">{row.unit}</p>
+                    <p className="text-xs text-gray-400 dark:text-slate-500">{row.unit}</p>
                   </div>
 
                   <div>
-                    <h3 className="font-semibold text-gray-800 dark:text-white">{row.ingredientName}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <h3 className="font-semibold text-gray-800 dark:text-slate-50">{row.ingredientName}</h3>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">
                       低庫存門檻 {row.lowStockThreshold} {row.unit} · 成本 {row.costPerUnit.toLocaleString()} / {row.unit}
                     </p>
                   </div>
@@ -273,13 +273,13 @@ export default function InventoryPage() {
       {actionModal && (
         <Modal open={true} onClose={() => setActionModal(null)} title={`${actionModal.action === 'restock' ? '進貨' : actionModal.action === 'adjust' ? '調整庫存' : '報廢'} - ${actionModal.row.ingredientName}`} size="sm">
           <div className="space-y-4">
-            <div className="text-center bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">目前庫存</p>
-              <p className="text-3xl font-bold text-gray-800 dark:text-white">{actionModal.row.currentStock} {actionModal.row.unit}</p>
+            <div className="text-center bg-gray-50 dark:bg-[#131c2e] rounded-xl p-4">
+              <p className="text-sm text-gray-500 dark:text-slate-400">目前庫存</p>
+              <p className="text-3xl font-bold text-gray-800 dark:text-slate-50">{actionModal.row.currentStock} {actionModal.row.unit}</p>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">
+              <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-1">
                 {actionModal.action === 'adjust' ? '調整後庫存' : '數量'}
               </label>
               <input
@@ -294,7 +294,7 @@ export default function InventoryPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">備註</label>
+              <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-1">備註</label>
               <input value={note} onChange={(event) => setNote(event.target.value)} className="input-field" placeholder="例如：每日盤點" />
             </div>
 
@@ -310,16 +310,16 @@ export default function InventoryPage() {
         <Modal open={true} onClose={() => setHistoryModal(null)} title={`${historyModal.ingredientName} - 異動記錄`} size="lg">
           <div className="space-y-2 max-h-[60vh] overflow-auto">
             {history.length === 0 ? (
-              <p className="text-center text-gray-400 dark:text-gray-500 py-8">尚無異動記錄</p>
+              <p className="text-center text-gray-400 dark:text-slate-500 py-8">尚無異動記錄</p>
             ) : (
               history.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                <div key={transaction.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-[#1e2d4a]">
                   <div className="flex items-center gap-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                       transaction.type === 'sale' ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400' :
                       transaction.type === 'restock' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400' :
                       transaction.type === 'waste' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400' :
-                      'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                      'bg-gray-100 text-gray-600 dark:bg-[#131c2e] dark:text-slate-400'
                     }`}>
                       {INVENTORY_TRANSACTION_LABELS[transaction.type]}
                     </span>
@@ -327,14 +327,14 @@ export default function InventoryPage() {
                       <span className={`font-semibold ${transaction.quantity > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                         {transaction.quantity > 0 ? '+' : ''}{transaction.quantity}
                       </span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
+                      <span className="text-sm text-gray-500 dark:text-slate-400 ml-2">
                         {transaction.previousStock} → {transaction.newStock}
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-400 dark:text-gray-500">{formatDateTime(transaction.createdAt)}</p>
-                    {transaction.note && <p className="text-xs text-gray-500 dark:text-gray-400">{transaction.note}</p>}
+                    <p className="text-xs text-gray-400 dark:text-slate-500">{formatDateTime(transaction.createdAt)}</p>
+                    {transaction.note && <p className="text-xs text-gray-500 dark:text-slate-400">{transaction.note}</p>}
                   </div>
                 </div>
               ))
@@ -352,21 +352,21 @@ export default function InventoryPage() {
         >
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-                <p className="text-xs text-gray-500 dark:text-gray-400">待補貨品項</p>
-                <p className="mt-1 text-xl font-bold text-gray-800 dark:text-white">
+              <div className="rounded-2xl bg-gray-50 dark:bg-[#131c2e] px-4 py-3">
+                <p className="text-xs text-gray-500 dark:text-slate-400">待補貨品項</p>
+                <p className="mt-1 text-xl font-bold text-gray-800 dark:text-slate-50">
                   {purchaseSuggestions.length}
                 </p>
               </div>
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-                <p className="text-xs text-gray-500 dark:text-gray-400">建議採購量</p>
-                <p className="mt-1 text-xl font-bold text-gray-800 dark:text-white">
+              <div className="rounded-2xl bg-gray-50 dark:bg-[#131c2e] px-4 py-3">
+                <p className="text-xs text-gray-500 dark:text-slate-400">建議採購量</p>
+                <p className="mt-1 text-xl font-bold text-gray-800 dark:text-slate-50">
                   {formatInventoryQuantity(purchaseSummary.totalSuggestedQuantity)}
                 </p>
               </div>
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-                <p className="text-xs text-gray-500 dark:text-gray-400">預估採購成本</p>
-                <p className="mt-1 text-xl font-bold text-gray-800 dark:text-white">
+              <div className="rounded-2xl bg-gray-50 dark:bg-[#131c2e] px-4 py-3">
+                <p className="text-xs text-gray-500 dark:text-slate-400">預估採購成本</p>
+                <p className="mt-1 text-xl font-bold text-gray-800 dark:text-slate-50">
                   {formatPrice(purchaseSummary.totalEstimatedCost)}
                 </p>
               </div>
@@ -404,12 +404,12 @@ export default function InventoryPage() {
               {purchaseSuggestions.map((suggestion) => (
                 <div
                   key={suggestion.ingredientId}
-                  className="rounded-2xl border border-gray-200 dark:border-gray-700 px-4 py-3"
+                  className="rounded-2xl border border-gray-200 dark:border-[#1e2d4a] px-4 py-3"
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-gray-800 dark:text-white">
+                        <h3 className="font-semibold text-gray-800 dark:text-slate-50">
                           {suggestion.ingredientName}
                         </h3>
                         <span
@@ -422,7 +422,7 @@ export default function InventoryPage() {
                           {suggestion.status === 'out' ? '缺貨' : '低庫存'}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
                         目前 {formatInventoryQuantity(suggestion.currentStock)} {suggestion.unit}
                         {' · '}
                         門檻 {formatInventoryQuantity(suggestion.lowStockThreshold)} {suggestion.unit}
@@ -432,11 +432,11 @@ export default function InventoryPage() {
                     </div>
 
                     <div className="text-left sm:text-right">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">建議補貨</p>
-                      <p className="text-lg font-bold text-gray-800 dark:text-white">
+                      <p className="text-sm text-gray-500 dark:text-slate-400">建議補貨</p>
+                      <p className="text-lg font-bold text-gray-800 dark:text-slate-50">
                         {formatInventoryQuantity(suggestion.recommendedOrderQuantity)} {suggestion.unit}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-gray-500 dark:text-slate-400">
                         預估 {formatPrice(suggestion.estimatedCost)}
                       </p>
                     </div>
@@ -512,31 +512,31 @@ function IngredientFormModal({
     <Modal open={true} onClose={onClose} title={ingredient ? '編輯食材' : '新增食材'} size="sm">
       <div className="space-y-4">
         <div>
-          <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">食材名稱</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-1">食材名稱</label>
           <input value={name} onChange={(event) => setName(event.target.value)} className="input-field" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">單位</label>
+            <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-1">單位</label>
             <input value={unit} onChange={(event) => setUnit(event.target.value)} className="input-field" />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">每單位成本</label>
+            <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-1">每單位成本</label>
             <input type="number" min={0} step="0.1" value={costPerUnit} onChange={(event) => setCostPerUnit(event.target.value)} className="input-field" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">低庫存門檻</label>
+            <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-1">低庫存門檻</label>
             <input type="number" min={0} step="0.1" value={lowStockThreshold} onChange={(event) => setLowStockThreshold(event.target.value)} className="input-field" />
             {!ingredient && (
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
                 預設值來自系統設定
               </p>
             )}
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-1">目前庫存</label>
+            <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-1">目前庫存</label>
             <input type="number" min={0} step="0.1" value={currentStock} onChange={(event) => setCurrentStock(event.target.value)} className="input-field" />
           </div>
         </div>

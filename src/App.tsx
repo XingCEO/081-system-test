@@ -2,6 +2,7 @@ import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { initializeDatabase } from './db/database';
+import { startSync, stopSync } from './api/sync';
 import AppShell from './components/layout/AppShell';
 import { IconRestaurant } from './components/ui/Icons';
 import { useAppSettingsStore } from './stores/useAppSettingsStore';
@@ -40,6 +41,8 @@ export default function App() {
       try {
         await initializeDatabase();
         await useAppSettingsStore.getState().loadSettings();
+        // Start syncing from server (pulls data every 5 seconds)
+        startSync(5000);
       } catch (err) {
         console.error('Init failed:', err);
       } finally {
@@ -53,6 +56,7 @@ export default function App() {
 
     return () => {
       cancelled = true;
+      stopSync();
     };
   }, []);
 

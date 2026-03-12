@@ -35,11 +35,11 @@ export default function Header() {
   };
 
   return (
-    <header className="h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 flex-shrink-0 transition-colors">
+    <header className="h-14 bg-white dark:bg-[#0b1120] border-b border-gray-200 dark:border-[#1e2d4a] flex items-center justify-between px-4 flex-shrink-0 transition-colors">
       <div className="flex items-center gap-3">
         <button
           onClick={toggleSidebar}
-          className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors lg:hidden"
+          className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a2540] text-gray-500 dark:text-slate-400 transition-colors lg:hidden"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -48,9 +48,9 @@ export default function Header() {
 
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 accent-gradient rounded-lg flex items-center justify-center">
-            <span className="text-sm font-bold text-white">P</span>
+            <span className="text-sm font-bold text-white">{storeName?.charAt(0) || 'P'}</span>
           </div>
-          <h1 className="hidden sm:block text-sm font-bold text-gray-900 dark:text-white">
+          <h1 className="hidden sm:block text-sm font-bold text-gray-900 dark:text-slate-50">
             {storeName}
           </h1>
         </div>
@@ -60,7 +60,7 @@ export default function Header() {
         {currentEmployee && (
           <div className="flex items-center gap-2 text-sm">
             <UserAvatar name={currentEmployee.name} size={28} />
-            <span className="hidden sm:inline font-medium text-gray-600 dark:text-gray-300 text-sm">
+            <span className="hidden sm:inline font-medium text-gray-600 dark:text-slate-300 text-sm">
               {currentEmployee.name}
             </span>
           </div>
@@ -79,13 +79,13 @@ export default function Header() {
             </button>
           )}
 
-        <div className="text-xs font-mono font-medium text-gray-500 dark:text-gray-400 tabular-nums bg-gray-50 dark:bg-gray-800 px-2.5 py-1 rounded-lg">
+        <div className="text-xs font-mono font-medium text-gray-500 dark:text-slate-400 tabular-nums bg-gray-50 dark:bg-[#131c2e] px-2.5 py-1 rounded-lg">
           {time.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
         </div>
 
         <button
           onClick={cycleTheme}
-          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a2540] text-gray-400 dark:text-slate-500 transition-colors"
           title={theme === 'light' ? '亮色模式' : theme === 'dark' ? '深色模式' : '跟隨系統'}
         >
           {theme === 'light' ? (

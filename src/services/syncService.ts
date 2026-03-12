@@ -1,3 +1,5 @@
+import { api } from '../api/client';
+import { pullFromServer } from '../api/sync';
 import { db } from '../db/database';
 import type {
   AppSetting,
@@ -87,7 +89,93 @@ function normalizeInventoryTransactions(value: unknown): InventoryTransaction[] 
   });
 }
 
+function buildFullBackupJson(data: {
+  categories: Category[];
+  products: Product[];
+  ingredients: Ingredient[];
+  productRecipes: ProductRecipeItem[];
+  modifierGroups: ModifierGroup[];
+  modifiers: Modifier[];
+  diningTables: RestaurantTable[];
+  orders: Order[];
+  orderItems: OrderItem[];
+  employees: Employee[];
+  shifts: Shift[];
+  inventory: InventoryRecord[];
+  inventoryTransactions: InventoryTransaction[];
+  dailySummaries: DailySummary[];
+  settings: AppSetting[];
+}): string {
+  return JSON.stringify({
+    version: '2.0',
+    exportedAt: new Date().toISOString(),
+    categories: data.categories,
+    products: data.products,
+    ingredients: data.ingredients,
+    productRecipes: data.productRecipes,
+    modifierGroups: data.modifierGroups,
+    modifiers: data.modifiers,
+    tables: data.diningTables,
+    diningTables: data.diningTables,
+    orders: data.orders,
+    orderItems: data.orderItems,
+    employees: data.employees,
+    shifts: data.shifts,
+    inventory: data.inventory,
+    inventoryTransactions: data.inventoryTransactions,
+    dailySummaries: data.dailySummaries,
+    settings: data.settings,
+  }, null, 2);
+}
+
+function buildMenuBackupJson(data: {
+  categories: Category[];
+  products: Product[];
+  ingredients: Ingredient[];
+  productRecipes: ProductRecipeItem[];
+  modifierGroups: ModifierGroup[];
+  modifiers: Modifier[];
+  inventory: InventoryRecord[];
+}): string {
+  return JSON.stringify({
+    version: '2.0',
+    type: 'menu',
+    exportedAt: new Date().toISOString(),
+    categories: data.categories,
+    products: data.products,
+    ingredients: data.ingredients,
+    productRecipes: data.productRecipes,
+    modifierGroups: data.modifierGroups,
+    modifiers: data.modifiers,
+    inventory: data.inventory,
+  }, null, 2);
+}
+
 export async function exportAllData(): Promise<string> {
+  try {
+    const data = await api.get<{
+      categories: Category[];
+      products: Product[];
+      ingredients: Ingredient[];
+      productRecipes: ProductRecipeItem[];
+      modifierGroups: ModifierGroup[];
+      modifiers: Modifier[];
+      diningTables: RestaurantTable[];
+      orders: Order[];
+      orderItems: OrderItem[];
+      employees: Employee[];
+      shifts: Shift[];
+      inventory: InventoryRecord[];
+      inventoryTransactions: InventoryTransaction[];
+      dailySummaries: DailySummary[];
+      settings: AppSetting[];
+    }>('/sync/export');
+
+    return buildFullBackupJson(data);
+  } catch {
+    // Fall back to local Dexie mirror.
+  }
+
   const data = {
     version: '2.0',
     exportedAt: new Date().toISOString(),
@@ -113,6 +201,19 @@ export async function exportAllData(): Promise<string> {
 
 export async function importAllData(jsonString: string): Promise<void> {
   const data = JSON.parse(jsonString);
+  const diningTables = asArray<RestaurantTable>(data.diningTables ?? data.tables);
+
+  try {
+    await api.post('/sync/import', {
+      ...data,
+      diningTables,
+    });
+    await pullFromServer();
+    return;
+  } catch {
+    // Fall back to local Dexie import.
+  }
+
   if (!data.version) {
     throw new Error('無效的資料格式');
   }
@@ -123,7 +224,7 @@ export async function importAllData(jsonString: string): Promise<void> {
   const productRecipes = asArray<ProductRecipeItem>(data.productRecipes);
   const modifierGroups = asArray<ModifierGroup>(data.modifierGroups);
   const modifiers = asArray<Modifier>(data.modifiers);
-  const tables = asArray<RestaurantTable>(data.tables);
+  const tables = diningTables;
   const orders = asArray<Order>(data.orders);
   const orderItems = asArray<OrderItem>(data.orderItems);
   const employees = asArray<Employee>(data.employees);
@@ -189,6 +290,22 @@ export async function importAllData(jsonString: string): Promise<void> {
 }
 
 export async function exportMenuData(): Promise<string> {
+  try {
+    const data = await api.get<{
+      categories: Category[];
+      products: Product[];
+      ingredients: Ingredient[];
+      productRecipes: ProductRecipeItem[];
+      modifierGroups: ModifierGroup[];
+      modifiers: Modifier[];
+      inventory: InventoryRecord[];
+    }>('/sync/menu-export');
+
+    return buildMenuBackupJson(data);
+  } catch {
+    // Fall back to local Dexie mirror.
+  }
+
   const data = {
     version: '2.0',
     type: 'menu',
@@ -206,6 +323,17 @@ export async function exportMenuData(): Promise<string> {
 
 export async function importMenuData(jsonString: string): Promise<void> {
   const data = JSON.parse(jsonString);
+  try {
+    await api.post('/sync/menu-import', {
+      ...data,
+      inventory: normalizeInventoryRecords(data.inventory),
+    });
+    await pullFromServer();
+    return;
+  } catch {
+    // Fall back to local Dexie import.
+  }
+
   if (!data.version) {
     throw new Error('無效的菜單資料格式');
   }
@@ -250,7 +378,13 @@ export async function importMenuData(jsonString: string): Promise<void> {
 }
 
 export async function resetAllData(): Promise<void> {
-  await db.delete();
+  try {
+    await api.post('/sync/reset');
+    await pullFromServer();
+  } catch {
+    await db.delete();
+  }
+
   window.location.reload();
 }
 

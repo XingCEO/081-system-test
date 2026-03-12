@@ -149,7 +149,7 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
 
         <div className="text-center">
           <p className="text-slate-600 dark:text-slate-400 text-sm">收款金額</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-50 mt-1">
             {cashInput ? formatPrice(cashReceived) : formatPrice(0)}
           </p>
         </div>

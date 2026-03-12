@@ -67,7 +67,7 @@ export default function Sidebar() {
       className={({ isActive }) =>
         isActive
           ? 'flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium select-none bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400'
-          : 'flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium select-none text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 transition-colors'
+          : 'flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium select-none text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-slate-400 dark:hover:bg-[#1a2540] dark:hover:text-gray-200 transition-colors'
       }
     >
       {({ isActive }) => (
@@ -76,7 +76,7 @@ export default function Sidebar() {
             className={`w-5 h-5 flex-shrink-0 ${
               isActive
                 ? 'text-indigo-600 dark:text-indigo-400'
-                : 'text-gray-400 dark:text-gray-500'
+                : 'text-gray-400 dark:text-slate-500'
             }`}
           />
 
@@ -111,8 +111,8 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={`fixed lg:static inset-y-0 left-0 z-40 w-56 flex flex-col
-          bg-white dark:bg-gray-900
-          border-r border-gray-200 dark:border-gray-700
+          bg-white dark:bg-[#0b1120]
+          border-r border-gray-200 dark:border-[#1e2d4a]
           transition-transform duration-200
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
@@ -125,8 +125,8 @@ export default function Sidebar() {
 
           {mainItems.length > 0 && mgmtItems.length > 0 && (
             <div className="my-3 mx-2">
-              <div className="h-px bg-gray-200 dark:bg-gray-700" />
-              <p className="text-[10px] uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mt-3 mb-1 px-1">
+              <div className="h-px bg-gray-200 dark:bg-[#1a2540]" />
+              <p className="text-[10px] uppercase tracking-widest font-semibold text-gray-400 dark:text-slate-500 mt-3 mb-1 px-1">
                 管理
               </p>
             </div>
@@ -139,12 +139,12 @@ export default function Sidebar() {
           )}
         </nav>
 
-        <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-3 border-t border-gray-200 dark:border-[#1e2d4a]">
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl font-medium select-none
                        text-gray-400 hover:bg-red-50 hover:text-red-600
-                       dark:text-gray-500 dark:hover:bg-red-900/10 dark:hover:text-red-400
+                       dark:text-slate-500 dark:hover:bg-red-900/10 dark:hover:text-red-400
                        transition-colors"
           >
             <IconLogout className="w-5 h-5" />

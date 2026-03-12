@@ -78,7 +78,7 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
           className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
             activeCategoryId === null
               ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50 border border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700'
+              : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50 border border-gray-200 dark:bg-[#131c2e] dark:text-slate-400 dark:border-[#1e2d4a] dark:hover:bg-[#243552]'
           }`}
         >
           全部
@@ -91,7 +91,7 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeCategoryId === category.id
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50 border border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700'
+                : 'bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50 border border-gray-200 dark:bg-[#131c2e] dark:text-slate-400 dark:border-[#1e2d4a] dark:hover:bg-[#243552]'
             }`}
           >
             {getCategoryIcon(category.icon, { className: 'w-4 h-4' })}
@@ -102,7 +102,7 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
 
       {/* Product grid */}
       <div className="flex-1 overflow-y-auto px-5 pb-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
+        <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
           {filteredProducts?.map((product) => {
             const availability = availabilityMap?.get(product.id!);
             const isSoldOut = product.trackInventory && (availability?.isSoldOut ?? false);
@@ -119,7 +119,7 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
                   }
                 }}
                 disabled={isSoldOut}
-                className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-left transition-all group ${
+                className={`bg-white dark:bg-[#131c2e] rounded-xl border border-gray-200 dark:border-[#1e2d4a] text-left transition-all group ${
                   isSoldOut
                     ? 'opacity-40 cursor-not-allowed'
                     : 'hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-600 cursor-pointer active:scale-[0.97]'
@@ -141,7 +141,7 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
                 {/* Content */}
                 <div className="px-3 pb-3 pt-2">
                   <div className="flex items-center gap-1.5">
-                    <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm leading-tight truncate">
+                    <h3 className="font-semibold text-gray-800 dark:text-slate-100 text-sm leading-tight truncate">
                       {product.name}
                     </h3>
                     {product.isCombo && (

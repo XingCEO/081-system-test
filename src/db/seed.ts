@@ -6,7 +6,7 @@ export async function seedDatabase() {
 
   // ==================== 預設設定 ====================
   await db.settings.bulkAdd([
-    { key: 'storeName', value: '美味餐廳' },
+    { key: 'storeName', value: '青青草原' },
     { key: 'storeAddress', value: '台北市中山區中山北路100號' },
     { key: 'storePhone', value: '02-2345-6789' },
     { key: 'receiptFooter', value: '謝謝光臨，歡迎再來！' },

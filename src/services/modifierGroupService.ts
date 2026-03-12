@@ -1,4 +1,6 @@
+import { api } from '../api/client';
 import { db } from '../db/database';
+import type { Modifier, ModifierGroup } from '../db/types';
 
 export interface ModifierDraft {
   id?: number;
@@ -39,6 +41,20 @@ function normalizeModifierGroupDraft(draft: ModifierGroupDraft): ModifierGroupDr
   };
 }
 
+async function persistModifierGroup(
+  group: ModifierGroup,
+  modifiers: Modifier[]
+): Promise<void> {
+  await db.transaction('rw', db.modifierGroups, db.modifiers, async () => {
+    await db.modifierGroups.put(group);
+    await db.modifiers.where('groupId').equals(group.id!).delete();
+
+    if (modifiers.length > 0) {
+      await db.modifiers.bulkPut(modifiers);
+    }
+  });
+}
+
 export async function saveModifierGroup(
   groupId: number | undefined,
   draft: ModifierGroupDraft
@@ -49,61 +65,92 @@ export async function saveModifierGroup(
     throw new Error('Modifier group requires a name and at least one active modifier.');
   }
 
-  return db.transaction('rw', db.modifierGroups, db.modifiers, async () => {
-    const nextGroupId =
-      typeof groupId === 'number'
-        ? groupId
-        : ((await db.modifierGroups.add({
-            name: normalized.name,
-            required: normalized.required,
-            multiSelect: normalized.multiSelect,
-            maxSelections: normalized.maxSelections,
-          })) as number);
-
-    if (typeof groupId === 'number') {
-      await db.modifierGroups.update(groupId, {
+  try {
+    const payload = {
+      group: {
         name: normalized.name,
         required: normalized.required,
         multiSelect: normalized.multiSelect,
         maxSelections: normalized.maxSelections,
-      });
-    }
+      },
+      modifiers: normalized.modifiers.map((modifier) => ({
+        id: modifier.id,
+        name: modifier.name,
+        price: modifier.price,
+        isActive: modifier.isActive,
+      })),
+    };
 
-    const existingModifiers = await db.modifiers.where('groupId').equals(nextGroupId).toArray();
-    const keepIds = new Set(
-      normalized.modifiers
-        .filter((modifier): modifier is ModifierDraft & { id: number } => typeof modifier.id === 'number')
-        .map((modifier) => modifier.id)
-    );
+    const savedGroup = typeof groupId === 'number'
+      ? await api.put<ModifierGroup>(`/modifier-groups/${groupId}`, payload)
+      : await api.post<ModifierGroup>('/modifier-groups', payload);
 
-    await Promise.all(
-      existingModifiers
-        .filter((modifier) => modifier.id && !keepIds.has(modifier.id))
-        .map((modifier) => db.modifiers.delete(modifier.id!))
-    );
+    const modifiers = await api.get<Modifier[]>(`/modifiers?groupId=${savedGroup.id}`);
+    await persistModifierGroup(savedGroup, modifiers);
+    return savedGroup.id!;
+  } catch {
+    return db.transaction('rw', db.modifierGroups, db.modifiers, async () => {
+      const nextGroupId =
+        typeof groupId === 'number'
+          ? groupId
+          : ((await db.modifierGroups.add({
+              name: normalized.name,
+              required: normalized.required,
+              multiSelect: normalized.multiSelect,
+              maxSelections: normalized.maxSelections,
+            })) as number);
 
-    for (const modifier of normalized.modifiers) {
-      if (typeof modifier.id === 'number') {
-        await db.modifiers.update(modifier.id, {
-          name: modifier.name,
-          price: modifier.price,
-          isActive: modifier.isActive,
-        });
-      } else {
-        await db.modifiers.add({
-          groupId: nextGroupId,
-          name: modifier.name,
-          price: modifier.price,
-          isActive: modifier.isActive,
+      if (typeof groupId === 'number') {
+        await db.modifierGroups.update(groupId, {
+          name: normalized.name,
+          required: normalized.required,
+          multiSelect: normalized.multiSelect,
+          maxSelections: normalized.maxSelections,
         });
       }
-    }
 
-    return nextGroupId;
-  });
+      const existingModifiers = await db.modifiers.where('groupId').equals(nextGroupId).toArray();
+      const keepIds = new Set(
+        normalized.modifiers
+          .filter((modifier): modifier is ModifierDraft & { id: number } => typeof modifier.id === 'number')
+          .map((modifier) => modifier.id)
+      );
+
+      await Promise.all(
+        existingModifiers
+          .filter((modifier) => modifier.id && !keepIds.has(modifier.id))
+          .map((modifier) => db.modifiers.delete(modifier.id!))
+      );
+
+      for (const modifier of normalized.modifiers) {
+        if (typeof modifier.id === 'number') {
+          await db.modifiers.update(modifier.id, {
+            name: modifier.name,
+            price: modifier.price,
+            isActive: modifier.isActive,
+          });
+        } else {
+          await db.modifiers.add({
+            groupId: nextGroupId,
+            name: modifier.name,
+            price: modifier.price,
+            isActive: modifier.isActive,
+          });
+        }
+      }
+
+      return nextGroupId;
+    });
+  }
 }
 
 export async function deleteModifierGroup(groupId: number): Promise<void> {
+  try {
+    await api.del(`/modifier-groups/${groupId}`);
+  } catch {
+    // Fall through to local cleanup.
+  }
+
   await db.transaction('rw', db.modifierGroups, db.modifiers, db.products, async () => {
     await db.modifiers.where('groupId').equals(groupId).delete();
 

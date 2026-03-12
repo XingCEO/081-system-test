@@ -1,3 +1,4 @@
+import { api } from '../api/client';
 import { db } from '../db/database';
 import type { Employee, EmployeeRole } from '../db/types';
 
@@ -21,43 +22,76 @@ export async function loginEmployee(
   employeeId: number,
   pin: string
 ): Promise<{ employee: Employee; shiftId: number } | null> {
-  const employee = await db.employees.get(employeeId);
-  if (!employee || !employee.isActive) return null;
+  try {
+    const result = await api.post<{ employee: Employee; shiftId: number } | null>(
+      '/auth/login',
+      { employeeId, pin }
+    );
 
-  const valid = await verifyPin(employee, pin);
-  if (!valid) return null;
+    if (!result) return null;
 
-  const shiftId = await db.shifts.add({
-    employeeId: employee.id!,
-    employeeName: employee.name,
-    startTime: new Date().toISOString(),
-    endTime: '',
-    totalOrders: 0,
-    totalRevenue: 0,
-  });
+    // Update Dexie locally for immediate reactivity
+    if (result.employee) {
+      await db.employees.put(result.employee);
+    }
+    if (result.shiftId) {
+      await db.shifts.put({
+        id: result.shiftId,
+        employeeId: result.employee.id!,
+        employeeName: result.employee.name,
+        startTime: new Date().toISOString(),
+        endTime: '',
+        totalOrders: 0,
+        totalRevenue: 0,
+      });
+    }
 
-  return { employee, shiftId: shiftId as number };
+    return result;
+  } catch {
+    // Fallback to Dexie-only if server is unavailable
+    const employee = await db.employees.get(employeeId);
+    if (!employee || !employee.isActive) return null;
+
+    const valid = await verifyPin(employee, pin);
+    if (!valid) return null;
+
+    const shiftId = await db.shifts.add({
+      employeeId: employee.id!,
+      employeeName: employee.name,
+      startTime: new Date().toISOString(),
+      endTime: '',
+      totalOrders: 0,
+      totalRevenue: 0,
+    });
+
+    return { employee, shiftId: shiftId as number };
+  }
 }
 
 export async function logoutEmployee(shiftId: number): Promise<void> {
-  const shift = await db.shifts.get(shiftId);
-  if (!shift) return;
+  try {
+    await api.post('/auth/logout', { shiftId });
+  } catch {
+    // Fallback to Dexie-only
+    const shift = await db.shifts.get(shiftId);
+    if (!shift) return;
 
-  const orders = await db.orders
-    .where('employeeId')
-    .equals(shift.employeeId)
-    .filter(
-      (o) =>
-        o.createdAt >= shift.startTime &&
-        o.status === 'completed'
-    )
-    .toArray();
+    const orders = await db.orders
+      .where('employeeId')
+      .equals(shift.employeeId)
+      .filter(
+        (o) =>
+          o.createdAt >= shift.startTime &&
+          o.status === 'completed'
+      )
+      .toArray();
 
-  await db.shifts.update(shiftId, {
-    endTime: new Date().toISOString(),
-    totalOrders: orders.length,
-    totalRevenue: orders.reduce((sum, o) => sum + o.total, 0),
-  });
+    await db.shifts.update(shiftId, {
+      endTime: new Date().toISOString(),
+      totalOrders: orders.length,
+      totalRevenue: orders.reduce((sum, o) => sum + o.total, 0),
+    });
+  }
 }
 
 const PERMISSIONS: Record<EmployeeRole, string[]> = {

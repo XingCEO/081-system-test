@@ -1,3 +1,4 @@
+import { api } from '../api/client';
 import { db } from '../db/database';
 import type { AppSetting } from '../db/types';
 
@@ -17,7 +18,7 @@ export interface AppSettings {
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
-  storeName: '美味餐廳',
+  storeName: '青青草原',
   storeAddress: '台北市中山區中山北路100號',
   storePhone: '02-2345-6789',
   receiptHeader: '',
@@ -102,9 +103,27 @@ export function normalizeAppSettings(records: AppSetting[]): AppSettings {
   return normalizeSettingsObject(values);
 }
 
+function normalizeAppSettingsPayload(
+  payload: AppSetting[] | Record<string, unknown>
+): AppSettings {
+  if (Array.isArray(payload)) {
+    return normalizeAppSettings(payload);
+  }
+
+  return normalizeSettingsObject(
+    payload as Partial<Record<keyof AppSettings, unknown>>
+  );
+}
+
 export async function loadAppSettings(): Promise<AppSettings> {
-  const records = await db.settings.toArray();
-  return normalizeAppSettings(records);
+  try {
+    const settings = await api.get<AppSetting[] | Record<string, unknown>>('/settings');
+    return normalizeAppSettingsPayload(settings);
+  } catch {
+    // Fallback to Dexie
+    const records = await db.settings.toArray();
+    return normalizeAppSettings(records);
+  }
 }
 
 export async function saveAppSettings(
@@ -113,6 +132,13 @@ export async function saveAppSettings(
   const current = await loadAppSettings();
   const next = normalizeSettingsObject({ ...current, ...updates });
 
+  try {
+    await api.put('/settings', next);
+  } catch {
+    // Continue — still update Dexie below
+  }
+
+  // Also update Dexie for immediate reactivity
   await db.transaction('rw', db.settings, async () => {
     for (const key of APP_SETTING_KEYS) {
       await db.settings.put({ key, value: next[key] });
@@ -125,10 +151,16 @@ export async function saveAppSettings(
 export async function getSettingValue<K extends keyof AppSettings>(
   key: K
 ): Promise<AppSettings[K]> {
-  const record = await db.settings.get(key);
-  return normalizeSettingsObject({
-    [key]: record?.value,
-  } as Partial<Record<keyof AppSettings, unknown>>)[key];
+  try {
+    const settings = await api.get<AppSetting[] | Record<string, unknown>>('/settings');
+    return normalizeAppSettingsPayload(settings)[key];
+  } catch {
+    // Fallback to Dexie
+    const record = await db.settings.get(key);
+    return normalizeSettingsObject({
+      [key]: record?.value,
+    } as Partial<Record<keyof AppSettings, unknown>>)[key];
+  }
 }
 
 interface RgbColor {
