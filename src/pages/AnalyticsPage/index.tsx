@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import {
@@ -117,9 +117,15 @@ export default function AnalyticsPage() {
     customStart !== '' &&
     customEnd !== '' &&
     new Date(`${customStart}T00:00:00`) > new Date(`${customEnd}T00:00:00`);
-  const isDark =
-    typeof document !== 'undefined' &&
-    document.documentElement.classList.contains('dark');
+  const subscribeToDarkMode = useCallback((cb: () => void) => {
+    const observer = new MutationObserver(cb);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+  const isDark = useSyncExternalStore(
+    subscribeToDarkMode,
+    () => document.documentElement.classList.contains('dark')
+  );
 
   useEffect(() => {
     let cancelled = false;

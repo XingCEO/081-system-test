@@ -1,0 +1,4 @@
+{
+  "$schema": "https://schema.zeabur.app/template.json",
+  "build_type": "docker"
+}

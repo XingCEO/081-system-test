@@ -12,8 +12,8 @@ A restaurant POS (Point of Sale) system built as a Progressive Web App (PWA). Th
 - `npm run build` — Type-check with `tsc -b` then build with Vite
 - `npm run lint` — ESLint across the project
 - `npm run preview` — Preview the production build locally
-
-No test framework is configured.
+- `npm test` — Run all Vitest tests (`vitest run`)
+- `npx vitest run src/services/orderService.test.ts` — Run a single test file
 
 ## Tech Stack
 
@@ -22,6 +22,7 @@ No test framework is configured.
 - **Dexie.js** — IndexedDB wrapper for all persistent data (`src/db/database.ts`)
 - **Zustand** — State management with `persist` middleware (stores save to localStorage)
 - **react-router-dom v7** — Client-side routing with lazy-loaded pages
+- **Vitest** + **@testing-library/react** — Unit/integration tests (jsdom environment, setup in `src/test/setup.ts`)
 - **recharts** — Charts on the analytics page
 - **date-fns** — Date formatting and intervals
 - **react-hot-toast** — Toast notifications
@@ -33,11 +34,14 @@ No test framework is configured.
 - `types.ts` — All TypeScript interfaces for database entities (Category, Product, Order, Employee, etc.)
 - `database.ts` — Dexie database class `PosDatabase` with 14 tables. The singleton `db` instance is imported throughout. `initializeDatabase()` auto-seeds on first load.
 - `seed.ts` — Populates default categories, products, modifier groups, employees (admin PIN: 0000), and dining tables.
+- `seedBom.ts` — Seeds Bill of Materials (BOM) data for ingredient tracking.
 
 ### State Stores (`src/stores/`)
 - `useAuthStore` — Current employee session + shift ID (persisted as `pos-auth`)
 - `useCartStore` — Cart items, table selection, order notes (persisted as `pos-cart`)
 - `useUIStore` — Sidebar state, active modal, selected category (not persisted)
+- `useThemeStore` — Dark/light mode preference
+- `useAppSettingsStore` — Application-level settings
 
 ### Services (`src/services/`)
 Business logic that operates on the Dexie database:
@@ -46,6 +50,9 @@ Business logic that operates on the Dexie database:
 - `inventoryService` — Restock, adjust, waste tracking with full transaction history
 - `analyticsService` — Revenue, order counts, top items, hourly breakdown, daily summaries
 - `syncService` — Full data export/import (JSON), menu-only export/import, data reset
+- `bomService` — Bill of Materials management for ingredient-level inventory
+- `settingsService` — App configuration persistence (stored in Dexie)
+- `modifierGroupService` — CRUD for custom modifier groups (add-ons, options)
 
 ### Routing & Layout
 - `App.tsx` — BrowserRouter with all routes. All page components are `lazy()` loaded.

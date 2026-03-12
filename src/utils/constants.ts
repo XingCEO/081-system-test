@@ -7,11 +7,11 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
 };
 
 export const ORDER_STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-red-100 text-red-700',
-  preparing: 'bg-amber-100 text-amber-700',
-  ready: 'bg-emerald-100 text-emerald-700',
-  completed: 'bg-slate-100 text-slate-600',
-  cancelled: 'bg-slate-100 text-slate-400',
+  pending: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400',
+  preparing: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400',
+  ready: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400',
+  completed: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+  cancelled: 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
 };
 
 export const TABLE_STATUS_LABELS: Record<string, string> = {
