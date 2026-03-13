@@ -37,6 +37,11 @@ function getById(table: string, id: number): unknown {
   return row ? rowToJs(row as Record<string, unknown>) : null;
 }
 
+function getEmployeeById(id: number): unknown {
+  const row = db.prepare('SELECT id, username, name, role, isActive, createdAt FROM employees WHERE id = ?').get(id);
+  return row ? rowToJs(row as Record<string, unknown>) : null;
+}
+
 interface IngredientUsage {
   ingredientId: number;
   ingredientName: string;
@@ -688,7 +693,7 @@ app.post('/api/employees', (req, res) => {
   const result = db.prepare(
     'INSERT INTO employees (username, pin, name, role, isActive, createdAt) VALUES (?, ?, ?, ?, ?, ?)'
   ).run(data.username, pinHashed, data.name, data.role ?? 'cashier', data.isActive !== false ? 1 : 0, now);
-  res.json(getById('employees', Number(result.lastInsertRowid)));
+  res.json(getEmployeeById(Number(result.lastInsertRowid)));
 });
 
 app.put('/api/employees/:id', (req, res) => {
@@ -701,7 +706,7 @@ app.put('/api/employees/:id', (req, res) => {
     db.prepare('UPDATE employees SET username=?, name=?, role=?, isActive=? WHERE id=?')
       .run(data.username, data.name, data.role, data.isActive !== false ? 1 : 0, id);
   }
-  res.json(getById('employees', id));
+  res.json(getEmployeeById(id));
 });
 
 app.delete('/api/employees/:id', (req, res) => {

@@ -130,13 +130,11 @@ export async function restockIngredient(
   note: string
 ): Promise<void> {
   try {
-    await api.post(`/inventory/${ingredientId}/restock`, { quantity, employeeId, note });
-    await applyInventoryDeltaLocal({
-      ingredientId,
-      type: 'restock',
-      quantityDelta: quantity,
-      note,
-      employeeId,
+    const result = await api.post<{ newStock: number }>(`/inventory/${ingredientId}/restock`, { quantity, employeeId, note });
+    // Update local stock to match server value (avoid double-add)
+    await db.inventory.where('ingredientId').equals(ingredientId).modify({
+      currentStock: result.newStock,
+      lastUpdated: new Date().toISOString(),
     });
   } catch {
     // Fallback to Dexie-only
@@ -157,17 +155,12 @@ export async function adjustIngredientStock(
   note: string
 ): Promise<void> {
   try {
-    await api.post(`/inventory/${ingredientId}/adjust`, { newQuantity, employeeId, note });
-    const inventory = await db.inventory.where('ingredientId').equals(ingredientId).first();
-    if (inventory) {
-      await applyInventoryDeltaLocal({
-        ingredientId,
-        type: 'adjustment',
-        quantityDelta: newQuantity - inventory.currentStock,
-        note,
-        employeeId,
-      });
-    }
+    const result = await api.post<{ newStock: number }>(`/inventory/${ingredientId}/adjust`, { newQuantity, employeeId, note });
+    // Update local stock to match server value (avoid double-apply)
+    await db.inventory.where('ingredientId').equals(ingredientId).modify({
+      currentStock: result.newStock,
+      lastUpdated: new Date().toISOString(),
+    });
   } catch {
     // Fallback to Dexie-only
     const inventory = await db.inventory.where('ingredientId').equals(ingredientId).first();
@@ -205,13 +198,11 @@ export async function wasteIngredient(
   note: string
 ): Promise<void> {
   try {
-    await api.post(`/inventory/${ingredientId}/waste`, { quantity, employeeId, note });
-    await applyInventoryDeltaLocal({
-      ingredientId,
-      type: 'waste',
-      quantityDelta: -quantity,
-      note,
-      employeeId,
+    const result = await api.post<{ newStock: number }>(`/inventory/${ingredientId}/waste`, { quantity, employeeId, note });
+    // Update local stock to match server value (avoid double-deduct)
+    await db.inventory.where('ingredientId').equals(ingredientId).modify({
+      currentStock: result.newStock,
+      lastUpdated: new Date().toISOString(),
     });
   } catch {
     // Fallback to Dexie-only

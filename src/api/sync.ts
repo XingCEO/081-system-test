@@ -8,6 +8,7 @@
  *
  * This lets useLiveQuery() keep working since Dexie is always in sync.
  */
+import type { Table } from 'dexie';
 import { db } from '../db/database';
 import { api } from './client';
 import type {
@@ -25,6 +26,34 @@ let isServerAvailable = true;
 
 export function getServerStatus(): boolean {
   return isServerAvailable;
+}
+
+/**
+ * Upsert server rows into a Dexie table and remove rows that no longer exist
+ * on the server. Uses bulkPut (upsert) instead of clear+bulkPut to avoid a
+ * transient empty-table state that causes UI flicker.
+ */
+async function syncTable<T>(
+  table: Table<T>,
+  serverRows: T[] | undefined,
+  primaryKey: string = 'id',
+): Promise<void> {
+  if (!serverRows) return;
+
+  // Upsert all server rows
+  if (serverRows.length > 0) {
+    await table.bulkPut(serverRows);
+  }
+
+  // Remove local rows that the server no longer has
+  const serverIds = new Set(
+    serverRows.map((row) => (row as Record<string, unknown>)[primaryKey])
+  );
+  const localKeys = await table.toCollection().primaryKeys();
+  const staleKeys = localKeys.filter((key) => !serverIds.has(key));
+  if (staleKeys.length > 0) {
+    await table.bulkDelete(staleKeys);
+  }
 }
 
 export async function pullFromServer(): Promise<void> {
@@ -52,70 +81,45 @@ export async function pullFromServer(): Promise<void> {
 
     isServerAvailable = true;
 
-    // Write everything to Dexie in one transaction
+    // Upsert everything to Dexie in one transaction (no clear → no flicker)
     await db.transaction('rw',
       [db.categories, db.products, db.ingredients, db.productRecipes,
        db.modifierGroups, db.modifiers, db.diningTables,
        db.orders, db.orderItems, db.employees, db.shifts,
        db.inventory, db.inventoryTransactions, db.dailySummaries, db.settings],
       async () => {
-        // Clear and re-populate each table
-        await db.categories.clear();
-        if (data.categories?.length) await db.categories.bulkPut(data.categories);
+        await syncTable(db.categories, data.categories);
+        await syncTable(db.products, data.products);
+        await syncTable(db.ingredients, data.ingredients);
+        await syncTable(db.productRecipes, data.productRecipes);
+        await syncTable(db.modifierGroups, data.modifierGroups);
+        await syncTable(db.modifiers, data.modifiers);
+        await syncTable(db.diningTables, data.diningTables);
+        await syncTable(db.orders, data.orders);
+        await syncTable(db.orderItems, data.orderItems);
 
-        await db.products.clear();
-        if (data.products?.length) await db.products.bulkPut(data.products);
-
-        await db.ingredients.clear();
-        if (data.ingredients?.length) await db.ingredients.bulkPut(data.ingredients);
-
-        await db.productRecipes.clear();
-        if (data.productRecipes?.length) await db.productRecipes.bulkPut(data.productRecipes);
-
-        await db.modifierGroups.clear();
-        if (data.modifierGroups?.length) await db.modifierGroups.bulkPut(data.modifierGroups);
-
-        await db.modifiers.clear();
-        if (data.modifiers?.length) await db.modifiers.bulkPut(data.modifiers);
-
-        await db.diningTables.clear();
-        if (data.diningTables?.length) await db.diningTables.bulkPut(data.diningTables);
-
-        await db.orders.clear();
-        if (data.orders?.length) await db.orders.bulkPut(data.orders);
-
-        await db.orderItems.clear();
-        if (data.orderItems?.length) await db.orderItems.bulkPut(data.orderItems);
-
-        await db.employees.clear();
+        // Store pin hashes so offline login works.
+        // The server only returns SHA-256 hashes, never plaintext PINs.
         if (data.employees?.length) {
-          // Don't store pin hashes locally.
-          const employees = data.employees.map((employee) => ({
+          const employees: Employee[] = data.employees.map((employee) => ({
             id: employee.id,
             username: employee.username,
-            pin: '***',
+            pin: employee.pin ?? '***',
             name: employee.name,
             role: employee.role,
             isActive: employee.isActive,
             createdAt: employee.createdAt,
-          } satisfies Employee));
-          await db.employees.bulkPut(employees);
+          }));
+          await syncTable(db.employees, employees);
+        } else {
+          await syncTable(db.employees, []);
         }
 
-        await db.shifts.clear();
-        if (data.shifts?.length) await db.shifts.bulkPut(data.shifts);
-
-        await db.inventory.clear();
-        if (data.inventory?.length) await db.inventory.bulkPut(data.inventory);
-
-        await db.inventoryTransactions.clear();
-        if (data.inventoryTransactions?.length) await db.inventoryTransactions.bulkPut(data.inventoryTransactions);
-
-        await db.dailySummaries.clear();
-        if (data.dailySummaries?.length) await db.dailySummaries.bulkPut(data.dailySummaries);
-
-        await db.settings.clear();
-        if (data.settings?.length) await db.settings.bulkPut(data.settings);
+        await syncTable(db.shifts, data.shifts);
+        await syncTable(db.inventory, data.inventory);
+        await syncTable(db.inventoryTransactions, data.inventoryTransactions);
+        await syncTable(db.dailySummaries, data.dailySummaries);
+        await syncTable(db.settings, data.settings, 'key');
       }
     );
   } catch (err) {

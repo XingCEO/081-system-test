@@ -7,13 +7,14 @@ import {
 
 describe('analyticsService', () => {
   it('groups completed orders into named time slots', () => {
+    // Use ISO strings without offset so getHours() works in any timezone
     const breakdown = buildTimeSlotBreakdown([
-      { createdAt: '2026-03-08T08:15:00+08:00', total: 120 },
-      { createdAt: '2026-03-08T12:20:00+08:00', total: 220 },
-      { createdAt: '2026-03-08T12:50:00+08:00', total: 180 },
-      { createdAt: '2026-03-08T15:10:00+08:00', total: 90 },
-      { createdAt: '2026-03-08T18:05:00+08:00', total: 260 },
-      { createdAt: '2026-03-08T22:40:00+08:00', total: 150 },
+      { createdAt: '2026-03-08T08:15:00', total: 120 },
+      { createdAt: '2026-03-08T12:20:00', total: 220 },
+      { createdAt: '2026-03-08T12:50:00', total: 180 },
+      { createdAt: '2026-03-08T15:10:00', total: 90 },
+      { createdAt: '2026-03-08T18:05:00', total: 260 },
+      { createdAt: '2026-03-08T22:40:00', total: 150 },
     ]);
 
     expect(breakdown).toEqual([
@@ -41,12 +42,12 @@ describe('analyticsService', () => {
         { hour: 12, orders: 2, revenue: 400 },
       ],
       timeSlotBreakdown: buildTimeSlotBreakdown([
-        { createdAt: '2026-03-08T08:15:00+08:00', total: 120 },
-        { createdAt: '2026-03-08T12:20:00+08:00', total: 220 },
-        { createdAt: '2026-03-08T12:50:00+08:00', total: 180 },
-        { createdAt: '2026-03-08T15:10:00+08:00', total: 90 },
-        { createdAt: '2026-03-08T18:05:00+08:00', total: 260 },
-        { createdAt: '2026-03-08T22:40:00+08:00', total: 150 },
+        { createdAt: '2026-03-08T08:15:00', total: 120 },
+        { createdAt: '2026-03-08T12:20:00', total: 220 },
+        { createdAt: '2026-03-08T12:50:00', total: 180 },
+        { createdAt: '2026-03-08T15:10:00', total: 90 },
+        { createdAt: '2026-03-08T18:05:00', total: 260 },
+        { createdAt: '2026-03-08T22:40:00', total: 150 },
       ]),
       peakTimeSlot: {
         key: 'lunch',
@@ -62,7 +63,7 @@ describe('analyticsService', () => {
       data,
       currency: 'NT$',
       rangeLabel: '2026/03/08',
-      generatedAt: new Date('2026-03-08T12:00:00+08:00'),
+      generatedAt: new Date('2026-03-08T12:00:00'),
     });
 
     expect(workbook).toContain('Worksheet ss:Name="摘要"');

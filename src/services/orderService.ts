@@ -104,26 +104,7 @@ export async function createOrder(params: {
 
   try {
     const result = await api.post<Order>('/orders', { order, items: orderItems });
-    const inventoryManagedByServer = true;
-    if (!inventoryManagedByServer) {
-
-    // Deduct ingredient stock via API
-    const ingredientUsages = await buildIngredientUsageForItems(params.items);
-    if (ingredientUsages.length > 0) {
-      try {
-        await api.post('/inventory/deduct', {
-          usages: ingredientUsages,
-          employeeId: params.employeeId,
-          note: `訂單 ${result.orderNumber || orderNumber}`,
-          orderId: result.id,
-          restore: false,
-        });
-      } catch {
-        // Non-critical: sync will reconcile
-        console.warn('Failed to deduct inventory via API');
-      }
-    }
-    }
+    // Inventory deduction is handled server-side in POST /api/orders.
 
     // Update Dexie locally for immediate reactivity
     if (result.id) {
