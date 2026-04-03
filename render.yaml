@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: pos-system
+    runtime: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: DB_PATH
+        value: /app/data/pos.db
+    disk:
+      name: pos-data
+      mountPath: /app/data
+      sizeGB: 10
