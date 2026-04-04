@@ -451,7 +451,7 @@ function ProductFormModal({
       price: Number.parseInt(price, 10),
       categoryId,
       trackInventory: isCombo ? false : trackInventory,
-      modifierGroupIds: isCombo ? [] : selectedModGroups,
+      modifierGroupIds: selectedModGroups,
       imageUrl,
       isCombo,
       comboPickCount: isCombo ? Math.max(1, Number(comboPickCount) || 1) : undefined,
@@ -610,30 +610,31 @@ function ProductFormModal({
               </div>
             )}
 
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-2">可用加料群組</label>
-              <div className="flex flex-wrap gap-2">
-                {modifierGroups.map((group) => (
-                  <button
-                    key={group.id}
-                    onClick={() => setSelectedModGroups((current) =>
-                      current.includes(group.id!)
-                        ? current.filter((id) => id !== group.id!)
-                        : [...current, group.id!]
-                    )}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
-                      selectedModGroups.includes(group.id!)
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400'
-                        : 'border-gray-200 dark:border-[#2a3a54] dark:text-slate-400'
-                    }`}
-                  >
-                    {group.name}
-                  </button>
-                ))}
-              </div>
-            </div>
           </>
         )}
+
+        <div>
+          <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-2">可用加料群組</label>
+          <div className="flex flex-wrap gap-2">
+            {modifierGroups.map((group) => (
+              <button
+                key={group.id}
+                onClick={() => setSelectedModGroups((current) =>
+                  current.includes(group.id!)
+                    ? current.filter((id) => id !== group.id!)
+                    : [...current, group.id!]
+                )}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
+                  selectedModGroups.includes(group.id!)
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400'
+                    : 'border-gray-200 dark:border-[#2a3a54] dark:text-slate-400'
+                }`}
+              >
+                {group.name}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="flex gap-2 pt-4">
           <button onClick={onClose} className="btn-secondary flex-1">取消</button>

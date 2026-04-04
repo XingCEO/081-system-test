@@ -18,7 +18,9 @@ export default function POSPage() {
   );
 
   const handleProductClick = (product: Product) => {
-    if (product.isCombo) {
+    if (product.modifierGroupIds.length > 0) {
+      setSelectedProduct(product);
+    } else if (product.isCombo) {
       useCartStore.getState().addItem({
         productId: product.id!,
         productName: product.name,
@@ -27,8 +29,6 @@ export default function POSPage() {
         isCombo: true,
         comboItems: [],
       });
-    } else if (product.modifierGroupIds.length > 0) {
-      setSelectedProduct(product);
     } else {
       useCartStore.getState().addItem({
         productId: product.id!,

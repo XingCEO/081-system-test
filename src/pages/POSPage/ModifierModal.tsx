@@ -94,6 +94,7 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
       unitPrice: product.price,
       modifiers: allModifiers,
       note,
+      ...(product.isCombo ? { isCombo: true, comboItems: [] } : {}),
     });
     onClose();
   };
