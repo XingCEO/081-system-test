@@ -464,6 +464,8 @@ export default function InventoryPage() {
               </label>
               <input
                 type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={quantity}
                 onChange={(event) => setQuantity(event.target.value)}
                 className="input-field text-lg"
