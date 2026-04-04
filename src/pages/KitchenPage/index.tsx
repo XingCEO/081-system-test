@@ -7,6 +7,7 @@ import { getShortOrderNumber } from '../../utils/orderNumber';
 import { ORDER_STATUS_LABELS } from '../../utils/constants';
 import { IconFire, IconChefHat, IconMapPin, IconNote, IconWarning, IconCheck, IconSparkles } from '../../components/ui/Icons';
 import toast from 'react-hot-toast';
+import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
 import type { Order, OrderItem, OrderStatus } from '../../db/types';
 
 function playNotificationSound() {
@@ -45,6 +46,7 @@ function playNotificationSound() {
 
 export default function KitchenPage() {
   const [muted, setMuted] = useState(false);
+  const enableSound = useAppSettingsStore((s) => s.settings.enableSound);
   const knownOrderIdsRef = useRef<Set<number> | null>(null);
   const activeOrders = useLiveQuery(
     () => db.orders.where('status').anyOf(['pending', 'preparing', 'ready']).toArray()
@@ -73,11 +75,11 @@ export default function KitchenPage() {
     }
 
     const hasNew = [...currentIds].some(id => !knownOrderIdsRef.current!.has(id));
-    if (hasNew && !muted) {
+    if (hasNew && !muted && enableSound) {
       playNotificationSound();
     }
     knownOrderIdsRef.current = currentIds;
-  }, [activeOrders, muted]);
+  }, [activeOrders, muted, enableSound]);
 
   const handleStatusChange = async (order: Order, newStatus: OrderStatus) => {
     if (!order.id) return;
@@ -259,12 +261,13 @@ export default function KitchenPage() {
         <button
           onClick={() => setMuted(!muted)}
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            muted
+            muted || !enableSound
               ? 'bg-gray-200 text-gray-500 dark:bg-[#1e2d4a] dark:text-slate-400'
               : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
           }`}
+          title={!enableSound ? '系統設定已關閉提示音' : ''}
         >
-          {muted ? '🔇 靜音' : '🔔 提示音'}
+          {!enableSound ? '🔇 音效已關閉' : muted ? '🔇 靜音' : '🔔 提示音'}
         </button>
       </div>
 
