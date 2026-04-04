@@ -15,7 +15,8 @@ app.use(cors({
   origin: process.env.ALLOWED_ORIGIN || 'http://localhost:5173',
   credentials: true,
 }));
-app.use(express.json({ limit: '50mb' }));
+// S4: 預設 body limit 改為 1MB（防止超大 payload 攻擊）
+app.use(express.json({ limit: '1mb' }));
 
 // Seed on first run
 seedDatabase();
@@ -1343,7 +1344,8 @@ app.get('/api/sync/menu-export', (_req, res) => {
   });
 });
 
-app.post('/api/sync/import', (req, res) => {
+// S4: sync/import 允許最大 50MB body（覆蓋全域的 1MB 限制）
+app.post('/api/sync/import', express.json({ limit: '50mb' }), (req, res) => {
   importSyncData(req.body as Record<string, unknown>);
 
   res.json({ success: true });
