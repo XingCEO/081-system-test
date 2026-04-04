@@ -11,34 +11,37 @@ import { useAppSettingsStore } from '../../stores/useAppSettingsStore';
 import type { Order, OrderItem, OrderStatus } from '../../db/types';
 
 function playNotificationSound() {
+  const REPEAT = 5;
+  const CYCLE = 0.45; // seconds per ding-dong cycle
   try {
     const ctx = new AudioContext();
     const now = ctx.currentTime;
 
-    // First tone (higher pitch)
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.frequency.value = 880;
-    osc1.type = 'sine';
-    gain1.gain.setValueAtTime(0.3, now);
-    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-    osc1.connect(gain1).connect(ctx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.15);
+    for (let i = 0; i < REPEAT; i++) {
+      const t = now + i * CYCLE;
 
-    // Second tone (even higher, delayed)
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.frequency.value = 1174;
-    osc2.type = 'sine';
-    gain2.gain.setValueAtTime(0.3, now + 0.15);
-    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-    osc2.connect(gain2).connect(ctx.destination);
-    osc2.start(now + 0.15);
-    osc2.stop(now + 0.35);
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.frequency.value = 880;
+      osc1.type = 'sine';
+      gain1.gain.setValueAtTime(0.3, t);
+      gain1.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+      osc1.connect(gain1).connect(ctx.destination);
+      osc1.start(t);
+      osc1.stop(t + 0.15);
 
-    // Clean up
-    setTimeout(() => ctx.close(), 500);
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.frequency.value = 1174;
+      osc2.type = 'sine';
+      gain2.gain.setValueAtTime(0.3, t + 0.15);
+      gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
+      osc2.connect(gain2).connect(ctx.destination);
+      osc2.start(t + 0.15);
+      osc2.stop(t + 0.35);
+    }
+
+    setTimeout(() => ctx.close(), REPEAT * CYCLE * 1000 + 200);
   } catch {
     // AudioContext not available
   }
