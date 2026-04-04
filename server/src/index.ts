@@ -1,8 +1,9 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
 import db, { rowToJs, jsToRow } from './db.js';
 import { seedDatabase } from './seed.js';
@@ -10,6 +11,37 @@ import { seedDatabase } from './seed.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
+
+// S1: JWT secret（優先用環境變數，否則每次啟動隨機生成）
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+
+// S1: requireAuth middleware — 驗證 Authorization: Bearer <token>
+function requireAuth(req: Request, res: Response, next: NextFunction): void {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: '未授權：缺少 token' });
+    return;
+  }
+  const token = authHeader.slice(7);
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as { employeeId: number; role: string };
+    (req as any).user = payload;
+    next();
+  } catch {
+    res.status(401).json({ error: '未授權：token 無效或已過期' });
+  }
+}
+
+// S1: requireAdmin middleware — 在 requireAuth 之後檢查 admin 角色
+function requireAdmin(req: Request, res: Response, next: NextFunction): void {
+  requireAuth(req, res, () => {
+    if ((req as any).user?.role !== 'admin') {
+      res.status(403).json({ error: '權限不足：需要管理員身份' });
+      return;
+    }
+    next();
+  });
+}
 
 // S3: CORS 白名單
 app.use(cors({
@@ -320,14 +352,25 @@ app.post('/api/auth/login', loginLimiter, (req, res) => {
     'INSERT INTO shifts (employeeId, employeeName, startTime, endTime, totalOrders, totalRevenue) VALUES (?, ?, ?, \'\', 0, 0)'
   ).run(employeeId, employee.name, now);
 
+  // S1: 產生 JWT token（payload: employeeId + role，有效期 24h）
+  const token = jwt.sign(
+    { employeeId: employee.id, role: employee.role },
+    JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+
   // Strip pin hash from response
   const safeEmployee = rowToJs(employee);
   delete safeEmployee.pin;
   res.json({
     employee: safeEmployee,
     shiftId: Number(result.lastInsertRowid),
+    token,
   });
 });
+
+// S1: 從此處開始所有端點都需要認證（/api/health 和 /api/auth/login 已在上方定義，不受影響）
+app.use('/api/', requireAuth);
 
 app.post('/api/auth/logout', (req, res) => {
   const { shiftId } = req.body;
@@ -937,7 +980,7 @@ app.get('/api/employees/:id', (req, res) => {
   res.json(rowToJs(row as Record<string, unknown>));
 });
 
-app.post('/api/employees', (req, res) => {
+app.post('/api/employees', requireAdmin, (req, res) => {
   const data = req.body;
   if (!data.pin || !data.username || !data.name) {
     res.status(400).json({ error: '缺少必要欄位' }); return;
@@ -950,7 +993,7 @@ app.post('/api/employees', (req, res) => {
   res.json(getEmployeeById(Number(result.lastInsertRowid)));
 });
 
-app.put('/api/employees/:id', (req, res) => {
+app.put('/api/employees/:id', requireAdmin, (req, res) => {
   const data = req.body;
   const id = Number(req.params.id);
   if (data.pin) {
@@ -963,7 +1006,7 @@ app.put('/api/employees/:id', (req, res) => {
   res.json(getEmployeeById(id));
 });
 
-app.delete('/api/employees/:id', (req, res) => {
+app.delete('/api/employees/:id', requireAdmin, (req, res) => {
   db.prepare('DELETE FROM employees WHERE id = ?').run(Number(req.params.id));
   res.json({ success: true });
 });
@@ -1364,8 +1407,8 @@ app.get('/api/sync/menu-export', (_req, res) => {
   });
 });
 
-// S4: sync/import 允許最大 50MB body（覆蓋全域的 1MB 限制）
-app.post('/api/sync/import', express.json({ limit: '50mb' }), (req, res) => {
+// S1+S4: sync/import 需要 admin 權限，且允許最大 50MB body（覆蓋全域的 1MB 限制）
+app.post('/api/sync/import', requireAdmin, express.json({ limit: '50mb' }), (req, res) => {
   importSyncData(req.body as Record<string, unknown>);
 
   res.json({ success: true });
@@ -1411,7 +1454,7 @@ app.post('/api/sync/inventory-import', (req, res) => {
   res.json({ success: true });
 });
 
-app.post('/api/sync/reset', (_req, res) => {
+app.post('/api/sync/reset', requireAdmin, (_req, res) => {
   const tables = ['settings', 'inventory_transactions', 'inventory', 'shifts', 'employees',
     'order_items', 'orders', 'dining_tables', 'modifier_recipes', 'modifiers', 'modifier_groups',
     'product_recipes', 'ingredients', 'products', 'categories', 'daily_summaries'];
