@@ -307,7 +307,7 @@ export default function LoginPage() {
 
                   <button
                     id="login-btn"
-                    onClick={handleLogin}
+                    onClick={() => void handleLogin()}
                     disabled={pin.length < 4 || isLoading}
                     className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-gray-200 dark:disabled:bg-[#131c2e] text-white disabled:text-gray-400 font-semibold text-base transition-all disabled:cursor-not-allowed shadow-sm shadow-indigo-600/20 disabled:shadow-none"
                   >
