@@ -55,20 +55,17 @@ export default function KitchenPage() {
   const [muted, setMuted] = useState(false);
   const enableSound = useAppSettingsStore((s) => s.settings.enableSound);
   const knownOrderIdsRef = useRef<Set<number> | null>(null);
-  const activeOrders = useLiveQuery(
-    () => db.orders.where('status').anyOf(['pending', 'preparing', 'ready']).toArray()
-  );
-
-  const orderItems = useLiveQuery(async () => {
-    if (!activeOrders?.length) return new Map<number, OrderItem[]>();
+  const data = useLiveQuery(async () => {
+    const orders = await db.orders.where('status').anyOf(['pending', 'preparing', 'ready']).toArray();
     const map = new Map<number, OrderItem[]>();
-    for (const order of activeOrders) {
+    for (const order of orders) {
       if (!order.id) continue;
-      const items = await db.orderItems.where('orderId').equals(order.id).toArray();
-      map.set(order.id, items);
+      map.set(order.id, await db.orderItems.where('orderId').equals(order.id).toArray());
     }
-    return map;
-  }, [activeOrders]);
+    return { orders, orderItems: map };
+  });
+  const activeOrders = data?.orders;
+  const orderItems = data?.orderItems;
 
   // Play sound when new pending orders arrive
   useEffect(() => {
