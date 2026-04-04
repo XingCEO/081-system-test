@@ -31,6 +31,7 @@ export interface Product {
   trackInventory: boolean;
   sortOrder: number;
   isCombo?: boolean;
+  comboPickCount?: number;
   comboItems?: ComboItem[];
   createdAt: string;
   updatedAt: string;

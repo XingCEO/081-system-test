@@ -351,6 +351,7 @@ function ProductFormModal({
   const [selectedModGroups, setSelectedModGroups] = useState<number[]>(product?.modifierGroupIds || []);
   const [imageUrl, setImageUrl] = useState(product?.imageUrl || '');
   const [isCombo, setIsCombo] = useState(product?.isCombo ?? false);
+  const [comboPickCount, setComboPickCount] = useState(String(product?.comboPickCount || 1));
   const [comboItems, setComboItems] = useState<ComboItem[]>(product?.comboItems || []);
   const [recipeItems, setRecipeItems] = useState<Array<{ ingredientId: number; ingredientName: string; quantity: number }>>(
     initialRecipe.map((recipe) => ({
@@ -453,6 +454,7 @@ function ProductFormModal({
       modifierGroupIds: isCombo ? [] : selectedModGroups,
       imageUrl,
       isCombo,
+      comboPickCount: isCombo ? Math.max(1, Number(comboPickCount) || 1) : undefined,
       comboItems: isCombo ? comboItems : undefined,
       recipeItems: isCombo || !trackInventory ? [] : recipeItems,
     });
@@ -498,7 +500,18 @@ function ProductFormModal({
 
         {isCombo ? (
           <div className="border border-purple-200 dark:border-purple-800 rounded-lg p-3 space-y-3">
-            <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block">套餐內容</label>
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium text-gray-600 dark:text-slate-300">客人可選</label>
+              <input
+                type="number"
+                min={1}
+                value={comboPickCount}
+                onChange={(event) => setComboPickCount(event.target.value)}
+                className="input-field w-20 text-center"
+              />
+              <span className="text-sm text-gray-500 dark:text-slate-400">項（從以下品項中選擇）</span>
+            </div>
+            <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block">套餐可選品項</label>
 
             {comboItems.length > 0 && (
               <div className="space-y-2">
@@ -626,7 +639,7 @@ function ProductFormModal({
           <button onClick={onClose} className="btn-secondary flex-1">取消</button>
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || !name.trim() || !price || (isCombo && comboItems.length === 0)}
+            disabled={isSubmitting || !name.trim() || !price}
             className="btn-primary flex-1"
           >
             {isSubmitting ? '處理中...' : product ? '儲存商品' : '新增商品'}

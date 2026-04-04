@@ -227,6 +227,7 @@ function addIngredientsColumnIfMissing(sql: string): void {
   }
 }
 
+addIngredientsColumnIfMissing("ALTER TABLE products ADD COLUMN comboPickCount INTEGER DEFAULT 0;");
 addIngredientsColumnIfMissing("ALTER TABLE ingredients ADD COLUMN supplier TEXT DEFAULT '';");
 addIngredientsColumnIfMissing('ALTER TABLE ingredients ADD COLUMN costPerServing REAL DEFAULT 0;');
 addIngredientsColumnIfMissing("ALTER TABLE ingredients ADD COLUMN ingredientCategory TEXT DEFAULT '其他';");

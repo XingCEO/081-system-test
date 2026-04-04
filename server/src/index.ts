@@ -411,12 +411,12 @@ app.post('/api/products', (req, res) => {
   const data = jsToRow(req.body);
   const now = new Date().toISOString();
   const result = db.prepare(
-    `INSERT INTO products (categoryId, name, description, price, imageUrl, isActive, modifierGroupIds, trackInventory, sortOrder, isCombo, comboItems, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO products (categoryId, name, description, price, imageUrl, isActive, modifierGroupIds, trackInventory, sortOrder, isCombo, comboPickCount, comboItems, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     data.categoryId, data.name, data.description ?? '', data.price, data.imageUrl ?? '',
     data.isActive ?? 1, data.modifierGroupIds ?? '[]', data.trackInventory ?? 0,
-    data.sortOrder ?? 0, data.isCombo ?? 0, data.comboItems ?? '[]', now, now
+    data.sortOrder ?? 0, data.isCombo ?? 0, data.comboPickCount ?? 0, data.comboItems ?? '[]', now, now
   );
   res.json(getById('products', Number(result.lastInsertRowid)));
 });
@@ -425,11 +425,11 @@ app.put('/api/products/:id', (req, res) => {
   const data = jsToRow(req.body);
   const now = new Date().toISOString();
   db.prepare(
-    `UPDATE products SET categoryId=?, name=?, description=?, price=?, imageUrl=?, isActive=?, modifierGroupIds=?, trackInventory=?, sortOrder=?, isCombo=?, comboItems=?, updatedAt=? WHERE id=?`
+    `UPDATE products SET categoryId=?, name=?, description=?, price=?, imageUrl=?, isActive=?, modifierGroupIds=?, trackInventory=?, sortOrder=?, isCombo=?, comboPickCount=?, comboItems=?, updatedAt=? WHERE id=?`
   ).run(
     data.categoryId, data.name, data.description ?? '', data.price, data.imageUrl ?? '',
     data.isActive ?? 1, data.modifierGroupIds ?? '[]', data.trackInventory ?? 0,
-    data.sortOrder ?? 0, data.isCombo ?? 0, data.comboItems ?? '[]', now, Number(req.params.id)
+    data.sortOrder ?? 0, data.isCombo ?? 0, data.comboPickCount ?? 0, data.comboItems ?? '[]', now, Number(req.params.id)
   );
   res.json(getById('products', Number(req.params.id)));
 });
