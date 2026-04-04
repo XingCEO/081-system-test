@@ -287,6 +287,10 @@ export async function cancelOrder(orderId: number): Promise<void> {
 export async function deleteOrder(orderId: number): Promise<void> {
   try {
     await api.del(`/orders/${orderId}`);
+
+    // Clean up local Dexie after successful API call
+    await db.orderItems.where('orderId').equals(orderId).delete();
+    await db.orders.delete(orderId);
   } catch {
     // Fallback to Dexie-only
     const order = await db.orders.get(orderId);
@@ -314,11 +318,11 @@ export async function deleteOrder(orderId: number): Promise<void> {
         currentOrderId: null,
       });
     }
-  }
 
-  // Clean up local Dexie
-  await db.orderItems.where('orderId').equals(orderId).delete();
-  await db.orders.delete(orderId);
+    // Clean up local Dexie in fallback path
+    await db.orderItems.where('orderId').equals(orderId).delete();
+    await db.orders.delete(orderId);
+  }
 }
 
 export async function updateOrderWithItems(
