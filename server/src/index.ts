@@ -569,6 +569,7 @@ app.get('/api/orders/today', (_req, res) => {
   res.json(rows);
 });
 
+// 注意：此端點僅供前端預覽用，不保證唯一性。實際訂單編號在 POST /api/orders 的 transaction 中原子生成。
 app.get('/api/orders/next-number', (_req, res) => {
   const now = new Date();
   const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
@@ -598,15 +599,29 @@ app.post('/api/orders', (req, res) => {
   const orderData = jsToRow(order);
 
   const txn = db.transaction(() => {
+    // 在 transaction 內原子生成訂單編號，避免 race condition
+    const createdAt = (orderData.createdAt as string | undefined) ?? new Date().toISOString();
+    const orderDate = new Date(createdAt);
+    const dateStr = `${orderDate.getFullYear()}${String(orderDate.getMonth() + 1).padStart(2, '0')}${String(orderDate.getDate()).padStart(2, '0')}`;
+    const dayStart = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate()).toISOString();
+    const dayEnd = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate() + 1).toISOString();
+    const todayCount = (db.prepare('SELECT COUNT(*) as c FROM orders WHERE createdAt >= ? AND createdAt < ?').get(dayStart, dayEnd) as { c: number }).c;
+    const prefixRow = db.prepare("SELECT value FROM settings WHERE key = 'orderNumberPrefix'").get() as { value: string } | undefined;
+    let prefixStr = '';
+    try { prefixStr = prefixRow?.value ? JSON.parse(prefixRow.value) : ''; } catch { /* empty */ }
+    const num = String(todayCount + 1).padStart(3, '0');
+    const prefixPart = prefixStr ? `${prefixStr}-` : '';
+    const orderNumber = `${prefixPart}${dateStr}-${num}`;
+
     const result = db.prepare(
       `INSERT INTO orders (orderNumber, tableId, tableName, status, employeeId, employeeName, subtotal, discount, total, cashReceived, changeGiven, note, createdAt, completedAt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
-      orderData.orderNumber, orderData.tableId, orderData.tableName ?? '',
+      orderNumber, orderData.tableId, orderData.tableName ?? '',
       orderData.status ?? 'pending', orderData.employeeId, orderData.employeeName ?? '',
       orderData.subtotal ?? 0, orderData.discount ?? 0, orderData.total ?? 0,
       orderData.cashReceived ?? 0, orderData.changeGiven ?? 0, orderData.note ?? '',
-      orderData.createdAt ?? new Date().toISOString(), orderData.completedAt ?? ''
+      createdAt, orderData.completedAt ?? ''
     );
     const orderId = Number(result.lastInsertRowid);
 
