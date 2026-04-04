@@ -218,7 +218,7 @@ function applyInventoryUsageChanges(params: {
     ).run(
       usage.ingredientId,
       usage.ingredientName,
-      params.type ?? 'sale',
+      params.type ?? (params.restore ? 'restock' : 'sale'),
       quantityDelta,
       previousStock,
       newStock,
