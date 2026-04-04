@@ -794,11 +794,32 @@ app.put('/api/orders/:id', (req, res) => {
     // Update order fields
     if (orderUpdates) {
       const u = jsToRow(orderUpdates);
+      const newTableId = u.tableId !== undefined ? u.tableId : existing.tableId;
+      const newTableName = u.tableName !== undefined ? u.tableName : existing.tableName;
+
+      // 處理桌位切換：釋放舊桌位，佔用新桌位
+      if (newTableId !== existing.tableId) {
+        // 釋放舊桌位
+        if (existing.tableId) {
+          const oldTable = db.prepare('SELECT currentOrderId FROM dining_tables WHERE id = ?').get(existing.tableId) as Record<string, unknown> | undefined;
+          if (oldTable && Number(oldTable.currentOrderId) === orderId) {
+            db.prepare('UPDATE dining_tables SET status = ?, currentOrderId = NULL WHERE id = ?')
+              .run('available', existing.tableId);
+          }
+        }
+        // 佔用新桌位
+        if (newTableId) {
+          db.prepare('UPDATE dining_tables SET status = ?, currentOrderId = ? WHERE id = ?')
+            .run('occupied', orderId, newTableId);
+        }
+      }
+
       db.prepare(
-        `UPDATE orders SET tableName=?, subtotal=?, discount=?, total=?,
+        `UPDATE orders SET tableId=?, tableName=?, subtotal=?, discount=?, total=?,
          cashReceived=?, changeGiven=?, note=? WHERE id=?`
       ).run(
-        u.tableName ?? existing.tableName,
+        newTableId ?? null,
+        newTableName ?? existing.tableName,
         u.subtotal ?? existing.subtotal,
         u.discount ?? existing.discount,
         u.total ?? existing.total,
