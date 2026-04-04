@@ -17,29 +17,18 @@ const ROLE_LABEL: Record<string, string> = {
   kitchen: '廚房',
 };
 
-const ROLE_BADGE: Record<string, string> = {
-  admin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-  cashier: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  kitchen: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+const ROLE_COLOR: Record<string, { bg: string; text: string; glow: string }> = {
+  admin: { bg: 'from-purple-500 to-violet-600', text: 'text-purple-100', glow: 'shadow-purple-500/30' },
+  cashier: { bg: 'from-blue-500 to-cyan-600', text: 'text-blue-100', glow: 'shadow-blue-500/30' },
+  kitchen: { bg: 'from-orange-500 to-amber-600', text: 'text-orange-100', glow: 'shadow-orange-500/30' },
 };
 
-// Keyframe styles injected via a <style> tag inside the component
-const floatKeyframes = `
-@keyframes floatA {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(18px, -22px) scale(1.04); }
-  66% { transform: translate(-12px, 14px) scale(0.97); }
-}
-@keyframes floatB {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  40% { transform: translate(-20px, 16px) scale(1.05); }
-  70% { transform: translate(14px, -10px) scale(0.96); }
-}
-@keyframes floatC {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  30% { transform: translate(10px, 20px) scale(1.03); }
-  60% { transform: translate(-16px, -8px) scale(0.98); }
-}
+const keyframes = `
+@keyframes drift1 { 0%,100%{transform:translate(0,0) rotate(0deg)} 50%{transform:translate(30px,-40px) rotate(6deg)} }
+@keyframes drift2 { 0%,100%{transform:translate(0,0) rotate(0deg)} 50%{transform:translate(-40px,30px) rotate(-8deg)} }
+@keyframes drift3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(20px,20px) scale(1.08)} }
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 `;
 
 export default function LoginPage() {
@@ -57,15 +46,11 @@ export default function LoginPage() {
   const isSubmittingRef = useRef(false);
 
   const employees = useLiveQuery(() => db.employees.filter((e) => e.isActive).toArray());
-  const productCount = useLiveQuery(() => db.products.filter(p => p.isActive).count());
-  const categoryCount = useLiveQuery(() => db.categories.filter(c => c.isActive).count());
 
   useEffect(() => {
     if (isAuthenticated) {
       const { currentEmployee } = useAuthStore.getState();
-      if (currentEmployee) {
-        navigate(getDefaultRoute(currentEmployee.role), { replace: true });
-      }
+      if (currentEmployee) navigate(getDefaultRoute(currentEmployee.role), { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -75,9 +60,7 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedEmployee && pinRef.current) {
-      pinRef.current.focus();
-    }
+    if (selectedEmployee && pinRef.current) pinRef.current.focus();
   }, [selectedEmployee]);
 
   const handleLogin = async (pinOverride?: string) => {
@@ -88,16 +71,12 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const result = await loginEmployee(selectedEmployee.id, pinToUse);
-      if (!result) {
-        setError('PIN 碼錯誤，請重新輸入');
-        setPin('');
-        return;
-      }
+      if (!result) { setError('PIN 碼錯誤'); setPin(''); return; }
       login(result.employee, result.shiftId, useAuthStore.getState().token ?? undefined);
       toast.success(`歡迎，${result.employee.name}！`);
       navigate(getDefaultRoute(result.employee.role), { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : '登入失敗，請重試');
+      setError(err instanceof Error ? err.message : '登入失敗');
       setPin('');
     } finally {
       setIsLoading(false);
@@ -109,238 +88,151 @@ export default function LoginPage() {
     const digits = value.replace(/\D/g, '').slice(0, 4);
     setPin(digits);
     setError('');
-    if (digits.length === 4) {
-      void handleLogin(digits);
-    }
+    if (digits.length === 4) void handleLogin(digits);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && pin.length === 4) void handleLogin();
   };
 
-  const dateStr = time.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-  const timeStr = time.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const timeStr = time.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = time.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric', weekday: 'short' });
 
   return (
     <>
-      <style>{floatKeyframes}</style>
-      <div className="min-h-screen flex dark:bg-[#080e1e]">
+      <style>{keyframes}</style>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4"
+        style={{
+          background: 'linear-gradient(135deg, #0f0c29 0%, #1a1145 25%, #302b63 50%, #24243e 75%, #0f0c29 100%)',
+        }}
+      >
+        {/* Geometric background shapes */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Large triangle - top left */}
+          <div className="absolute -top-20 -left-20 w-[500px] h-[500px] opacity-[0.07]"
+            style={{ animation: 'drift1 20s ease-in-out infinite', background: 'linear-gradient(135deg, #6366f1, transparent)', clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
+          {/* Circle - top right */}
+          <div className="absolute -top-32 -right-32 w-[400px] h-[400px] rounded-full opacity-[0.08]"
+            style={{ animation: 'drift2 25s ease-in-out infinite', background: 'radial-gradient(circle, #a78bfa, transparent 70%)' }} />
+          {/* Diamond - bottom left */}
+          <div className="absolute -bottom-16 left-[10%] w-[300px] h-[300px] opacity-[0.06] rotate-45"
+            style={{ animation: 'drift3 18s ease-in-out infinite', background: 'linear-gradient(180deg, #818cf8, transparent)' }} />
+          {/* Small circle - center right */}
+          <div className="absolute top-[60%] right-[15%] w-[200px] h-[200px] rounded-full opacity-[0.05]"
+            style={{ animation: 'drift1 22s ease-in-out infinite reverse', background: 'radial-gradient(circle, #c4b5fd, transparent 60%)' }} />
+          {/* Hexagon-ish - bottom right */}
+          <div className="absolute -bottom-24 -right-24 w-[350px] h-[350px] opacity-[0.07]"
+            style={{ animation: 'drift2 16s ease-in-out infinite reverse', background: 'linear-gradient(45deg, #7c3aed, transparent)', clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+          {/* Dot grid overlay */}
+          <div className="absolute inset-0 opacity-[0.03]"
+            style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+        </div>
 
-        {/* ========== Left brand panel (desktop) ========== */}
-        <div
-          className="hidden lg:flex lg:w-[48%] relative overflow-hidden flex-col justify-between p-12"
-          style={{
-            background:
-              'radial-gradient(ellipse 80% 60% at 20% 10%, #4f46e5 0%, transparent 60%),' +
-              'radial-gradient(ellipse 60% 70% at 80% 90%, #6d28d9 0%, transparent 55%),' +
-              'radial-gradient(ellipse 50% 50% at 50% 50%, #4338ca 0%, transparent 70%),' +
-              'linear-gradient(160deg, #1e1b4b 0%, #312e81 40%, #3730a3 100%)',
-          }}
-        >
-          {/* Grid dot pattern */}
-          <div
-            className="absolute inset-0 opacity-[0.035]"
-            style={{
-              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1px)',
-              backgroundSize: '24px 24px',
-            }}
-          />
-
-          {/* Floating blob A */}
-          <div
-            className="absolute top-[8%] right-[10%] w-80 h-80 rounded-full bg-indigo-400/20 blur-3xl"
-            style={{ animation: 'floatA 14s ease-in-out infinite' }}
-          />
-          {/* Floating blob B */}
-          <div
-            className="absolute bottom-[12%] left-[5%] w-64 h-64 rounded-full bg-violet-500/20 blur-3xl"
-            style={{ animation: 'floatB 18s ease-in-out infinite' }}
-          />
-          {/* Floating blob C */}
-          <div
-            className="absolute top-[40%] left-[30%] w-48 h-48 rounded-full bg-blue-400/15 blur-3xl"
-            style={{ animation: 'floatC 22s ease-in-out infinite' }}
-          />
-
-          {/* Top — Logo */}
-          <div className="relative z-10 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg shadow-black/20">
-              <IconRestaurant className="w-6 h-6 text-white" />
+        {/* Top bar - floating */}
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 py-4 sm:px-10 sm:py-6 z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+              <IconRestaurant className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white tracking-tight">{storeName}</h1>
-              <p className="text-xs text-indigo-300/80">超星集團</p>
+              <p className="text-white font-bold text-sm tracking-tight">{storeName}</p>
+              <p className="text-white/40 text-[10px]">超星集團</p>
             </div>
           </div>
-
-          {/* Center — Tagline */}
-          <div className="relative z-10">
-            <h2 className="text-4xl xl:text-[44px] font-bold text-white leading-[1.15] mb-5 tracking-tight">
-              更聰明的方式<br />管理您的餐廳
-            </h2>
-            <p className="text-indigo-200/70 text-[15px] leading-relaxed mb-8 max-w-sm">
-              從點餐到出餐、庫存到報表，一站式解決所有營運需求。
-            </p>
-
-            {/* Feature chips — glass card style */}
-            <div className="flex flex-wrap gap-2">
-              {['即時點餐', '廚房管理', '庫存追蹤', '營運報表', '多角色權限', '離線運作'].map((label) => (
-                <span
-                  key={label}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-sm bg-white/5 text-indigo-100 border border-white/15 shadow-sm"
-                >
-                  <svg className="w-3 h-3 text-indigo-300" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  {label}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Bottom — Live system stats */}
-          <div className="relative z-10 flex items-center gap-5 text-xs text-indigo-200/60">
+          <div className="flex items-center gap-3 text-white/50 text-xs">
             <div className="flex items-center gap-1.5">
               <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
-              {isOnline ? '連線正常' : '離線模式'}
+              <span>{isOnline ? '已連線' : '離線'}</span>
             </div>
-            <div className="w-px h-3 bg-indigo-400/20" />
-            <span>{employees?.length ?? 0} 位員工</span>
-            <div className="w-px h-3 bg-indigo-400/20" />
-            <span>{productCount ?? 0} 項商品</span>
-            <div className="w-px h-3 bg-indigo-400/20" />
-            <span>{categoryCount ?? 0} 個分類</span>
+            <span className="font-mono tabular-nums">{timeStr}</span>
           </div>
         </div>
 
-        {/* ========== Right form panel ========== */}
-        <div className="flex-1 flex flex-col bg-white dark:bg-[#0b1120]">
-          {/* Top bar */}
-          <div className="flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-8">
-            <div className="flex items-center gap-2.5 lg:opacity-0">
-              <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
-                <IconRestaurant className="w-4.5 h-4.5 text-white" />
+        {/* Main card */}
+        <div className="relative z-10 w-full max-w-[420px]">
+          <div className="backdrop-blur-xl bg-white/[0.08] rounded-3xl border border-white/[0.12] shadow-2xl shadow-black/30 overflow-hidden">
+
+            {/* Card header */}
+            <div className="px-8 pt-8 pb-6 text-center border-b border-white/[0.06]">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 mb-4">
+                <IconRestaurant className="w-8 h-8 text-white" />
               </div>
-              <span className="font-bold text-gray-900 dark:text-slate-50 text-sm">{storeName}</span>
+              <h1 className="text-2xl font-bold text-white tracking-tight">{storeName}</h1>
+              <p className="text-white/40 text-sm mt-1">{dateStr}</p>
             </div>
-            <div className="text-right">
-              <p className="text-[11px] text-gray-400 dark:text-slate-500 font-mono tabular-nums">{timeStr}</p>
-              <p className="text-[10px] text-gray-300 dark:text-slate-500">{dateStr}</p>
-            </div>
-          </div>
 
-          {/* Form — vertically centered */}
-          <div className="flex-1 flex items-center justify-center px-6 sm:px-10 pb-6">
-            <div className="w-full max-w-[380px]">
-
+            {/* Card body */}
+            <div className="px-8 py-6">
               {!selectedEmployee ? (
                 <div className="animate-fade-in">
-                  <div className="mb-8">
-                    <h2 className="text-[28px] font-bold text-gray-900 dark:text-slate-50 leading-tight">歡迎回來</h2>
-                    <p className="text-gray-400 mt-2 text-[15px]">選擇您的帳號以繼續</p>
-                  </div>
+                  <p className="text-white/50 text-sm mb-4">選擇帳號登入</p>
 
                   <div className="space-y-2">
-                    {employees?.map((employee) => (
-                      <button
-                        key={employee.id}
-                        onClick={() => setSelectedEmployee(employee)}
-                        className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border border-gray-100 dark:border-[#1e2d4a]/60 hover:bg-gray-50 hover:border-gray-200 hover:shadow-md dark:hover:bg-[#1a2540] dark:hover:border-[#2a3a5a] transition-all duration-200 active:scale-[0.99] hover:scale-[1.02] group"
-                      >
-                        <UserAvatar name={employee.name} size={44} className="flex-shrink-0" />
-                        <div className="flex-1 text-left min-w-0">
-                          <p className="font-semibold text-gray-900 dark:text-slate-100 text-[15px] truncate">
-                            {employee.name}
-                          </p>
-                          <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ${ROLE_BADGE[employee.role] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}>
-                            {ROLE_LABEL[employee.role] || employee.role}
-                          </span>
-                        </div>
-                        <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-[#131c2e] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                    {employees?.map((employee) => {
+                      const color = ROLE_COLOR[employee.role] ?? { bg: 'from-gray-500 to-gray-600', text: 'text-gray-100', glow: 'shadow-gray-500/30' };
+                      return (
+                        <button
+                          key={employee.id}
+                          onClick={() => setSelectedEmployee(employee)}
+                          className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.1] hover:border-white/[0.18] transition-all duration-200 active:scale-[0.98] group"
+                        >
+                          <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${color.bg} flex items-center justify-center shadow-lg ${color.glow} flex-shrink-0`}>
+                            <span className={`text-sm font-bold ${color.text}`}>{employee.name[0]}</span>
+                          </div>
+                          <div className="flex-1 text-left min-w-0">
+                            <p className="font-semibold text-white text-[15px] truncate">{employee.name}</p>
+                            <p className="text-white/40 text-xs">{ROLE_LABEL[employee.role] || employee.role}</p>
+                          </div>
+                          <svg className="w-4 h-4 text-white/20 group-hover:text-white/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
-                        </div>
-                      </button>
-                    ))}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {/* Test credentials */}
-                  {(
-                    <div className="mt-8 p-4 rounded-2xl bg-gray-50 dark:bg-[#131c2e]/50 border border-gray-100 dark:border-[#1e2d4a]/50">
-                      <p className="text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2.5">測試帳號 PIN 碼</p>
-                      <div className="grid grid-cols-3 gap-3">
-                        {[
-                          { name: '管理員', pin: '0000' },
-                          { name: '小明', pin: '1234' },
-                          { name: '阿華', pin: '5678' },
-                        ].map((item) => (
-                          <div key={item.pin} className="text-center">
-                            <p className="text-xs text-gray-500 dark:text-slate-400">{item.name}</p>
-                            <p className="text-sm font-bold text-gray-800 dark:text-slate-200 font-mono tracking-widest mt-0.5">{item.pin}</p>
-                          </div>
-                        ))}
-                      </div>
+                  <div className="mt-5 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-2">PIN 碼</p>
+                    <div className="flex justify-around">
+                      {[{ n: '管理員', p: '0000' }, { n: '小明', p: '1234' }, { n: '阿華', p: '5678' }].map((x) => (
+                        <div key={x.p} className="text-center">
+                          <p className="text-[11px] text-white/40">{x.n}</p>
+                          <p className="text-sm font-bold text-white/70 font-mono tracking-[0.2em]">{x.p}</p>
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
                 </div>
               ) : (
                 <div className="animate-fade-in">
                   {/* Back */}
                   <button
                     onClick={() => { setSelectedEmployee(null); setPin(''); setError(''); }}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors mb-8 group"
+                    className="flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors mb-6"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-[#131c2e] flex items-center justify-center group-hover:bg-gray-200 dark:group-hover:bg-[#1a2540] transition-colors">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </div>
-                    <span>切換帳號</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    返回
                   </button>
 
                   {/* Selected user */}
-                  <div className="flex items-center gap-4 mb-8">
-                    <UserAvatar name={selectedEmployee.name} size={56} className="flex-shrink-0 shadow-lg" />
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-slate-50">{selectedEmployee.name}</h3>
-                      <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${ROLE_BADGE[selectedEmployee.role] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}>
-                        {ROLE_LABEL[selectedEmployee.role] || selectedEmployee.role}
-                      </span>
-                    </div>
+                  <div className="text-center mb-6">
+                    <UserAvatar name={selectedEmployee.name} size={64} className="mx-auto shadow-xl" />
+                    <h3 className="text-xl font-bold text-white mt-3">{selectedEmployee.name}</h3>
+                    <p className="text-white/40 text-sm">{ROLE_LABEL[selectedEmployee.role] || selectedEmployee.role}</p>
                   </div>
 
-                  {/* PIN form */}
+                  {/* PIN display */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
-                        PIN 碼
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setShowPin(!showPin)}
-                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
-                      >
-                        {showPin ? (
-                          <>
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.98 8.223A10.477 10.477 0 001.934 12c1.292 4.338 5.31 7.5 10.066 7.5.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                            </svg>
-                            隱藏
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            顯示
-                          </>
-                        )}
+                      <p className="text-sm text-white/50">請輸入 PIN 碼</p>
+                      <button onClick={() => setShowPin(!showPin)} className="text-[11px] text-white/30 hover:text-white/60 transition-colors">
+                        {showPin ? '隱藏' : '顯示'}
                       </button>
                     </div>
 
-                    {/* Hidden real input */}
                     <input
                       ref={pinRef}
                       type="text"
@@ -354,52 +246,30 @@ export default function LoginPage() {
                       aria-label="PIN 碼輸入"
                     />
 
-                    {/* 4 visual digit boxes */}
-                    <div
-                      className="flex gap-3 mb-4 cursor-text"
-                      onClick={() => pinRef.current?.focus()}
-                    >
+                    <div className="flex gap-3 mb-4 cursor-text" onClick={() => pinRef.current?.focus()}>
                       {[0, 1, 2, 3].map((i) => {
-                        const isFilled = pin.length > i;
-                        const isActive = pin.length === i;
+                        const filled = pin.length > i;
+                        const active = pin.length === i;
                         return (
-                          <div
-                            key={i}
-                            className={`
-                              flex-1 h-14 rounded-xl border-2 flex items-center justify-center text-xl font-bold
-                              transition-all duration-150 select-none
-                              ${error
-                                ? 'border-red-400 bg-red-50 dark:bg-red-900/10 dark:border-red-500/60'
-                                : isActive
-                                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 ring-2 ring-indigo-500/30'
-                                  : isFilled
-                                    ? 'border-indigo-300 bg-white dark:bg-[#1a2540] dark:border-indigo-400/50'
-                                    : 'border-gray-200 bg-gray-50 dark:bg-[#131c2e] dark:border-[#1e2d4a]'
-                              }
-                            `}
-                          >
-                            {isFilled ? (
-                              showPin ? (
-                                <span className="text-gray-900 dark:text-slate-100">{pin[i]}</span>
-                              ) : (
-                                <span className="text-indigo-500 dark:text-indigo-400 text-2xl leading-none" style={{ marginTop: '2px' }}>●</span>
-                              )
-                            ) : (
-                              isActive ? (
-                                <span className="w-0.5 h-6 bg-indigo-500 rounded-full animate-pulse" />
-                              ) : null
-                            )}
+                          <div key={i} className={`flex-1 h-14 rounded-xl border-2 flex items-center justify-center text-xl font-bold transition-all duration-150
+                            ${error ? 'border-red-500/60 bg-red-500/10' : active ? 'border-indigo-400 bg-indigo-500/10' : filled ? 'border-white/20 bg-white/[0.06]' : 'border-white/[0.08] bg-white/[0.03]'}`}>
+                            {filled ? (
+                              showPin ? <span className="text-white">{pin[i]}</span>
+                                : <span className="text-indigo-400 text-2xl">●</span>
+                            ) : active ? (
+                              <span className="w-0.5 h-6 bg-indigo-400 rounded-full" style={{ animation: 'blink 1s step-end infinite' }} />
+                            ) : null}
                           </div>
                         );
                       })}
                     </div>
 
                     {error && (
-                      <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800/30 mb-4 animate-shake">
-                        <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 mb-4 animate-shake">
+                        <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                        <p className="text-sm text-red-400">{error}</p>
                       </div>
                     )}
 
@@ -407,34 +277,28 @@ export default function LoginPage() {
                       id="login-btn"
                       onClick={() => void handleLogin()}
                       disabled={pin.length < 4 || isLoading}
-                      className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-gray-200 dark:disabled:bg-[#131c2e] text-white disabled:text-gray-400 font-semibold text-base transition-all disabled:cursor-not-allowed shadow-sm shadow-indigo-600/20 disabled:shadow-none"
+                      className="w-full h-12 rounded-xl font-semibold text-base transition-all disabled:cursor-not-allowed bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 active:from-indigo-600 active:to-purple-700 text-white shadow-lg shadow-indigo-500/25 disabled:opacity-40 disabled:shadow-none"
                     >
-                      {isLoading ? '登入中...' : '登入'}
+                      {isLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          登入中...
+                        </span>
+                      ) : '登入'}
                     </button>
                   </div>
                 </div>
               )}
             </div>
           </div>
+        </div>
 
-          {/* Bottom status bar — frosted glass */}
-          <div className="px-6 pb-5 sm:px-10">
-            <div className="flex items-center justify-between px-4 py-2.5 rounded-2xl bg-gray-50/80 dark:bg-[#131c2e]/60 backdrop-blur-sm border border-gray-100 dark:border-[#1e2d4a]/40 text-[11px] text-gray-400 dark:text-slate-500">
-              <div className="flex items-center gap-3">
-                <span className="font-medium">超星集團 POS v2.0</span>
-                <div className="w-px h-3 bg-gray-200 dark:bg-[#1a2540]" />
-                <div className="flex items-center gap-1.5">
-                  <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
-                  {isOnline ? '連線正常' : '離線中'}
-                </div>
-                <div className="w-px h-3 bg-gray-200 dark:bg-[#1a2540]" />
-                <span>{employees?.length ?? '-'} 員工</span>
-                <div className="w-px h-3 bg-gray-200 dark:bg-[#1a2540]" />
-                <span>{productCount ?? '-'} 品項</span>
-              </div>
-              <span className="font-mono tabular-nums">{timeStr}</span>
-            </div>
-          </div>
+        {/* Bottom floating info */}
+        <div className="absolute bottom-4 left-0 right-0 text-center text-[10px] text-white/20 z-10">
+          超星集團 POS v2.0
         </div>
       </div>
     </>
