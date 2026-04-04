@@ -1167,8 +1167,13 @@ app.get('/api/shifts', (_req, res) => {
 
 // ==================== ANALYTICS ====================
 app.get('/api/analytics', (req, res) => {
-  const startDate = req.query.start as string;
-  const endDate = req.query.end as string;
+  const startDate = req.query.start as string | undefined;
+  const endDate = req.query.end as string | undefined;
+
+  if (!startDate || !endDate) {
+    res.status(400).json({ error: '缺少日期參數，請提供 start 和 end' });
+    return;
+  }
 
   const orders = db.prepare(
     `SELECT * FROM orders WHERE status = 'completed' AND createdAt >= ? AND createdAt <= ?`
