@@ -435,7 +435,9 @@ app.put('/api/products/:id', (req, res) => {
 });
 
 app.delete('/api/products/:id', (req, res) => {
-  db.prepare('DELETE FROM products WHERE id = ?').run(Number(req.params.id));
+  const productId = Number(req.params.id);
+  db.prepare('DELETE FROM product_recipes WHERE productId = ?').run(productId);
+  db.prepare('DELETE FROM products WHERE id = ?').run(productId);
   res.json({ success: true });
 });
 
