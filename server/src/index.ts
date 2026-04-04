@@ -3,6 +3,7 @@ import cors from 'cors';
 import crypto from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import rateLimit from 'express-rate-limit';
 import db, { rowToJs, jsToRow } from './db.js';
 import { seedDatabase } from './seed.js';
 
@@ -17,6 +18,25 @@ app.use(cors({
 }));
 // S4: 預設 body limit 改為 1MB（防止超大 payload 攻擊）
 app.use(express.json({ limit: '1mb' }));
+
+// S2: Rate limiting — 通用端點每 IP 每分鐘 100 次
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: { error: '請求次數過多，請稍後再試' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', generalLimiter);
+
+// S2: 登入端點每 IP 每 15 分鐘最多 10 次（防止 PIN 暴力破解）
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: '登入嘗試次數過多，請 15 分鐘後再試' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Seed on first run
 seedDatabase();
@@ -286,7 +306,7 @@ function importSyncData(
 }
 
 // ==================== AUTH ====================
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', loginLimiter, (req, res) => {
   const { employeeId, pin } = req.body;
   if (!pin) { res.status(400).json({ error: '請輸入 PIN 碼' }); return; }
   const employee = db.prepare('SELECT * FROM employees WHERE id = ? AND isActive = 1').get(employeeId) as Record<string, unknown> | undefined;
