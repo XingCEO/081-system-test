@@ -1179,6 +1179,37 @@ app.get('/api/analytics', (req, res) => {
     `SELECT * FROM orders WHERE status = 'completed' AND createdAt >= ? AND createdAt <= ?`
   ).all(startDate, endDate).map(r => rowToJs(r as Record<string, unknown>));
 
+  // 若無訂單，直接回傳空結果（避免後續查詢 IN () 語法錯誤）
+  if (orders.length === 0) {
+    res.json({
+      totalRevenue: 0,
+      totalCost: 0,
+      grossProfit: 0,
+      grossMarginPercent: 0,
+      totalOrders: 0,
+      averageOrderValue: 0,
+      topItems: [],
+      revenueByDay: [],
+      hourlyBreakdown: [],
+    });
+    return;
+  }
+
+  // 一次性取得所有相關 order_items，避免 N+1 查詢
+  const orderIds = orders.map(o => o.id as number);
+  const placeholders = orderIds.map(() => '?').join(',');
+  const allOrderItems = db.prepare(
+    `SELECT * FROM order_items WHERE orderId IN (${placeholders})`
+  ).all(...orderIds) as Array<Record<string, unknown>>;
+
+  // 在記憶體中按 orderId 分組
+  const itemsByOrderId = new Map<number, Array<Record<string, unknown>>>();
+  for (const item of allOrderItems) {
+    const oid = item.orderId as number;
+    if (!itemsByOrderId.has(oid)) itemsByOrderId.set(oid, []);
+    itemsByOrderId.get(oid)!.push(item);
+  }
+
   let totalRevenue = 0;
   const revenueByDay: Record<string, { revenue: number; orders: number }> = {};
   const hourlyBreakdown: Record<number, { orders: number; revenue: number }> = {};
@@ -1200,8 +1231,7 @@ app.get('/api/analytics', (req, res) => {
     hourlyBreakdown[hour].orders++;
     hourlyBreakdown[hour].revenue += total;
 
-    const items = db.prepare('SELECT * FROM order_items WHERE orderId = ?')
-      .all(order.id as number) as Array<Record<string, unknown>>;
+    const items = itemsByOrderId.get(order.id as number) ?? [];
     for (const item of items) {
       const key = String(item.productId);
       if (!itemCounts[key]) itemCounts[key] = { name: item.productName as string, quantity: 0, revenue: 0 };
@@ -1226,12 +1256,11 @@ app.get('/api/analytics', (req, res) => {
     productCostMap.set(recipe.productId, (productCostMap.get(recipe.productId) ?? 0) + cost);
   }
 
-  // Sum cost for all order items
+  // 使用已分組的 order_items 計算食材成本（不再重複查詢）
   for (const order of orders) {
-    const items = db.prepare('SELECT productId, quantity FROM order_items WHERE orderId = ?')
-      .all(order.id as number) as Array<{ productId: number; quantity: number }>;
+    const items = itemsByOrderId.get(order.id as number) ?? [];
     for (const item of items) {
-      totalCost += (productCostMap.get(item.productId) ?? 0) * item.quantity;
+      totalCost += (productCostMap.get(item.productId as number) ?? 0) * (item.quantity as number);
     }
   }
 
