@@ -95,6 +95,20 @@ async function syncTable<T>(
 
 export async function pullFromServer(): Promise<void> {
   if (isSyncing) return;
+
+  // Skip sync if not authenticated — avoids 401 spam before login
+  try {
+    const raw = localStorage.getItem('pos-auth');
+    if (raw) {
+      const parsed = JSON.parse(raw) as { state?: { token?: string | null } };
+      if (!parsed?.state?.token) return;
+    } else {
+      return;
+    }
+  } catch {
+    return;
+  }
+
   isSyncing = true;
 
   try {

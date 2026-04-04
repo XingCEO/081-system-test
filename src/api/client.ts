@@ -67,9 +67,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       },
     });
 
-    // 401 means the token is invalid or expired — clear auth and redirect to login
+    // 401 handling: only kick to login if we had a token (i.e., the token expired/invalid).
+    // If there's no token (not logged in yet), 401 is expected — just throw without redirecting.
     if (res.status === 401) {
-      handleUnauthorized();
+      if (token) {
+        handleUnauthorized();
+      }
       throw new Error('未授權，請重新登入');
     }
 
