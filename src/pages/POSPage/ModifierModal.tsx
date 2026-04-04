@@ -21,7 +21,7 @@ export default function ModifierModal({ product, onClose }: ModifierModalProps) 
   const groups = useLiveQuery(async () => {
     const gs = await db.modifierGroups
       .where('id')
-      .anyOf(product.modifierGroupIds)
+      .anyOf(product.modifierGroupIds ?? [])
       .toArray();
     const result = [];
     for (const g of gs) {

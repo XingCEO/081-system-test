@@ -64,7 +64,7 @@ export default function ModifierGroupsPanel() {
         .sort((left, right) => Number(right.isActive) - Number(left.isActive) || left.name.localeCompare(right.name, 'zh-Hant')),
       modifierRecipes,
       ingredientMap,
-      productCount: products.filter((product) => product.modifierGroupIds.includes(group.id!)).length,
+      productCount: products.filter((product) => product.modifierGroupIds?.includes(group.id!)).length,
     }));
   }, []);
 

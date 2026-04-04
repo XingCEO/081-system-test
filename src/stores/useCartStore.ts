@@ -35,7 +35,7 @@ export const useCartStore = create<CartState>()(
       note: '',
 
       addItem: (item) => {
-        const modifiersTotal = item.modifiers.reduce((sum, m) => sum + m.price, 0);
+        const modifiersTotal = (item.modifiers ?? []).reduce((sum, m) => sum + m.price, 0);
         set((state) => ({
           items: [
             ...state.items,
@@ -45,7 +45,7 @@ export const useCartStore = create<CartState>()(
               productName: item.productName,
               unitPrice: item.unitPrice,
               quantity: 1,
-              modifiers: item.modifiers,
+              modifiers: item.modifiers ?? [],
               modifiersTotal,
               note: item.note || '',
               isCombo: item.isCombo,

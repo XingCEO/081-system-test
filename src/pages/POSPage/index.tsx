@@ -18,7 +18,7 @@ export default function POSPage() {
   );
 
   const handleProductClick = (product: Product) => {
-    if (product.modifierGroupIds.length > 0) {
+    if (product.modifierGroupIds?.length > 0) {
       setSelectedProduct(product);
     } else if (product.isCombo) {
       useCartStore.getState().addItem({
