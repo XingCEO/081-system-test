@@ -109,8 +109,8 @@ function buildTopItems(
   orderItemsByOrder.forEach((items) => {
     items.forEach((item) => {
       const current = itemMap.get(item.productName) ?? { quantity: 0, revenue: 0 };
-      current.quantity += item.quantity;
-      current.revenue += item.subtotal;
+      current.quantity += item.quantity ?? 0;
+      current.revenue += item.subtotal ?? 0;
       itemMap.set(item.productName, current);
     });
   });
@@ -270,12 +270,12 @@ export async function getAnalytics(startDate: Date, endDate: Date): Promise<Anal
       hourlyBreakdown: Array<{ hour: number; orders: number; revenue: number }>;
     }>(`/analytics?start=${encodeURIComponent(startDate.toISOString())}&end=${encodeURIComponent(endDate.toISOString())}`);
 
-    const revenueByDay = response.revenueByDay.map((entry) => ({
+    const revenueByDay = (response.revenueByDay ?? []).map((entry) => ({
       date: entry.date.slice(5).replace('-', '/'),
       revenue: entry.revenue,
       orders: entry.orders,
     }));
-    const hourlyBreakdown = [...response.hourlyBreakdown].sort((left, right) => left.hour - right.hour);
+    const hourlyBreakdown = [...(response.hourlyBreakdown ?? [])].sort((left, right) => left.hour - right.hour);
     const timeSlotBreakdown = buildTimeSlotBreakdownFromHourlyBreakdown(hourlyBreakdown);
 
     return {
@@ -285,7 +285,7 @@ export async function getAnalytics(startDate: Date, endDate: Date): Promise<Anal
       grossMarginPercent: response.grossMarginPercent ?? 0,
       totalOrders: response.totalOrders,
       averageOrderValue: Math.round(response.averageOrderValue),
-      topItems: response.topItems,
+      topItems: response.topItems ?? [],
       revenueByDay,
       hourlyBreakdown,
       timeSlotBreakdown,
@@ -426,7 +426,7 @@ export function createAnalyticsWorkbookXml({
       name: '熱銷商品',
       rows: [
         ['商品', '數量', '營收'],
-        ...data.topItems.map((item) => [item.name, item.quantity, item.revenue]),
+        ...(data.topItems ?? []).map((item) => [item.name, item.quantity, item.revenue]),
       ],
     },
   ];

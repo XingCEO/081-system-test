@@ -114,7 +114,7 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
 
             {receiptItems.map((item) => (
               <div key={item.cartItemId} className="mb-1">
-                <p>{item.productName} x{item.quantity}  {formatPrice((item.unitPrice + item.modifiersTotal) * item.quantity)}</p>
+                <p>{item.productName} x{item.quantity}  {formatPrice((item.unitPrice + (item.modifiersTotal ?? 0)) * item.quantity)}</p>
                 {item.modifiers?.map((modifier) => (
                   <p key={`${item.cartItemId}-${modifier.modifierId}`} className="pl-2">
                     +{modifier.name} {formatPriceDelta(modifier.price)}

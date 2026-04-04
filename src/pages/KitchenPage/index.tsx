@@ -194,9 +194,9 @@ export default function KitchenPage() {
                       ))}
                     </div>
                   )}
-                  {item.modifiers?.length > 0 && (
+                  {(item.modifiers ?? []).length > 0 && (
                     <span className={`text-xs ml-1 ${isDone ? 'text-gray-400 dark:text-slate-500' : 'text-gray-500 dark:text-slate-400'}`}>
-                      ({item.modifiers.map(m => m.name).join(', ')})
+                      ({(item.modifiers ?? []).map(m => m.name).join(', ')})
                     </span>
                   )}
                   {item.note && (

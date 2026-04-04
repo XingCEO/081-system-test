@@ -80,7 +80,7 @@ export async function createOrder(params: {
 }): Promise<Order> {
   const orderNumber = await getNextOrderNumber();
   const subtotal = params.items.reduce(
-    (sum, item) => sum + (item.unitPrice + item.modifiersTotal) * item.quantity,
+    (sum, item) => sum + (item.unitPrice + (item.modifiersTotal ?? 0)) * item.quantity,
     0
   );
   const total = subtotal - params.discount;
