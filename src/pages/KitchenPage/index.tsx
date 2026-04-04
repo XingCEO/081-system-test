@@ -264,14 +264,14 @@ export default function KitchenPage() {
         </div>
         <button
           onClick={() => setMuted(!muted)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border-2 ${
             muted || !enableSound
-              ? 'bg-gray-200 text-gray-500 dark:bg-[#1e2d4a] dark:text-slate-400'
-              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
+              ? 'bg-gray-200 text-gray-500 dark:bg-[#1e2d4a] dark:text-slate-400 border-red-400'
+              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 border-emerald-400'
           }`}
           title={!enableSound ? '系統設定已關閉提示音' : ''}
         >
-          {!enableSound ? '🔇 音效已關閉' : muted ? '🔇 靜音' : '🔔 提示音'}
+          {!enableSound ? '🔇 音效已關閉' : muted ? '🔇 已靜音' : '🔔 提示音開'}
         </button>
       </div>
 
