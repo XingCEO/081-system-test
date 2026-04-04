@@ -109,7 +109,7 @@ export function seedDatabase(): void {
     // ==================== Products ====================
     const insertProduct = db.prepare(
       `INSERT INTO products (categoryId, name, description, price, imageUrl, isActive, modifierGroupIds, trackInventory, sortOrder, isCombo, comboItems, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, '', 1, ?, 0, ?, 0, '[]', ?, ?)`
+       VALUES (?, ?, ?, ?, '', 1, ?, 1, ?, 0, '[]', ?, ?)`
     );
 
     // --- 1. 燉飯 (categoryId=1) modifiers: 醬料[1], 主食[2] ---
@@ -293,6 +293,112 @@ export function seedDatabase(): void {
         item.lowStockThreshold, item.unit, now
       );
     });
+
+    const ingByName = new Map<string, number>();
+    const allIng = db.prepare('SELECT id, name FROM ingredients').all() as Array<{ id: number; name: string }>;
+    for (const row of allIng) ingByName.set(row.name, row.id);
+
+    const insertRecipe = db.prepare(
+      'INSERT INTO product_recipes (productId, ingredientId, ingredientName, quantity) VALUES (?, ?, ?, ?)'
+    );
+    const allProducts = db.prepare('SELECT id, name, categoryId FROM products').all() as Array<{ id: number; name: string; categoryId: number }>;
+
+    const ri = (name: string, qty: number, productId: number) => {
+      const id = ingByName.get(name);
+      if (id) insertRecipe.run(productId, id, name, qty);
+    };
+
+    for (const p of allProducts) {
+      if (p.categoryId === 1) {
+        ri('有機黎麥飯', 1, p.id);
+        ri('花椰', 1, p.id);
+        if (p.name.includes('松子')) ri('松子粒', 1, p.id);
+        if (p.name.includes('菇菇')) ri('菇菇', 1, p.id);
+        if (p.name.includes('黑豬') || p.name.includes('梅花豬')) ri('梅花豬片', 1, p.id);
+        if (p.name.includes('菲瑞牛')) ri('草原牛', 1, p.id);
+        if (p.name.includes('花蛤')) { ri('花蛤包', 1, p.id); ri('花蛤調味品', 2, p.id); }
+        if (p.name.includes('炸雞條')) { ri('雞條', 1, p.id); ri('油炸物(吸+耗油)', 1, p.id); }
+        if (p.name.includes('醬燒雞腿')) ri('醬燒雞腿', 1, p.id);
+        if (p.name.includes('舒肥雞胸')) ri('雞胸', 1, p.id);
+      }
+      if (p.categoryId === 2) {
+        ri('有機黎麥飯', 1, p.id);
+        ri('花椰', 1, p.id);
+        if (p.name.includes('黑豬') || p.name.includes('燴飯 黑豬')) ri('梅花豬醬+調粉', 1, p.id);
+        if (p.name.includes('菇菇')) ri('菇菇', 1, p.id);
+        if (p.name.includes('梅花豬')) ri('梅花豬片', 1, p.id);
+        if (p.name.includes('炸雞條')) { ri('雞條', 1, p.id); ri('油炸物(吸+耗油)', 1, p.id); }
+        if (p.name.includes('菲瑞牛')) ri('草原牛', 1, p.id);
+        if (p.name.includes('醬燒雞腿')) ri('醬燒雞腿', 1, p.id);
+        if (p.name.includes('舒肥雞胸')) ri('雞胸', 1, p.id);
+        if (p.name.includes('洋蔥醬燒豬')) ri('梅花豬醬+調粉', 1, p.id);
+        if (p.name.includes('牛肋條')) ri('牛肋條醬+調粉', 1, p.id);
+        if (p.name.includes('杏鮑菇')) ri('菇菇', 1, p.id);
+      }
+      if (p.categoryId === 3) {
+        ri('沙拉', 1, p.id);
+        ri('高麗菜罐', 1, p.id);
+        ri('花椰', 1, p.id);
+        if (p.name.includes('菲瑞牛')) ri('草原牛', 1, p.id);
+        if (p.name.includes('醬燒雞腿')) ri('醬燒雞腿', 1, p.id);
+        if (p.name.includes('舒肥雞胸')) ri('雞胸', 1, p.id);
+      }
+      if (p.categoryId === 4) {
+        ri('吐司', 1, p.id);
+        if (p.name.includes('鮪魚玉米')) ri('鮪魚玉米', 1, p.id);
+        if (p.name.includes('薯餅')) ri('薯餅', 1, p.id);
+        if (p.name.includes('梅花豬')) ri('梅花豬片', 1, p.id);
+        if (p.name.includes('菲瑞牛')) ri('草原牛', 1, p.id);
+        if (p.name.includes('炸雞條')) { ri('雞條', 1, p.id); ri('油炸物(吸+耗油)', 1, p.id); }
+        if (p.name.includes('舒肥雞胸')) ri('雞胸', 1, p.id);
+        if (p.name.includes('杏鮑菇')) ri('菇菇', 1, p.id);
+      }
+      if (p.categoryId === 5) {
+        ri('蛋餅皮', 1, p.id);
+        if (p.name.includes('鮪魚玉米')) ri('鮪魚玉米', 1, p.id);
+        if (p.name.includes('薯餅')) ri('薯餅', 1, p.id);
+        if (p.name.includes('梅花豬')) ri('梅花豬片', 1, p.id);
+        if (p.name.includes('菲瑞牛')) ri('草原牛', 1, p.id);
+        if (p.name.includes('杏鮑菇')) ri('菇菇', 1, p.id);
+      }
+      if (p.categoryId === 6) {
+        ri('烏麵', 1, p.id);
+        if (p.name.includes('黑胡椒')) ri('黑胡椒醬+調粉', 1, p.id);
+        if (p.name.includes('杏鮑菇')) ri('菇菇', 1, p.id);
+        if (p.name.includes('黑豬')) ri('梅花豬片', 1, p.id);
+      }
+      if (p.categoryId === 7) {
+        ri('蘿蔔糕', 1, p.id);
+        if (p.name.includes('梅花豬')) ri('梅花豬片', 1, p.id);
+        if (p.name.includes('菲瑞牛')) ri('草原牛', 1, p.id);
+        if (p.name.includes('醬燒雞腿')) ri('醬燒雞腿', 1, p.id);
+        if (p.name.includes('舒肥雞胸')) ri('雞胸', 1, p.id);
+      }
+      if (p.categoryId === 8) {
+        if (p.name.includes('薯餅')) ri('薯餅', 1, p.id);
+        if (p.name.includes('地瓜')) ri('地瓜', 1, p.id);
+        if (p.name.includes('蘿蔔糕')) ri('蘿蔔糕', 1, p.id);
+        if (p.name.includes('花蛤')) { ri('花蛤包', 1, p.id); ri('花蛤調味品', 2, p.id); }
+        if (p.name.includes('脆薯')) ri('脆薯', 1, p.id);
+        if (p.name.includes('炸雞條')) { ri('雞條', 1, p.id); ri('油炸物(吸+耗油)', 1, p.id); }
+        if (p.name.includes('沙拉')) ri('沙拉', 1, p.id);
+      }
+      if (p.categoryId === 9) {
+        if (p.name.includes('豆漿')) ri('豆漿', 1, p.id);
+      }
+      if (p.categoryId === 10) {
+        ri('冬瓜飲', 1, p.id);
+        if (p.name.includes('鳳梨')) ri('鳳梨汁', 1, p.id);
+        if (p.name.includes('百香果')) ri('百香果汁', 1, p.id);
+        if (p.name.includes('檸檬')) ri('檸檬汁', 1, p.id);
+      }
+      if (p.categoryId === 12) {
+        if (p.name.includes('洛神')) ri('洛神花乾', 1, p.id);
+        if (p.name.includes('鳳梨')) ri('鳳梨汁', 1, p.id);
+        if (p.name.includes('百香果')) ri('百香果汁', 1, p.id);
+        if (p.name.includes('檸檬')) ri('檸檬汁', 1, p.id);
+      }
+    }
   });
 
   seedAll();
