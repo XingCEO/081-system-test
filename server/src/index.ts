@@ -11,6 +11,7 @@ import { seedDatabase } from './seed.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT) || 3001;
 
 // S1: JWT secret（優先用環境變數，否則每次啟動隨機生成）
