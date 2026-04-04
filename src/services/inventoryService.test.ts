@@ -98,8 +98,8 @@ describe('inventoryService.restockIngredient（Dexie fallback）', () => {
 
     const record = await db.inventory.where('ingredientId').equals(3).first();
     // ISO 字串字典序等同時間序
-    expect(record?.lastUpdated >= before).toBe(true);
-    expect(record?.lastUpdated <= after).toBe(true);
+    expect(record!.lastUpdated! >= before).toBe(true);
+    expect(record!.lastUpdated! <= after).toBe(true);
   });
 });
 
