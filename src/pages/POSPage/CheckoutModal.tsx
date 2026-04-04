@@ -49,7 +49,7 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
     try {
       const receiptItems = items.map((item) => ({
         ...item,
-        modifiers: item.modifiers.map((modifier) => ({ ...modifier })),
+        modifiers: (item.modifiers ?? []).map((modifier) => ({ ...modifier })),
         comboItems: item.comboItems?.map((comboItem) => ({ ...comboItem })),
       }));
 
@@ -115,7 +115,7 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
             {receiptItems.map((item) => (
               <div key={item.cartItemId} className="mb-1">
                 <p>{item.productName} x{item.quantity}  {formatPrice((item.unitPrice + item.modifiersTotal) * item.quantity)}</p>
-                {item.modifiers.map((modifier) => (
+                {item.modifiers?.map((modifier) => (
                   <p key={`${item.cartItemId}-${modifier.modifierId}`} className="pl-2">
                     +{modifier.name} {formatPriceDelta(modifier.price)}
                   </p>

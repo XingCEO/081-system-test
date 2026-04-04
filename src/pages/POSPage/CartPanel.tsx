@@ -74,7 +74,7 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
                           ))}
                         </div>
                       )}
-                      {item.modifiers.length > 0 && (
+                      {item.modifiers?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {item.modifiers.map((mod, i) => (
                             <span

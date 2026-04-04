@@ -173,7 +173,7 @@ export default function OrderHistoryPage() {
                   <div key={item.id} className="flex justify-between">
                     <div>
                       <span className="font-medium text-gray-800 dark:text-slate-50">{item.quantity}x {item.productName}</span>
-                      {item.modifiers.length > 0 && (
+                      {item.modifiers?.length > 0 && (
                         <span className="text-xs text-gray-500 dark:text-slate-400 ml-1">
                           ({item.modifiers.map(m => m.name).join(', ')})
                         </span>
@@ -350,7 +350,7 @@ function OrderEditModal({
             <div key={`${item.id}-${index}`} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-[#1e2d4a]">
               <div className="flex-1 min-w-0">
                 <span className="font-medium text-gray-800 dark:text-slate-50">{item.productName}</span>
-                {item.modifiers.length > 0 && (
+                {item.modifiers?.length > 0 && (
                   <span className="text-xs text-gray-500 dark:text-slate-400 ml-1">
                     ({item.modifiers.map(m => m.name).join(', ')})
                   </span>
