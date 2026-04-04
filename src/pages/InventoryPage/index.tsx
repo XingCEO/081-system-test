@@ -668,7 +668,8 @@ function IngredientFormModal({
 }) {
   const [name, setName] = useState(ingredient?.ingredientName || '');
   const [unit, setUnit] = useState(ingredient?.unit || '份');
-  const [cost, setCost] = useState(String(ingredient?.costPerUnit ?? ingredient?.costPerServing ?? 0));
+  const [costPerUnit, setCostPerUnit] = useState(String(ingredient?.costPerUnit ?? 0));
+  const [costPerServing, setCostPerServing] = useState(String(ingredient?.costPerServing ?? 0));
   const [lowStockThreshold, setLowStockThreshold] = useState(
     String(ingredient?.lowStockThreshold ?? defaultLowStockThreshold)
   );
@@ -685,8 +686,8 @@ function IngredientFormModal({
     await onSave({
       name: name.trim(),
       unit: unit.trim() || '份',
-      costPerUnit: Number(cost) || 0,
-      costPerServing: Number(cost) || 0,
+      costPerUnit: Number(costPerUnit) || 0,
+      costPerServing: Number(costPerServing) || 0,
       lowStockThreshold: Number(lowStockThreshold) || 0,
       currentStock: Number(currentStock) || 0,
       supplier: supplier.trim(),
@@ -708,11 +709,15 @@ function IngredientFormModal({
             <input value={unit} onChange={(event) => setUnit(event.target.value)} className="input-field" />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-1">成本</label>
-            <input type="number" min={0} step="0.1" value={cost} onChange={(event) => setCost(event.target.value)} className="input-field" />
+            <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-1">單位成本</label>
+            <input type="number" min={0} step="0.1" value={costPerUnit} onChange={(event) => setCostPerUnit(event.target.value)} className="input-field" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-1">每份成本</label>
+            <input type="number" min={0} step="0.1" value={costPerServing} onChange={(event) => setCostPerServing(event.target.value)} className="input-field" />
+          </div>
           <div>
             <label className="text-sm font-medium text-gray-600 dark:text-slate-300 block mb-1">供應商</label>
             <input value={supplier} onChange={(event) => setSupplier(event.target.value)} placeholder="例: 青沄" className="input-field" />

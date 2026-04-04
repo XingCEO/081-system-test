@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { updateOrderStatus, updateOrderItemStatus } from '../../services/orderService';
@@ -8,7 +9,43 @@ import { IconFire, IconChefHat, IconMapPin, IconNote, IconWarning, IconCheck, Ic
 import toast from 'react-hot-toast';
 import type { Order, OrderItem, OrderStatus } from '../../db/types';
 
+function playNotificationSound() {
+  try {
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+
+    // First tone (higher pitch)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.frequency.value = 880;
+    osc1.type = 'sine';
+    gain1.gain.setValueAtTime(0.3, now);
+    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    osc1.connect(gain1).connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.15);
+
+    // Second tone (even higher, delayed)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.frequency.value = 1174;
+    osc2.type = 'sine';
+    gain2.gain.setValueAtTime(0.3, now + 0.15);
+    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+    osc2.connect(gain2).connect(ctx.destination);
+    osc2.start(now + 0.15);
+    osc2.stop(now + 0.35);
+
+    // Clean up
+    setTimeout(() => ctx.close(), 500);
+  } catch {
+    // AudioContext not available
+  }
+}
+
 export default function KitchenPage() {
+  const [muted, setMuted] = useState(false);
+  const knownOrderIdsRef = useRef<Set<number> | null>(null);
   const activeOrders = useLiveQuery(
     () => db.orders.where('status').anyOf(['pending', 'preparing', 'ready']).toArray()
   );
@@ -23,6 +60,24 @@ export default function KitchenPage() {
     }
     return map;
   }, [activeOrders]);
+
+  // Play sound when new pending orders arrive
+  useEffect(() => {
+    if (!activeOrders) return;
+    const currentIds = new Set(activeOrders.filter(o => o.status === 'pending').map(o => o.id!));
+
+    if (knownOrderIdsRef.current === null) {
+      // First load — just record, don't play
+      knownOrderIdsRef.current = currentIds;
+      return;
+    }
+
+    const hasNew = [...currentIds].some(id => !knownOrderIdsRef.current!.has(id));
+    if (hasNew && !muted) {
+      playNotificationSound();
+    }
+    knownOrderIdsRef.current = currentIds;
+  }, [activeOrders, muted]);
 
   const handleStatusChange = async (order: Order, newStatus: OrderStatus) => {
     if (!order.id) return;
@@ -201,6 +256,16 @@ export default function KitchenPage() {
             <span className="text-emerald-600 dark:text-emerald-400 font-medium">完成：{ready.length}</span>
           </div>
         </div>
+        <button
+          onClick={() => setMuted(!muted)}
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            muted
+              ? 'bg-gray-200 text-gray-500 dark:bg-[#1e2d4a] dark:text-slate-400'
+              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
+          }`}
+        >
+          {muted ? '🔇 靜音' : '🔔 提示音'}
+        </button>
       </div>
 
       {noOrders ? (

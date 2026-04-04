@@ -9,7 +9,7 @@ import {
 import type { IngredientUsage } from './bomService';
 
 async function buildIngredientUsageForItems(
-  items: Array<Pick<CartItem, 'productId' | 'quantity' | 'isCombo' | 'comboItems'>>
+  items: Array<Pick<CartItem, 'productId' | 'quantity' | 'isCombo' | 'comboItems' | 'modifiers'>>
 ) {
   const usages: IngredientUsage[] = [];
 
@@ -27,6 +27,22 @@ async function buildIngredientUsageForItems(
     }
 
     usages.push(...(await getIngredientUsageForProduct(item.productId, item.quantity)));
+
+    // Include modifier recipe usages
+    for (const mod of item.modifiers ?? []) {
+      if (!mod.modifierId) continue;
+      const modRecipes = await db.modifierRecipes
+        .where('modifierId')
+        .equals(mod.modifierId)
+        .toArray();
+      for (const recipe of modRecipes) {
+        usages.push({
+          ingredientId: recipe.ingredientId,
+          ingredientName: recipe.ingredientName,
+          quantity: recipe.quantity * item.quantity,
+        });
+      }
+    }
   }
 
   return mergeIngredientUsages(usages);

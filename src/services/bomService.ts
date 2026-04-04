@@ -1,4 +1,5 @@
 import { api } from '../api/client';
+import { syncNow } from '../api/sync';
 import { db } from '../db/database';
 import type {
   InventoryRecord,
@@ -152,7 +153,7 @@ export async function applyIngredientStockChange(params: {
       orderId: params.orderId,
       restore: params.restore ?? false,
     });
-    await applyIngredientStockChangeLocal(params);
+    void syncNow();
   } catch {
     // Fallback to Dexie-only
     await applyIngredientStockChangeLocal(params);

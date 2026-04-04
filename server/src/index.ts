@@ -1206,8 +1206,8 @@ app.get('/api/analytics', (req, res) => {
   // Calculate total food cost from BOM recipes
   let totalCost = 0;
   const allRecipes = db.prepare('SELECT productId, ingredientId, quantity FROM product_recipes').all() as Array<{ productId: number; ingredientId: number; quantity: number }>;
-  const allIngredients = db.prepare('SELECT id, costPerUnit FROM ingredients').all() as Array<{ id: number; costPerUnit: number }>;
-  const ingredientCostMap = new Map(allIngredients.map(i => [i.id, i.costPerUnit]));
+  const allIngredients = db.prepare('SELECT id, costPerServing FROM ingredients').all() as Array<{ id: number; costPerServing: number }>;
+  const ingredientCostMap = new Map(allIngredients.map(i => [i.id, i.costPerServing]));
   const productCostMap = new Map<number, number>();
   for (const recipe of allRecipes) {
     const cost = (ingredientCostMap.get(recipe.ingredientId) ?? 0) * recipe.quantity;
