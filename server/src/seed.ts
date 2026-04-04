@@ -294,9 +294,31 @@ export function seedDatabase(): void {
       );
     });
 
+    const insertModRecipe = db.prepare(
+      'INSERT INTO modifier_recipes (modifierId, ingredientId, ingredientName, quantity) VALUES (?, ?, ?, ?)'
+    );
+    const modRecipes: Array<[number, string, number]> = [
+      [1, '青醬包+調味品', 1],
+      [2, '黑胡椒醬+調粉', 1],
+      [3, '紅醬包+調味品', 1],
+      [4, '白醬包+調味品', 1],
+      [5, '白醬包+調味品', 1],
+      [6, '義大利麵', 1],
+      [7, '有機黎麥飯', 1],
+      [8, '番茄沙拉醬', 1],
+      [9, '清檸合風醬', 1],
+      [11, '起司片', 1],
+      [12, '花生香油醬', 1],
+    ];
+
     const ingByName = new Map<string, number>();
     const allIng = db.prepare('SELECT id, name FROM ingredients').all() as Array<{ id: number; name: string }>;
     for (const row of allIng) ingByName.set(row.name, row.id);
+
+    for (const [modId, ingName, qty] of modRecipes) {
+      const ingId = ingByName.get(ingName);
+      if (ingId) insertModRecipe.run(modId, ingId, ingName, qty);
+    }
 
     const insertRecipe = db.prepare(
       'INSERT INTO product_recipes (productId, ingredientId, ingredientName, quantity) VALUES (?, ?, ?, ?)'
@@ -310,7 +332,6 @@ export function seedDatabase(): void {
 
     for (const p of allProducts) {
       if (p.categoryId === 1) {
-        ri('有機黎麥飯', 1, p.id);
         ri('花椰', 1, p.id);
         if (p.name.includes('松子')) ri('松子粒', 1, p.id);
         if (p.name.includes('菇菇')) ri('菇菇', 1, p.id);
@@ -322,7 +343,6 @@ export function seedDatabase(): void {
         if (p.name.includes('舒肥雞胸')) ri('雞胸', 1, p.id);
       }
       if (p.categoryId === 2) {
-        ri('有機黎麥飯', 1, p.id);
         ri('花椰', 1, p.id);
         if (p.name.includes('黑豬') || p.name.includes('燴飯 黑豬')) ri('梅花豬醬+調粉', 1, p.id);
         if (p.name.includes('菇菇')) ri('菇菇', 1, p.id);
