@@ -68,7 +68,7 @@ export default function LoginPage() {
         setPin('');
         return;
       }
-      login(result.employee, result.shiftId);
+      login(result.employee, result.shiftId, useAuthStore.getState().token ?? undefined);
       toast.success(`歡迎，${result.employee.name}！`);
       navigate(getDefaultRoute(result.employee.role), { replace: true });
     } catch (err) {
