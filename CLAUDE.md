@@ -38,8 +38,8 @@ A restaurant POS (Point of Sale) system with a React PWA frontend and an Express
 
 ### Backend (`server/`)
 - **Express 5** + **TypeScript** — REST API on port 3001 (dev), 8080 (production)
-- **better-sqlite3** — SQLite database stored at `server/data/pos.db` (or `./data/pos.db` in production)
-- Vite dev server proxies `/api/*` to the backend
+- **better-sqlite3** — SQLite database stored at `server/data/pos.db` (override with `DB_PATH` env var)
+- Vite dev server proxies `/api/*` to the backend (configured in `vite.config.ts`)
 - In production, the Express server serves the static frontend from `dist/`
 
 ## Architecture
@@ -117,3 +117,4 @@ All UI strings are centralized in a single object. The type `I18n` is exported f
 - TypeScript strict mode is enabled with `noUnusedLocals` and `noUnusedParameters`.
 - SQLite stores arrays/objects as JSON strings; `rowToJs`/`jsToRow` in `server/src/db.ts` handle serialization.
 - Tests use `fake-indexeddb/auto` to mock IndexedDB. The test setup (`src/test/setup.ts`) deletes and reopens the Dexie database before/after each test for isolation.
+- Tests have a separate `vitest.config.ts` (jsdom environment, not the main `vite.config.ts`).
