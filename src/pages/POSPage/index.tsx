@@ -5,13 +5,11 @@ import { useCartStore } from '../../stores/useCartStore';
 import MenuGrid from './MenuGrid';
 import CartPanel from './CartPanel';
 import ModifierModal from './ModifierModal';
-import ComboSelectModal from './ComboSelectModal';
 import CheckoutModal from './CheckoutModal';
 import type { Product } from '../../db/types';
 
 export default function POSPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedCombo, setSelectedCombo] = useState<Product | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const { items } = useCartStore();
 
@@ -20,8 +18,15 @@ export default function POSPage() {
   );
 
   const handleProductClick = (product: Product) => {
-    if (product.isCombo && product.comboItems?.length) {
-      setSelectedCombo(product);
+    if (product.isCombo) {
+      useCartStore.getState().addItem({
+        productId: product.id!,
+        productName: product.name,
+        unitPrice: product.price,
+        modifiers: [],
+        isCombo: true,
+        comboItems: [],
+      });
     } else if (product.modifierGroupIds.length > 0) {
       setSelectedProduct(product);
     } else {
@@ -51,13 +56,6 @@ export default function POSPage() {
         <ModifierModal
           product={selectedProduct}
           onClose={() => setSelectedProduct(null)}
-        />
-      )}
-
-      {selectedCombo && (
-        <ComboSelectModal
-          product={selectedCombo}
-          onClose={() => setSelectedCombo(null)}
         />
       )}
 
