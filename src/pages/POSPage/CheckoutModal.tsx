@@ -202,6 +202,12 @@ export default function CheckoutModal({ onClose }: CheckoutModalProps) {
           </div>
         )}
 
+        {(cashReceived === 0 || cashReceived < total) && total > 0 && (
+          <p className="text-center text-sm text-amber-600 dark:text-amber-400 font-medium animate-fade-in">
+            請輸入收款金額
+          </p>
+        )}
+
         <div className="flex gap-3">
           <button onClick={onClose} className="btn-secondary flex-1">
             取消
