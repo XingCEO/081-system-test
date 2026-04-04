@@ -29,6 +29,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [time, setTime] = useState(new Date());
   const pinRef = useRef<HTMLInputElement>(null);
+  const isSubmittingRef = useRef(false);
 
   const employees = useLiveQuery(() => db.employees.filter((e) => e.isActive).toArray());
   const productCount = useLiveQuery(() => db.products.filter(p => p.isActive).count());
@@ -54,12 +55,14 @@ export default function LoginPage() {
     }
   }, [selectedEmployee]);
 
-  const handleLogin = async () => {
-    if (!selectedEmployee?.id || pin.length < 4 || isLoading) return;
+  const handleLogin = async (pinOverride?: string) => {
+    const pinToUse = pinOverride ?? pin;
+    if (!selectedEmployee?.id || pinToUse.length < 4 || isLoading || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setError('');
     setIsLoading(true);
     try {
-      const result = await loginEmployee(selectedEmployee.id, pin);
+      const result = await loginEmployee(selectedEmployee.id, pinToUse);
       if (!result) {
         setError('PIN 碼錯誤，請重新輸入');
         setPin('');
@@ -73,6 +76,7 @@ export default function LoginPage() {
       setPin('');
     } finally {
       setIsLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -81,7 +85,7 @@ export default function LoginPage() {
     setPin(digits);
     setError('');
     if (digits.length === 4) {
-      window.setTimeout(() => { document.getElementById('login-btn')?.click(); }, 150);
+      void handleLogin(digits);
     }
   };
 
@@ -303,7 +307,7 @@ export default function LoginPage() {
 
                   <button
                     id="login-btn"
-                    onClick={handleLogin}
+                    onClick={() => void handleLogin()}
                     disabled={pin.length < 4 || isLoading}
                     className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-gray-200 dark:disabled:bg-[#131c2e] text-white disabled:text-gray-400 font-semibold text-base transition-all disabled:cursor-not-allowed shadow-sm shadow-indigo-600/20 disabled:shadow-none"
                   >

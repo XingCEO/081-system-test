@@ -176,7 +176,7 @@ export default function CartPanel({ onCheckout }: CartPanelProps) {
             <IconBag className="w-6 h-6 mx-auto mb-1" />
             <span className="dark:text-slate-300">外帶</span>
           </button>
-          {tables?.filter(t => t.status === 'available' || t.id === tableId).map((table) => (
+          {tables?.filter(t => t.status === 'available' || t.status === 'occupied' || t.id === tableId).map((table) => (
             <button
               key={table.id}
               onClick={() => {

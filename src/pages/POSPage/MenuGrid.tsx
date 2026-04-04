@@ -49,7 +49,10 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
     [activeCategoryId]
   );
 
-  const availabilityMap = useLiveQuery(() => getProductAvailabilityMap());
+  const availabilityMap = useLiveQuery(async () => {
+    await db.inventory.count(); // 建立 Dexie 訂閱，確保庫存變動時觸發更新
+    return getProductAvailabilityMap();
+  });
 
   const filteredProducts = products?.filter((product) =>
     searchTerm ? product.name.toLowerCase().includes(searchTerm.toLowerCase()) : true
