@@ -6,7 +6,9 @@ interface AuthState {
   currentEmployee: Employee | null;
   isAuthenticated: boolean;
   shiftId: number | null;
-  login: (employee: Employee, shiftId: number) => void;
+  token: string | null;
+  login: (employee: Employee, shiftId: number, token?: string) => void;
+  setToken: (token: string | null) => void;
   logout: () => void;
 }
 
@@ -16,12 +18,14 @@ export const useAuthStore = create<AuthState>()(
       currentEmployee: null,
       isAuthenticated: false,
       shiftId: null,
-      login: (employee, shiftId) => {
+      token: null,
+      login: (employee, shiftId, token) => {
         // Strip pin before persisting to localStorage
-        set({ currentEmployee: { ...employee, pin: '' }, isAuthenticated: true, shiftId });
+        set({ currentEmployee: { ...employee, pin: '' }, isAuthenticated: true, shiftId, token: token ?? null });
       },
+      setToken: (token) => set({ token }),
       logout: () =>
-        set({ currentEmployee: null, isAuthenticated: false, shiftId: null }),
+        set({ currentEmployee: null, isAuthenticated: false, shiftId: null, token: null }),
     }),
     { name: 'pos-auth' }
   )

@@ -1,5 +1,6 @@
 import { api } from '../api/client';
 import { db } from '../db/database';
+import { useAuthStore } from '../stores/useAuthStore';
 import type { Employee, EmployeeRole } from '../db/types';
 
 export async function hashPin(pin: string): Promise<string> {
@@ -23,12 +24,17 @@ export async function loginEmployee(
   pin: string
 ): Promise<{ employee: Employee; shiftId: number } | null> {
   try {
-    const result = await api.post<{ employee: Employee; shiftId: number } | null>(
+    const result = await api.post<{ employee: Employee; shiftId: number; token?: string } | null>(
       '/auth/login',
       { employeeId, pin }
     );
 
     if (!result) return null;
+
+    // Persist JWT token if the server returned one
+    if (result.token) {
+      useAuthStore.getState().setToken(result.token);
+    }
 
     // Update Dexie locally for immediate reactivity
     if (result.employee) {
