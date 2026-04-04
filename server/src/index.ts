@@ -652,6 +652,11 @@ app.post('/api/orders', (req, res) => {
 app.put('/api/orders/:id/status', (req, res) => {
   const orderId = Number(req.params.id);
   const { status } = req.body;
+  const VALID_STATUSES = ['pending', 'preparing', 'ready', 'completed', 'cancelled'];
+  if (!VALID_STATUSES.includes(status)) {
+    res.status(400).json({ error: `無效的訂單狀態，必須是：${VALID_STATUSES.join(', ')}` });
+    return;
+  }
   const now = new Date().toISOString();
 
   db.transaction(() => {
