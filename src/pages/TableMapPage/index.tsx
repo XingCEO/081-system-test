@@ -64,6 +64,26 @@ export default function TableMapPage() {
     setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
+  const handleTouchStart = (e: React.TouchEvent, table: RestaurantTable) => {
+    if (!editMode || !table.id) return;
+    const touch = e.touches[0];
+    const rect = (e.target as HTMLElement).closest('.table-item')?.getBoundingClientRect();
+    if (!rect) return;
+    e.preventDefault();
+    setDragTable(table.id);
+    setDragOffset({ x: touch.clientX - rect.left, y: touch.clientY - rect.top });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!dragTable || !editMode) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const container = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = Math.max(0, touch.clientX - container.left - dragOffset.x);
+    const y = Math.max(0, touch.clientY - container.top - dragOffset.y);
+    void db.diningTables.update(dragTable, { x: Math.round(x), y: Math.round(y) });
+  };
+
   const handleDragMove = (e: React.MouseEvent) => {
     if (!dragTable || !editMode) return;
     const container = e.currentTarget.getBoundingClientRect();
@@ -215,6 +235,8 @@ export default function TableMapPage() {
           onMouseMove={handleDragMove}
           onMouseUp={handleDragEnd}
           onMouseLeave={handleDragEnd}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleDragEnd}
         >
           <div className="relative min-w-[700px] min-h-[600px]">
             {tables?.map((table) => (
@@ -222,7 +244,7 @@ export default function TableMapPage() {
                 key={table.id}
                 className={`table-item absolute cursor-pointer transition-all hover:shadow-lg flex flex-col items-center justify-center text-center select-none ${
                   TABLE_STATUS_COLORS[table.status]
-                } ${editMode ? 'cursor-move ring-2 ring-dashed ring-indigo-300 dark:ring-indigo-600' : ''} ${
+                } ${editMode ? 'cursor-move ring-2 ring-dashed ring-indigo-300 dark:ring-indigo-600 touch-none' : ''} ${
                   table.shape === 'round' ? 'rounded-full' : 'rounded-xl'
                 }`}
                 style={{
@@ -233,6 +255,7 @@ export default function TableMapPage() {
                 }}
                 onClick={() => handleTableClick(table)}
                 onMouseDown={(e) => handleDragStart(e, table)}
+                onTouchStart={(e) => handleTouchStart(e, table)}
               >
                 {/* Delete button in edit mode */}
                 {editMode && isAdmin && (

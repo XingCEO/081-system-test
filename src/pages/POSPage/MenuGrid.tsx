@@ -122,7 +122,7 @@ export default function MenuGrid({ categories, onProductClick }: MenuGridProps) 
                   }
                 }}
                 disabled={isSoldOut}
-                className={`bg-white dark:bg-[#131c2e] rounded-xl border border-gray-200 dark:border-[#1e2d4a] text-left transition-all group ${
+                className={`bg-white dark:bg-[#131c2e] rounded-xl border border-gray-200 dark:border-[#1e2d4a] text-left transition-all group min-h-[100px] ${
                   isSoldOut
                     ? 'opacity-40 cursor-not-allowed'
                     : 'hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-600 cursor-pointer active:scale-[0.97]'

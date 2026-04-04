@@ -102,8 +102,6 @@ export default function AppShell() {
     hasPermission(currentEmployee.role, item.permission)
   );
 
-  const isPOS = location.pathname === '/pos';
-
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-[#080e1e]">
       <Header />
@@ -114,7 +112,7 @@ export default function AppShell() {
         </main>
       </div>
 
-      <nav className={`lg:hidden flex-shrink-0 bg-white border-t border-gray-200 dark:bg-[#0b1120] dark:border-[#1e2d4a] flex items-center justify-around safe-area-bottom ${isPOS ? 'hidden' : ''}`}>
+      <nav className="lg:hidden flex-shrink-0 bg-white border-t border-gray-200 dark:bg-[#0b1120] dark:border-[#1e2d4a] flex items-center justify-around safe-area-bottom">
         {filteredBottomNav.map((item) => (
           <NavLink
             key={item.path}

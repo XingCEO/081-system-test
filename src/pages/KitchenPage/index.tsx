@@ -165,13 +165,13 @@ export default function KitchenPage() {
               <button
                 key={item.id}
                 onClick={() => handleItemToggle(item)}
-                className={`w-full flex items-start gap-2 text-left rounded-lg px-2 py-1.5 transition-all ${
+                className={`w-full flex items-center gap-2 text-left rounded-lg px-2 py-1.5 min-h-[48px] transition-all ${
                   isDone
                     ? 'bg-emerald-100/50 dark:bg-emerald-900/20'
                     : 'hover:bg-white/50 dark:hover:bg-white/5'
                 }`}
               >
-                <span className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                <span className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                   isDone
                     ? 'bg-emerald-500 border-emerald-500 text-white'
                     : 'border-gray-300 dark:border-[#2a3a54]'
@@ -264,14 +264,14 @@ export default function KitchenPage() {
         </div>
         <button
           onClick={() => setMuted(!muted)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border-2 ${
             muted || !enableSound
-              ? 'bg-gray-200 text-gray-500 dark:bg-[#1e2d4a] dark:text-slate-400'
-              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
+              ? 'bg-gray-200 text-gray-500 dark:bg-[#1e2d4a] dark:text-slate-400 border-red-400'
+              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 border-emerald-400'
           }`}
           title={!enableSound ? '系統設定已關閉提示音' : ''}
         >
-          {!enableSound ? '🔇 音效已關閉' : muted ? '🔇 靜音' : '🔔 提示音'}
+          {!enableSound ? '🔇 音效已關閉' : muted ? '🔇 已靜音' : '🔔 提示音開'}
         </button>
       </div>
 
