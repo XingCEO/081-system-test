@@ -246,19 +246,22 @@ export default function LoginPage() {
                       aria-label="PIN 碼輸入"
                     />
 
-                    <div className="flex gap-3 mb-4 cursor-text" onClick={() => pinRef.current?.focus()}>
+                    <div className="flex gap-5 mb-6 cursor-text justify-center" onClick={() => pinRef.current?.focus()}>
                       {[0, 1, 2, 3].map((i) => {
                         const filled = pin.length > i;
                         const active = pin.length === i;
                         return (
-                          <div key={i} className={`flex-1 h-14 rounded-xl border-2 flex items-center justify-center text-xl font-bold transition-all duration-150
-                            ${error ? 'border-red-500/60 bg-red-500/10' : active ? 'border-indigo-400 bg-indigo-500/10' : filled ? 'border-white/20 bg-white/[0.06]' : 'border-white/[0.08] bg-white/[0.03]'}`}>
-                            {filled ? (
-                              showPin ? <span className="text-white">{pin[i]}</span>
-                                : <span className="text-indigo-400 text-2xl">●</span>
-                            ) : active ? (
-                              <span className="w-0.5 h-6 bg-indigo-400 rounded-full" style={{ animation: 'blink 1s step-end infinite' }} />
-                            ) : null}
+                          <div key={i} className="flex flex-col items-center gap-2 w-12">
+                            <div className="h-10 flex items-center justify-center">
+                              {filled ? (
+                                showPin ? <span className="text-2xl font-bold text-white">{pin[i]}</span>
+                                  : <span className="w-3 h-3 rounded-full bg-white" />
+                              ) : active ? (
+                                <span className="w-0.5 h-7 bg-indigo-400 rounded-full" style={{ animation: 'blink 1s step-end infinite' }} />
+                              ) : null}
+                            </div>
+                            <div className={`w-full h-0.5 rounded-full transition-all duration-200
+                              ${error ? 'bg-red-500' : filled ? 'bg-white' : active ? 'bg-indigo-400' : 'bg-white/15'}`} />
                           </div>
                         );
                       })}
