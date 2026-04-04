@@ -165,13 +165,13 @@ export default function KitchenPage() {
               <button
                 key={item.id}
                 onClick={() => handleItemToggle(item)}
-                className={`w-full flex items-start gap-2 text-left rounded-lg px-2 py-1.5 transition-all ${
+                className={`w-full flex items-center gap-2 text-left rounded-lg px-2 py-1.5 min-h-[48px] transition-all ${
                   isDone
                     ? 'bg-emerald-100/50 dark:bg-emerald-900/20'
                     : 'hover:bg-white/50 dark:hover:bg-white/5'
                 }`}
               >
-                <span className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                <span className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                   isDone
                     ? 'bg-emerald-500 border-emerald-500 text-white'
                     : 'border-gray-300 dark:border-[#2a3a54]'
