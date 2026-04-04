@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
+import bcrypt from 'bcryptjs';
 import db, { rowToJs, jsToRow } from './db.js';
 import { seedDatabase } from './seed.js';
 
@@ -338,14 +339,21 @@ function importSyncData(
 }
 
 // ==================== AUTH ====================
-app.post('/api/auth/login', loginLimiter, (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const { employeeId, pin } = req.body;
   if (!pin) { res.status(400).json({ error: '請輸入 PIN 碼' }); return; }
   const employee = db.prepare('SELECT * FROM employees WHERE id = ? AND isActive = 1').get(employeeId) as Record<string, unknown> | undefined;
   if (!employee) { res.status(401).json({ error: '找不到員工' }); return; }
 
-  const pinHash = hashPin(pin);
-  if (employee.pin !== pinHash) { res.status(401).json({ error: 'PIN 碼錯誤' }); return; }
+  // S5: 先試 bcrypt 比對，失敗再試舊的 SHA-256（向後相容）
+  const storedPin = employee.pin as string;
+  let pinMatch = false;
+  if (storedPin.startsWith('$2')) {
+    pinMatch = await bcrypt.compare(pin, storedPin);
+  } else {
+    pinMatch = storedPin === hashPin(pin);
+  }
+  if (!pinMatch) { res.status(401).json({ error: 'PIN 碼錯誤' }); return; }
 
   const now = new Date().toISOString();
   const result = db.prepare(
@@ -980,25 +988,28 @@ app.get('/api/employees/:id', (req, res) => {
   res.json(rowToJs(row as Record<string, unknown>));
 });
 
-app.post('/api/employees', requireAdmin, (req, res) => {
+app.post('/api/employees', requireAdmin, async (req, res) => {
   const data = req.body;
   if (!data.pin || !data.username || !data.name) {
     res.status(400).json({ error: '缺少必要欄位' }); return;
   }
   const now = new Date().toISOString();
-  const pinHashed = hashPin(data.pin);
+  // S5: 使用 bcrypt hash PIN（salt rounds = 10）
+  const pinHashed = await bcrypt.hash(data.pin, 10);
   const result = db.prepare(
     'INSERT INTO employees (username, pin, name, role, isActive, createdAt) VALUES (?, ?, ?, ?, ?, ?)'
   ).run(data.username, pinHashed, data.name, data.role ?? 'cashier', data.isActive !== false ? 1 : 0, now);
   res.json(getEmployeeById(Number(result.lastInsertRowid)));
 });
 
-app.put('/api/employees/:id', requireAdmin, (req, res) => {
+app.put('/api/employees/:id', requireAdmin, async (req, res) => {
   const data = req.body;
   const id = Number(req.params.id);
   if (data.pin) {
+    // S5: 使用 bcrypt hash PIN
+    const pinHashed = await bcrypt.hash(data.pin, 10);
     db.prepare('UPDATE employees SET username=?, pin=?, name=?, role=?, isActive=? WHERE id=?')
-      .run(data.username, hashPin(data.pin), data.name, data.role, data.isActive !== false ? 1 : 0, id);
+      .run(data.username, pinHashed, data.name, data.role, data.isActive !== false ? 1 : 0, id);
   } else {
     db.prepare('UPDATE employees SET username=?, name=?, role=?, isActive=? WHERE id=?')
       .run(data.username, data.name, data.role, data.isActive !== false ? 1 : 0, id);

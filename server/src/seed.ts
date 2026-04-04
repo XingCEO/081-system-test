@@ -1,8 +1,9 @@
-import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import db from './db.js';
 
+// S5: seed 時用 bcryptSync hash PIN（seed 函式是同步的）
 function hashPin(pin: string): string {
-  return crypto.createHash('sha256').update(pin).digest('hex');
+  return bcrypt.hashSync(pin, 10);
 }
 
 export function seedDatabase(): void {
