@@ -215,22 +215,24 @@ export default function LoginPage() {
                   ))}
                 </div>
 
-                {/* Test credentials */}
-                <div className="mt-8 p-4 rounded-2xl bg-gray-50 dark:bg-[#131c2e]/50 border border-gray-100 dark:border-[#1e2d4a]/50">
-                  <p className="text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2.5">測試帳號 PIN 碼</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { name: '管理員', pin: '0000' },
-                      { name: '小明', pin: '1234' },
-                      { name: '阿華', pin: '5678' },
-                    ].map((item) => (
-                      <div key={item.pin} className="text-center">
-                        <p className="text-xs text-gray-500 dark:text-slate-400">{item.name}</p>
-                        <p className="text-sm font-bold text-gray-800 dark:text-slate-200 font-mono tracking-widest mt-0.5">{item.pin}</p>
-                      </div>
-                    ))}
+                {/* Test credentials — only shown in development builds */}
+                {import.meta.env.DEV && (
+                  <div className="mt-8 p-4 rounded-2xl bg-gray-50 dark:bg-[#131c2e]/50 border border-gray-100 dark:border-[#1e2d4a]/50">
+                    <p className="text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2.5">測試帳號 PIN 碼</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { name: '管理員', pin: '0000' },
+                        { name: '小明', pin: '1234' },
+                        { name: '阿華', pin: '5678' },
+                      ].map((item) => (
+                        <div key={item.pin} className="text-center">
+                          <p className="text-xs text-gray-500 dark:text-slate-400">{item.name}</p>
+                          <p className="text-sm font-bold text-gray-800 dark:text-slate-200 font-mono tracking-widest mt-0.5">{item.pin}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ) : (
               <div className="animate-fade-in">
