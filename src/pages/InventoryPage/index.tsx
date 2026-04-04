@@ -433,12 +433,16 @@ export default function InventoryPage() {
                   {getStatusBadge(row)}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button onClick={() => setIngredientModal(row)} className="btn-secondary text-sm px-3 py-1.5">編輯</button>
                   <button onClick={() => handleShowHistory(row.ingredientId, row.ingredientName)} className="btn-secondary text-sm px-3 py-1.5">記錄</button>
                   <button onClick={() => setActionModal({ row, action: 'restock' })} className="btn-success text-sm px-3 py-1.5">進貨</button>
                   <button onClick={() => setActionModal({ row, action: 'adjust' })} className="btn-secondary text-sm px-3 py-1.5">調整</button>
-                  <button onClick={() => setActionModal({ row, action: 'waste' })} className="btn-warning text-sm px-3 py-1.5">報廢</button>
+                  <button onClick={() => {
+                    if (window.confirm(`確定要將「${row.ingredientName}」標記為報廢？此操作將扣減庫存。`)) {
+                      setActionModal({ row, action: 'waste' });
+                    }
+                  }} className="btn-warning text-sm px-3 py-1.5">報廢</button>
                 </div>
               </div>
             ))}
