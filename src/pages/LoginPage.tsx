@@ -10,6 +10,7 @@ import { loginEmployee, getDefaultRoute } from '../services/authService';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useAppSettingsStore } from '../stores/useAppSettingsStore';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { fetchPublicEmployees } from '../api/sync';
 
 const ROLE_LABEL: Record<string, string> = {
   admin: '管理員',
@@ -46,6 +47,13 @@ export default function LoginPage() {
   const isSubmittingRef = useRef(false);
 
   const employees = useLiveQuery(() => db.employees.filter((e) => e.isActive).toArray());
+
+  // If Dexie has no employees (fresh install / cleared data), fetch from public endpoint
+  useEffect(() => {
+    if (employees !== undefined && employees.length === 0) {
+      void fetchPublicEmployees();
+    }
+  }, [employees]);
 
   useEffect(() => {
     if (isAuthenticated) {

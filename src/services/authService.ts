@@ -53,11 +53,20 @@ export async function loginEmployee(
     }
 
     return result;
-  } catch {
-    // Fallback to Dexie-only if server is unavailable.
-    // PIN hashes are not stored locally for security, so offline login
-    // only works if the employee record still has a valid pin hash
-    // (e.g., was created locally before any sync).
+  } catch (err: unknown) {
+    // Differentiate between network errors and server HTTP errors.
+    // Network errors (TypeError from fetch, AbortError from timeout) → try Dexie fallback.
+    // Server HTTP errors (401, 400, etc.) → re-throw so the user sees the real message.
+    const isNetworkError =
+      err instanceof TypeError ||
+      (err instanceof DOMException && err.name === 'AbortError');
+
+    if (!isNetworkError) {
+      // Server responded with an HTTP error — surface it directly
+      throw err;
+    }
+
+    // Genuine network failure — try offline Dexie fallback
     const employee = await db.employees.get(employeeId);
     if (!employee || !employee.isActive) return null;
 

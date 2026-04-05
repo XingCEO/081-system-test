@@ -93,16 +93,48 @@ async function syncTable<T>(
   }
 }
 
+/**
+ * Fetch the public employee list (no auth required) and write to Dexie.
+ * This breaks the deadlock where the login page can't show employees because
+ * sync won't run without a token.
+ */
+export async function fetchPublicEmployees(): Promise<void> {
+  try {
+    const rows = await api.get<Array<{
+      id: number; username: string; name: string;
+      role: string; isActive: boolean; createdAt: string;
+    }>>('/employees/public');
+
+    if (rows?.length) {
+      const employees = rows.map((e) => ({
+        id: e.id,
+        username: e.username,
+        pin: '',
+        name: e.name,
+        role: e.role as 'admin' | 'cashier' | 'kitchen',
+        isActive: e.isActive,
+        createdAt: e.createdAt,
+      }));
+      await syncTable(db.employees, employees);
+    }
+  } catch {
+    // Server unreachable — login page will fall back to whatever is in Dexie
+  }
+}
+
 export async function pullFromServer(): Promise<void> {
   if (isSyncing) return;
 
-  // Skip sync if not authenticated — avoids 401 spam before login
+  // If not authenticated, only fetch public employees (for login page) — skip full sync
   try {
     const raw = localStorage.getItem('pos-auth');
+    let hasToken = false;
     if (raw) {
       const parsed = JSON.parse(raw) as { state?: { token?: string | null } };
-      if (!parsed?.state?.token) return;
-    } else {
+      hasToken = !!parsed?.state?.token;
+    }
+    if (!hasToken) {
+      await fetchPublicEmployees();
       return;
     }
   } catch {

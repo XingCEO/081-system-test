@@ -378,6 +378,15 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
   });
 });
 
+// Public endpoint: return employee list without sensitive data (no auth required).
+// This breaks the auth/sync deadlock: on fresh install the login page can fetch
+// employee cards even before any JWT token exists.
+app.get('/api/employees/public', (_req, res) => {
+  const rows = db.prepare('SELECT id, username, name, role, isActive, createdAt FROM employees WHERE isActive = 1').all()
+    .map(r => rowToJs(r as Record<string, unknown>));
+  res.json(rows);
+});
+
 // S1: 從此處開始所有端點都需要認證（/api/health 和 /api/auth/login 已在上方定義，不受影響）
 app.use('/api/', requireAuth);
 
