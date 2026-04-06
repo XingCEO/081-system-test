@@ -108,13 +108,39 @@ All UI strings are centralized in a single object. The type `I18n` is exported f
 - **render.yaml** / **zeabur.json** — Platform deployment configs
 - Production server serves static frontend from `dist/` and API from `/api/*`
 
+## Quick Reference: Where to Look
+
+| Task | Location | Notes |
+|------|----------|-------|
+| Add new page | `src/pages/NewPage/index.tsx` + lazy route in `App.tsx` | Directory-per-page pattern |
+| Add DB table | `src/db/database.ts` (bump version), `src/db/types.ts` | Dexie schema migration |
+| Add/modify service | `src/services/` | API-first with Dexie fallback (see below) |
+| Modify auth/roles | `src/services/authService.ts` | `hasPermission()` + `ROUTE_PERMISSIONS` map |
+| Add UI strings | `src/i18n/zh-TW.ts` | Type `I18n` enforces completeness |
+| Add shared component | `src/components/ui/` | Page-specific components stay in their page dir |
+| Add Zustand store | `src/stores/useXxxStore.ts` | Use `persist` middleware for localStorage |
+| Modify API endpoint | `server/src/index.ts` | All routes in one file |
+| Change DB schema (server) | `server/src/db.ts` | JSON columns via `rowToJs`/`jsToRow` |
+| Styling/theming | `src/styles/globals.css` | CSS variable theming (`--theme-primary`, `--surface-*`) |
+
 ## Key Patterns
 
+- **Service pattern (API-first with Dexie fallback)**: Every mutation tries the REST API first → updates local Dexie on success → falls back to Dexie-only on API failure. Services import `db` and `api`, never Zustand stores. Read operations use `useLiveQuery()` in components, not services.
+- **Bootstrap phase** (`App.tsx`): DB init → settings load → sync start → render router. Shows loading state until ready.
 - Database IDs use auto-increment (`++id` in Dexie, `INTEGER PRIMARY KEY AUTOINCREMENT` in SQLite). The `id` field on all types is `id?: number` (optional before insert).
 - Cart items use `crypto.randomUUID()` for `cartItemId` to distinguish items with different modifiers.
 - Order numbers follow `YYYYMMDD-NNN` format (date-fns `format`).
 - PIN codes are hashed with SHA-256 — never stored in plain text. Server uses Node `crypto`, client uses Web Crypto API.
-- TypeScript strict mode is enabled with `noUnusedLocals` and `noUnusedParameters`.
+- TypeScript strict mode is enabled with `noUnusedLocals`, `noUnusedParameters`, and `verbatimModuleSyntax`.
+- All imports use relative paths — no path aliases configured.
 - SQLite stores arrays/objects as JSON strings; `rowToJs`/`jsToRow` in `server/src/db.ts` handle serialization.
+- No HOCs or render props — functional components with hooks only. Data access via `useLiveQuery` + Zustand stores.
 - Tests use `fake-indexeddb/auto` to mock IndexedDB. The test setup (`src/test/setup.ts`) deletes and reopens the Dexie database before/after each test for isolation.
 - Tests have a separate `vitest.config.ts` (jsdom environment, not the main `vite.config.ts`).
+- PWA manifest is inline in `vite.config.ts` (no separate manifest.json). `registerType: 'autoUpdate'`.
+
+## Known Gaps
+
+- Order creation + inventory deduction in `orderService` are sequential calls (not a single Dexie transaction) — potential race condition under concurrent orders.
+- `inventoryService.applyInventoryDeltaLocal` lacks a transaction wrapper (unlike `bomService` which wraps correctly).
+- `analyticsService.createAnalyticsWorkbookXml` builds Excel XML via string concatenation (~465 lines) — fragile but intentional (avoids xlsx dependency).

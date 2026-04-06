@@ -22,22 +22,29 @@ interface ModifierGroupViewModel {
   productCount: number;
 }
 
+interface IngredientRecipeFormValue {
+  localId: string;
+  ingredientId: number | null;
+  ingredientQuantity: string;
+}
+
 interface ModifierOptionFormValue {
   localId: string;
   id?: number;
   name: string;
   price: string;
   isActive: boolean;
-  ingredientId: number | null;
-  ingredientQuantity: string;
+  recipes: IngredientRecipeFormValue[];
 }
 
-interface ModifierRecipeInfo {
+interface ModifierRecipeData {
   modifierName: string;
   modifierId?: number;
-  ingredientId: number | null;
-  ingredientName: string;
-  quantity: number;
+  ingredients: Array<{
+    ingredientId: number;
+    ingredientName: string;
+    quantity: number;
+  }>;
 }
 
 export default function ModifierGroupsPanel() {
@@ -68,7 +75,7 @@ export default function ModifierGroupsPanel() {
     }));
   }, []);
 
-  const handleSave = async (draft: ModifierGroupDraft, recipes: ModifierRecipeInfo[]) => {
+  const handleSave = async (draft: ModifierGroupDraft, recipeData: ModifierRecipeData[]) => {
     if (isSaving) {
       return;
     }
@@ -82,21 +89,13 @@ export default function ModifierGroupsPanel() {
 
       try {
         const savedModifiers = await db.modifiers.where('groupId').equals(savedGroupId).toArray();
-        for (const recipe of recipes) {
-          const modifier = recipe.modifierId
-            ? savedModifiers.find((m) => m.id === recipe.modifierId)
-            : savedModifiers.find((m) => m.name === recipe.modifierName);
+        for (const entry of recipeData) {
+          const modifier = entry.modifierId
+            ? savedModifiers.find((m) => m.id === entry.modifierId)
+            : savedModifiers.find((m) => m.name === entry.modifierName);
           if (!modifier?.id) continue;
 
-          if (recipe.ingredientId) {
-            await api.put(`/modifier-recipes/${modifier.id}`, [{
-              ingredientId: recipe.ingredientId,
-              ingredientName: recipe.ingredientName,
-              quantity: recipe.quantity,
-            }]);
-          } else {
-            await api.put(`/modifier-recipes/${modifier.id}`, []);
-          }
+          await api.put(`/modifier-recipes/${modifier.id}`, entry.ingredients);
         }
       } catch {
         if (!isEditing) {
@@ -197,8 +196,7 @@ export default function ModifierGroupsPanel() {
 
                     <div className="flex flex-wrap gap-2">
                       {entry.modifiers.map((modifier) => {
-                        const recipe = entry.modifierRecipes.find((r) => r.modifierId === modifier.id);
-                        const ingredientName = recipe ? entry.ingredientMap.get(recipe.ingredientId) : null;
+                        const recipes = entry.modifierRecipes.filter((r) => r.modifierId === modifier.id);
                         return (
                           <span
                             key={modifier.id}
@@ -210,7 +208,12 @@ export default function ModifierGroupsPanel() {
                           >
                             {modifier.name}
                             {modifier.price !== 0 && ` (${formatPriceDelta(modifier.price)})`}
-                            {ingredientName && <span className="text-xs text-amber-600 dark:text-amber-400 ml-1">→ {ingredientName} {recipe!.quantity}</span>}
+                            {recipes.map((recipe) => {
+                              const ingredientName = entry.ingredientMap.get(recipe.ingredientId);
+                              return ingredientName ? (
+                                <span key={recipe.ingredientId} className="text-xs text-amber-600 dark:text-amber-400 ml-1">→ {ingredientName} {recipe.quantity}</span>
+                              ) : null;
+                            })}
                             {!modifier.isActive && ' · 停用'}
                           </span>
                         );
@@ -273,15 +276,24 @@ export default function ModifierGroupsPanel() {
   );
 }
 
-function createOptionValue(modifier?: Modifier, recipe?: ModifierRecipeItem): ModifierOptionFormValue {
+function generateLocalId(): string {
+  return typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+}
+
+function createOptionValue(modifier?: Modifier, recipes?: ModifierRecipeItem[]): ModifierOptionFormValue {
   return {
-    localId: typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2),
+    localId: generateLocalId(),
     id: modifier?.id,
     name: modifier?.name ?? '',
     price: modifier ? String(modifier.price) : '0',
     isActive: modifier?.isActive ?? true,
-    ingredientId: recipe?.ingredientId ?? null,
-    ingredientQuantity: recipe ? String(recipe.quantity) : '1',
+    recipes: recipes && recipes.length > 0
+      ? recipes.map((r) => ({
+          localId: generateLocalId(),
+          ingredientId: r.ingredientId,
+          ingredientQuantity: String(r.quantity),
+        }))
+      : [],
   };
 }
 
@@ -292,7 +304,7 @@ function ModifierGroupFormModal({
   onClose,
 }: {
   group: ModifierGroupViewModel | null;
-  onSave: (draft: ModifierGroupDraft, recipes: ModifierRecipeInfo[]) => void;
+  onSave: (draft: ModifierGroupDraft, recipeData: ModifierRecipeData[]) => void;
   isSaving: boolean;
   onClose: () => void;
 }) {
@@ -314,8 +326,8 @@ function ModifierGroupFormModal({
       const allRecipes = await db.modifierRecipes.toArray();
       setOptions(
         group!.modifiers.map((modifier) => {
-          const recipe = allRecipes.find((r) => r.modifierId === modifier.id);
-          return createOptionValue(modifier, recipe);
+          const modifierRecipes = allRecipes.filter((r) => r.modifierId === modifier.id);
+          return createOptionValue(modifier, modifierRecipes);
         })
       );
       setRecipesLoaded(true);
@@ -332,11 +344,53 @@ function ModifierGroupFormModal({
 
   const updateOption = (
     localId: string,
-    updates: Partial<Pick<ModifierOptionFormValue, 'name' | 'price' | 'isActive' | 'ingredientId' | 'ingredientQuantity'>>
+    updates: Partial<Pick<ModifierOptionFormValue, 'name' | 'price' | 'isActive' | 'recipes'>>
   ) => {
     setOptions((current) =>
       current.map((option) =>
         option.localId === localId ? { ...option, ...updates } : option
+      )
+    );
+  };
+
+  const updateRecipe = (
+    optionLocalId: string,
+    recipeLocalId: string,
+    updates: Partial<Pick<IngredientRecipeFormValue, 'ingredientId' | 'ingredientQuantity'>>
+  ) => {
+    setOptions((current) =>
+      current.map((option) =>
+        option.localId === optionLocalId
+          ? {
+              ...option,
+              recipes: option.recipes.map((r) =>
+                r.localId === recipeLocalId ? { ...r, ...updates } : r
+              ),
+            }
+          : option
+      )
+    );
+  };
+
+  const addRecipeRow = (optionLocalId: string) => {
+    setOptions((current) =>
+      current.map((option) =>
+        option.localId === optionLocalId
+          ? {
+              ...option,
+              recipes: [...option.recipes, { localId: generateLocalId(), ingredientId: null, ingredientQuantity: '1' }],
+            }
+          : option
+      )
+    );
+  };
+
+  const removeRecipeRow = (optionLocalId: string, recipeLocalId: string) => {
+    setOptions((current) =>
+      current.map((option) =>
+        option.localId === optionLocalId
+          ? { ...option, recipes: option.recipes.filter((r) => r.localId !== recipeLocalId) }
+          : option
       )
     );
   };
@@ -359,12 +413,16 @@ function ModifierGroupFormModal({
       isActive: option.isActive,
     }));
 
-    const recipeInfos: ModifierRecipeInfo[] = validOptions.map((option) => ({
+    const recipeData: ModifierRecipeData[] = validOptions.map((option) => ({
       modifierName: option.name.trim(),
       modifierId: option.id,
-      ingredientId: option.ingredientId,
-      ingredientName: ingredients?.find((i) => i.id === option.ingredientId)?.name ?? '',
-      quantity: Number(option.ingredientQuantity) || 1,
+      ingredients: option.recipes
+        .filter((r) => r.ingredientId !== null)
+        .map((r) => ({
+          ingredientId: r.ingredientId!,
+          ingredientName: ingredients?.find((i) => i.id === r.ingredientId)?.name ?? '',
+          quantity: Number(r.ingredientQuantity) || 1,
+        })),
     }));
 
     onSave({
@@ -373,7 +431,7 @@ function ModifierGroupFormModal({
       multiSelect,
       maxSelections: multiSelect ? Number(maxSelections || 1) : 1,
       modifiers: draftModifiers,
-    }, recipeInfos);
+    }, recipeData);
   };
 
   return (
@@ -492,32 +550,48 @@ function ModifierGroupFormModal({
                   </button>
                 </div>
                 {hasIngredients ? (
-                  <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_100px]">
-                    <select
-                      value={option.ingredientId ?? ''}
-                      onChange={(event) => updateOption(option.localId, {
-                        ingredientId: event.target.value ? Number(event.target.value) : null,
-                      })}
-                      className="input-field text-sm"
+                  <div className="space-y-1.5">
+                    {option.recipes.map((recipe) => (
+                      <div key={recipe.localId} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_100px_auto]">
+                        <select
+                          value={recipe.ingredientId ?? ''}
+                          onChange={(event) => updateRecipe(option.localId, recipe.localId, {
+                            ingredientId: event.target.value ? Number(event.target.value) : null,
+                          })}
+                          className="input-field text-sm"
+                        >
+                          <option value="">選擇食材</option>
+                          {ingredients.map((ingredient) => (
+                            <option key={ingredient.id} value={ingredient.id}>
+                              {ingredient.name}（{ingredient.unit}）
+                            </option>
+                          ))}
+                        </select>
+                        {recipe.ingredientId && (
+                          <input
+                            type="number"
+                            min={0.1}
+                            step={0.1}
+                            value={recipe.ingredientQuantity}
+                            onChange={(event) => updateRecipe(option.localId, recipe.localId, { ingredientQuantity: event.target.value })}
+                            className="input-field text-sm"
+                            placeholder="數量"
+                          />
+                        )}
+                        <button
+                          onClick={() => removeRecipeRow(option.localId, recipe.localId)}
+                          className="text-xs font-medium text-red-500 hover:text-red-600 px-1"
+                        >
+                          移除
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => addRecipeRow(option.localId)}
+                      className="text-xs font-medium text-indigo-500 hover:text-indigo-600"
                     >
-                      <option value="">不扣庫存</option>
-                      {ingredients.map((ingredient) => (
-                        <option key={ingredient.id} value={ingredient.id}>
-                          扣庫存：{ingredient.name}（{ingredient.unit}）
-                        </option>
-                      ))}
-                    </select>
-                    {option.ingredientId && (
-                      <input
-                        type="number"
-                        min={0.1}
-                        step={0.1}
-                        value={option.ingredientQuantity}
-                        onChange={(event) => updateOption(option.localId, { ingredientQuantity: event.target.value })}
-                        className="input-field text-sm"
-                        placeholder="數量"
-                      />
-                    )}
+                      + 新增扣庫存食材
+                    </button>
                   </div>
                 ) : (
                   <p className="text-xs text-gray-500 dark:text-slate-400">
@@ -536,7 +610,7 @@ function ModifierGroupFormModal({
             ))}
           </div>
           <p className="text-xs text-gray-500 dark:text-slate-400">
-            至少需要保留一個啟用中的選項。{hasIngredients ? '選擇「扣庫存」可在點餐時自動扣除對應食材。' : '新增食材後可設定自動扣庫存。'}
+            至少需要保留一個啟用中的選項。{hasIngredients ? '每個選項可綁定多種食材，點餐時會自動扣除所有對應食材。' : '新增食材後可設定自動扣庫存。'}
           </p>
         </div>
 
